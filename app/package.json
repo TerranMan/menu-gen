@@ -11,12 +11,14 @@
     "build:data": "node scripts/build-data.mjs",
     "migrate": "node scripts/migrate-legacy.mjs",
     "fetch:images": "node scripts/fetch-images.mjs",
-    "fetch:prices": "node scripts/fetch-prices.mjs"
+    "fetch:prices": "node scripts/fetch-prices.mjs",
+    "tauri": "tauri"
   },
   "dependencies": {
     "alpinejs": "^3.14.8"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.1.0",
     "cyrillic-to-translit-js": "^3.2.1",
     "sharp": "^0.33.5",
     "vite": "^5.4.10",

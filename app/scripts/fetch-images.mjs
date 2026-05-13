@@ -36,7 +36,7 @@ const EN_HINT = {
   'sloiki-s-vishnei': 'cherry puff pastry',
   sharlotka: 'sharlotka Russian apple pie',
   'sloiki-s-yablokom-i-koritsei': 'apple cinnamon puff pastry',
-  mannik: 'mannik semolina cake',
+  mannik: 'mannik manna cake Russian semolina dessert',
   'pechene-sdobnoe': 'sweet biscuit cookies',
   keks: 'pound cake',
   chebureki: 'chebureki',
@@ -69,8 +69,8 @@ const EN_HINT = {
   'tvorozhnaya-massa': 'sweet cottage cheese',
 
   // dishes
-  plov: 'plov pilaf rice',
-  lagman: 'lagman noodles',
+  plov: 'plov Uzbek pilaf rice meat carrot dish',
+  lagman: 'lagman Uzbek noodle soup beef',
   okroshka: 'okroshka soup',
   'kartoshka-zharenaya': 'fried potatoes',
   'kartoshka-s-selyodkoi': 'potatoes with herring',
@@ -87,7 +87,7 @@ const EN_HINT = {
   greipfruti: 'grapefruit',
   apelsini: 'oranges',
   mandarini: 'mandarin oranges',
-  yabloki: 'apples',
+  yabloki: 'apples red fresh fruit bowl',
   grushi: 'pears',
   vinograd: 'grapes',
   kivi: 'kiwifruit',
@@ -111,8 +111,8 @@ const EN_HINT = {
 
   // meat
   steiki: 'steak meat',
-  kotleti: 'meat cutlets',
-  'riba-belaya': 'white fish fillet',
+  kotleti: 'kotleti Russian cooked meat patties cutlets',
+  'riba-belaya': 'cooked cod fillet white fish plate',
   'riba-krasnaya': 'salmon fillet',
   gulyash: 'goulash',
   'kurinie-berda': 'chicken thighs',

@@ -89,11 +89,6 @@ categories:
         image: images/yogurt.webp
         tags: []
         ingredients: []
-      - id: bekon
-        name: Бекон
-        image: images/bekon.webp
-        tags: []
-        ingredients: []
       - id: glazunya
         name: Глазунья
         image: images/glazunya.webp
@@ -109,41 +104,6 @@ categories:
         image: images/pshenichnaya-kasha.webp
         tags: []
         ingredients: []
-      - id: konservirovannie-yagodi
-        name: Консервированные ягоды
-        image: images/konservirovannie-yagodi.webp
-        tags: []
-        ingredients: []
-      - id: svezhie-yagodi
-        name: Свежие ягоды
-        image: images/svezhie-yagodi.webp
-        tags: []
-        ingredients: []
-      - id: konservirovannie-frukti
-        name: Консервированные фрукты
-        image: images/konservirovannie-frukti.webp
-        tags: []
-        ingredients: []
-      - id: svezhie-frukti
-        name: Свежие фрукты
-        image: images/svezhie-frukti.webp
-        tags: []
-        ingredients: []
-      - id: vetchina
-        name: Ветчина
-        image: images/vetchina.webp
-        tags: []
-        ingredients: []
-      - id: sosiski
-        name: Сосиски
-        image: images/sosiski.webp
-        tags: []
-        ingredients: []
-      - id: goroshek
-        name: Горошек
-        image: images/goroshek.webp
-        tags: []
-        ingredients: []
       - id: grenki
         name: Гренки
         image: images/grenki.webp
@@ -157,11 +117,6 @@ categories:
       - id: khlopya-s-molokom
         name: Хлопья с молоком
         image: images/khlopya-s-molokom.webp
-        tags: []
-        ingredients: []
-      - id: khlopya-s-yogurtom
-        name: Хлопья с йогуртом
-        image: images/khlopya-s-yogurtom.webp
         tags: []
         ingredients: []
       - id: omlet
@@ -193,11 +148,6 @@ categories:
         image: images/lagman.webp
         tags: []
         ingredients: []
-      - id: okroshka
-        name: Окрошка
-        image: images/okroshka.webp
-        tags: []
-        ingredients: []
       - id: kartoshka-zharenaya
         name: Картошка жареная
         image: images/kartoshka-zharenaya.webp
@@ -206,16 +156,6 @@ categories:
       - id: kartoshka-s-selyodkoi
         name: Картошка с селёдкой
         image: images/kartoshka-s-selyodkoi.webp
-        tags: []
-        ingredients: []
-      - id: varyonaya-kukuruza
-        name: Варёная кукуруза
-        image: images/varyonaya-kukuruza.webp
-        tags: []
-        ingredients: []
-      - id: kapusta-tushyonaya
-        name: Капуста тушёная
-        image: images/kapusta-tushyonaya.webp
         tags: []
         ingredients: []
       - id: kuritsa-s-kartoshkoi-v-dukhovke
@@ -322,6 +262,26 @@ categories:
         image: images/nektarini.webp
         tags: []
         ingredients: []
+      - id: svezhie-yagodi
+        name: Свежие ягоды
+        image: images/svezhie-yagodi.webp
+        tags: []
+        ingredients: []
+      - id: konservirovannie-yagodi
+        name: Консервированные ягоды
+        image: images/konservirovannie-yagodi.webp
+        tags: []
+        ingredients: []
+      - id: svezhie-frukti
+        name: Свежие фрукты
+        image: images/svezhie-frukti.webp
+        tags: []
+        ingredients: []
+      - id: konservirovannie-frukti
+        name: Консервированные фрукты
+        image: images/konservirovannie-frukti.webp
+        tags: []
+        ingredients: []
   - id: garnishes
     name: Гарниры
     pick: 1
@@ -364,6 +324,21 @@ categories:
       - id: yachnevaya
         name: Ячневая
         image: images/yachnevaya.webp
+        tags: []
+        ingredients: []
+      - id: goroshek
+        name: Горошек
+        image: images/goroshek.webp
+        tags: []
+        ingredients: []
+      - id: varyonaya-kukuruza
+        name: Варёная кукуруза
+        image: images/varyonaya-kukuruza.webp
+        tags: []
+        ingredients: []
+      - id: kapusta-tushyonaya
+        name: Капуста тушёная
+        image: images/kapusta-tushyonaya.webp
         tags: []
         ingredients: []
   - id: meat
@@ -425,14 +400,14 @@ categories:
         image: images/krevetki.webp
         tags: []
         ingredients: []
-      - id: vetchina-2
+      - id: vetchina
         name: Ветчина
-        image: images/vetchina-2.webp
+        image: images/vetchina.webp
         tags: []
         ingredients: []
-      - id: sosiski-2
+      - id: sosiski
         name: Сосиски
-        image: images/sosiski-2.webp
+        image: images/sosiski.webp
         tags: []
         ingredients: []
       - id: sardelki
@@ -448,6 +423,11 @@ categories:
       - id: utka
         name: Утка
         image: images/utka.webp
+        tags: []
+        ingredients: []
+      - id: bekon
+        name: Бекон
+        image: images/bekon.webp
         tags: []
         ingredients: []
   - id: salads
@@ -546,5 +526,10 @@ categories:
       - id: kurinaya-lapsha
         name: Куриная лапша
         image: images/kurinaya-lapsha.webp
+        tags: []
+        ingredients: []
+      - id: okroshka
+        name: Окрошка
+        image: images/okroshka.webp
         tags: []
         ingredients: []
