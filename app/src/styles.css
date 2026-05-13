@@ -213,6 +213,35 @@ header.top h1 {
   border-bottom: none;
 }
 
+.shopping {
+  columns: 2;
+  column-gap: 20px;
+}
+
+.shopping li {
+  display: block;
+  break-inside: avoid;
+}
+
+.shopping label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.shopping input[type='checkbox']:checked + span {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+@media (max-width: 600px) {
+  .shopping {
+    columns: 1;
+  }
+}
+
 footer.bottom {
   margin-top: 30px;
   text-align: center;

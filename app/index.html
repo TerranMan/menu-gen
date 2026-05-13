@@ -59,6 +59,22 @@
       </template>
 
       <div class="lists">
+        <details open>
+          <summary>
+            🛒 Список покупок (<span x-text="shoppingList().length"></span>)
+          </summary>
+          <ul class="shopping">
+            <template x-for="ing in shoppingList()" :key="ing.name + ing.unit">
+              <li>
+                <label>
+                  <input type="checkbox" />
+                  <span x-text="ing.text"></span>
+                </label>
+              </li>
+            </template>
+          </ul>
+        </details>
+
         <details>
           <summary>
             ★ Избранное (<span x-text="state.favorites.length"></span>)

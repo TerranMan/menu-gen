@@ -1,0 +1,725 @@
+# Черновик ингредиентов на 2 порции. Сольётся с dishes.yml через merge-ingredients.mjs.
+# Унифицированные названия: яйцо, мука, молоко, масло сливочное, масло растительное,
+# лук, морковь, чеснок, картофель, сахар, соль, перец чёрный.
+ingredients:
+
+  # ===== Выпечка =====
+  pirozhki-s-yaitsom-i-lukom:
+    - { name: мука, qty: 300, unit: г }
+    - { name: молоко, qty: 150, unit: мл }
+    - { name: дрожжи сухие, qty: 1, unit: ч.л. }
+    - { name: яйцо, qty: 4, unit: шт }
+    - { name: лук зелёный, qty: 1, unit: пучок }
+    - { name: масло сливочное, qty: 30, unit: г }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: сахар, qty: 1, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  pirozhki-s-yablokom:
+    - { name: мука, qty: 300, unit: г }
+    - { name: молоко, qty: 150, unit: мл }
+    - { name: дрожжи сухие, qty: 1, unit: ч.л. }
+    - { name: яйцо, qty: 1, unit: шт }
+    - { name: яблоко, qty: 3, unit: шт }
+    - { name: сахар, qty: 4, unit: ст.л. }
+    - { name: корица, qty: 1, unit: ч.л. }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  sloiki-s-vishnei:
+    - { name: тесто слоёное, qty: 500, unit: г }
+    - { name: вишня, qty: 200, unit: г }
+    - { name: сахар, qty: 3, unit: ст.л. }
+    - { name: крахмал, qty: 1, unit: ст.л. }
+    - { name: яйцо, qty: 1, unit: шт }
+
+  sharlotka:
+    - { name: яйцо, qty: 4, unit: шт }
+    - { name: сахар, qty: 200, unit: г }
+    - { name: мука, qty: 200, unit: г }
+    - { name: яблоко, qty: 4, unit: шт }
+    - { name: ванилин, qty: 1, unit: ч.л. }
+    - { name: масло сливочное, qty: 20, unit: г }
+
+  sloiki-s-yablokom-i-koritsei:
+    - { name: тесто слоёное, qty: 500, unit: г }
+    - { name: яблоко, qty: 3, unit: шт }
+    - { name: сахар, qty: 3, unit: ст.л. }
+    - { name: корица, qty: 1, unit: ч.л. }
+    - { name: яйцо, qty: 1, unit: шт }
+    - { name: масло сливочное, qty: 20, unit: г }
+
+  mannik:
+    - { name: манка, qty: 200, unit: г }
+    - { name: кефир, qty: 250, unit: мл }
+    - { name: яйцо, qty: 2, unit: шт }
+    - { name: сахар, qty: 150, unit: г }
+    - { name: мука, qty: 100, unit: г }
+    - { name: масло сливочное, qty: 50, unit: г }
+    - { name: разрыхлитель, qty: 1, unit: ч.л. }
+    - { name: ванилин, qty: 1, unit: ч.л. }
+
+  pechene-sdobnoe:
+    - { name: мука, qty: 300, unit: г }
+    - { name: масло сливочное, qty: 150, unit: г }
+    - { name: сахар, qty: 100, unit: г }
+    - { name: яйцо, qty: 1, unit: шт }
+    - { name: разрыхлитель, qty: 1, unit: ч.л. }
+    - { name: ванилин, qty: 1, unit: ч.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  keks:
+    - { name: мука, qty: 250, unit: г }
+    - { name: сахар, qty: 200, unit: г }
+    - { name: яйцо, qty: 3, unit: шт }
+    - { name: масло сливочное, qty: 150, unit: г }
+    - { name: молоко, qty: 100, unit: мл }
+    - { name: разрыхлитель, qty: 1, unit: ч.л. }
+    - { name: изюм, qty: 100, unit: г }
+    - { name: ванилин, qty: 1, unit: ч.л. }
+
+  chebureki:
+    - { name: мука, qty: 400, unit: г }
+    - { name: вода, qty: 200, unit: мл }
+    - { name: мясо говядина, qty: 300, unit: г }
+    - { name: лук, qty: 2, unit: шт }
+    - { name: масло растительное, qty: 300, unit: мл }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  pirog-s-persikami:
+    - { name: мука, qty: 250, unit: г }
+    - { name: сахар, qty: 150, unit: г }
+    - { name: яйцо, qty: 3, unit: шт }
+    - { name: масло сливочное, qty: 100, unit: г }
+    - { name: персик, qty: 4, unit: шт }
+    - { name: разрыхлитель, qty: 1, unit: ч.л. }
+    - { name: ванилин, qty: 1, unit: ч.л. }
+
+  # ===== Завтраки =====
+  blini:
+    - { name: мука, qty: 200, unit: г }
+    - { name: молоко, qty: 500, unit: мл }
+    - { name: яйцо, qty: 2, unit: шт }
+    - { name: сахар, qty: 1, unit: ст.л. }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  oladi:
+    - { name: мука, qty: 250, unit: г }
+    - { name: кефир, qty: 400, unit: мл }
+    - { name: яйцо, qty: 2, unit: шт }
+    - { name: сахар, qty: 2, unit: ст.л. }
+    - { name: сода, qty: 1, unit: ч.л. }
+    - { name: масло растительное, qty: 3, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  sirniki:
+    - { name: творог, qty: 400, unit: г }
+    - { name: яйцо, qty: 2, unit: шт }
+    - { name: мука, qty: 4, unit: ст.л. }
+    - { name: сахар, qty: 3, unit: ст.л. }
+    - { name: ванилин, qty: 1, unit: ч.л. }
+    - { name: масло растительное, qty: 3, unit: ст.л. }
+    - { name: сметана, qty: 100, unit: г }
+
+  mannaya-kasha:
+    - { name: манка, qty: 80, unit: г }
+    - { name: молоко, qty: 500, unit: мл }
+    - { name: сахар, qty: 2, unit: ст.л. }
+    - { name: масло сливочное, qty: 30, unit: г }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  ovsyanaya-kasha:
+    - { name: хлопья овсяные, qty: 100, unit: г }
+    - { name: молоко, qty: 400, unit: мл }
+    - { name: сахар, qty: 2, unit: ст.л. }
+    - { name: масло сливочное, qty: 20, unit: г }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  yogurt:
+    - { name: йогурт, qty: 400, unit: г }
+
+  glazunya:
+    - { name: яйцо, qty: 4, unit: шт }
+    - { name: масло растительное, qty: 1, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  skrembl-s-pomidorami:
+    - { name: яйцо, qty: 4, unit: шт }
+    - { name: молоко, qty: 50, unit: мл }
+    - { name: помидор, qty: 2, unit: шт }
+    - { name: масло сливочное, qty: 20, unit: г }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  pshenichnaya-kasha:
+    - { name: крупа пшеничная, qty: 150, unit: г }
+    - { name: молоко, qty: 400, unit: мл }
+    - { name: сахар, qty: 2, unit: ст.л. }
+    - { name: масло сливочное, qty: 30, unit: г }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  grenki:
+    - { name: хлеб, qty: 6, unit: шт }
+    - { name: яйцо, qty: 2, unit: шт }
+    - { name: молоко, qty: 100, unit: мл }
+    - { name: сахар, qty: 1, unit: ст.л. }
+    - { name: масло сливочное, qty: 30, unit: г }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  goryachie-tosti-s-dzhemom:
+    - { name: хлеб, qty: 4, unit: шт }
+    - { name: джем, qty: 4, unit: ст.л. }
+    - { name: масло сливочное, qty: 30, unit: г }
+
+  khlopya-s-molokom:
+    - { name: хлопья кукурузные, qty: 100, unit: г }
+    - { name: молоко, qty: 400, unit: мл }
+    - { name: сахар, qty: 1, unit: ст.л. }
+
+  omlet:
+    - { name: яйцо, qty: 4, unit: шт }
+    - { name: молоко, qty: 100, unit: мл }
+    - { name: масло сливочное, qty: 20, unit: г }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  tvorog:
+    - { name: творог, qty: 400, unit: г }
+    - { name: сметана, qty: 100, unit: г }
+    - { name: сахар, qty: 2, unit: ст.л. }
+
+  tvorozhnaya-massa:
+    - { name: творог, qty: 400, unit: г }
+    - { name: сметана, qty: 100, unit: г }
+    - { name: сахар, qty: 3, unit: ст.л. }
+    - { name: изюм, qty: 50, unit: г }
+    - { name: ванилин, qty: 1, unit: ч.л. }
+
+  # ===== Основные блюда =====
+  plov:
+    - { name: рис, qty: 300, unit: г }
+    - { name: курица филе, qty: 400, unit: г }
+    - { name: морковь, qty: 2, unit: шт }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: чеснок, qty: 3, unit: зубчик }
+    - { name: масло растительное, qty: 4, unit: ст.л. }
+    - { name: специи, qty: 1, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  lagman:
+    - { name: лапша, qty: 300, unit: г }
+    - { name: мясо говядина, qty: 400, unit: г }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: морковь, qty: 1, unit: шт }
+    - { name: перец болгарский, qty: 1, unit: шт }
+    - { name: помидор, qty: 2, unit: шт }
+    - { name: чеснок, qty: 3, unit: зубчик }
+    - { name: масло растительное, qty: 3, unit: ст.л. }
+    - { name: специи, qty: 1, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  kartoshka-zharenaya:
+    - { name: картофель, qty: 800, unit: г }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: масло растительное, qty: 4, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  kartoshka-s-selyodkoi:
+    - { name: картофель, qty: 800, unit: г }
+    - { name: селёдка, qty: 1, unit: шт }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  kuritsa-s-kartoshkoi-v-dukhovke:
+    - { name: курица филе, qty: 500, unit: г }
+    - { name: картофель, qty: 800, unit: г }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: чеснок, qty: 3, unit: зубчик }
+    - { name: сметана, qty: 100, unit: г }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: специи, qty: 1, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  zapekanka-gorokhovaya-kasha-s-myasom:
+    - { name: горох, qty: 300, unit: г }
+    - { name: мясо свинина, qty: 300, unit: г }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: морковь, qty: 1, unit: шт }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  pelmeni:
+    - { name: пельмени, qty: 500, unit: г }
+    - { name: масло сливочное, qty: 30, unit: г }
+    - { name: сметана, qty: 100, unit: г }
+    - { name: лавровый лист, qty: 2, unit: шт }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  chakhokhbili:
+    - { name: курица филе, qty: 600, unit: г }
+    - { name: лук, qty: 2, unit: шт }
+    - { name: помидор, qty: 4, unit: шт }
+    - { name: чеснок, qty: 3, unit: зубчик }
+    - { name: зелень, qty: 1, unit: пучок }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: специи, qty: 1, unit: ч.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  ragu:
+    - { name: мясо говядина, qty: 400, unit: г }
+    - { name: картофель, qty: 4, unit: шт }
+    - { name: морковь, qty: 1, unit: шт }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: перец болгарский, qty: 1, unit: шт }
+    - { name: помидор, qty: 2, unit: шт }
+    - { name: чеснок, qty: 2, unit: зубчик }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: лавровый лист, qty: 2, unit: шт }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  # ===== Фрукты и овощи =====
+  banani:
+    - { name: банан, qty: 4, unit: шт }
+
+  greipfruti:
+    - { name: грейпфрут, qty: 2, unit: шт }
+
+  apelsini:
+    - { name: апельсин, qty: 3, unit: шт }
+
+  mandarini:
+    - { name: мандарин, qty: 6, unit: шт }
+
+  yabloki:
+    - { name: яблоко, qty: 4, unit: шт }
+
+  grushi:
+    - { name: груша, qty: 3, unit: шт }
+
+  vinograd:
+    - { name: виноград, qty: 400, unit: г }
+
+  kivi:
+    - { name: киви, qty: 4, unit: шт }
+
+  avokado:
+    - { name: авокадо, qty: 2, unit: шт }
+
+  persiki:
+    - { name: персик, qty: 4, unit: шт }
+
+  khurma:
+    - { name: хурма, qty: 3, unit: шт }
+
+  slivi:
+    - { name: слива, qty: 8, unit: шт }
+
+  abrikosi:
+    - { name: абрикос, qty: 8, unit: шт }
+
+  nektarini:
+    - { name: нектарин, qty: 4, unit: шт }
+
+  # ===== Гарниры =====
+  pyure:
+    - { name: картофель, qty: 800, unit: г }
+    - { name: молоко, qty: 150, unit: мл }
+    - { name: масло сливочное, qty: 50, unit: г }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  grechka:
+    - { name: гречка, qty: 200, unit: г }
+    - { name: масло сливочное, qty: 30, unit: г }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  ris:
+    - { name: рис, qty: 200, unit: г }
+    - { name: масло сливочное, qty: 30, unit: г }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  makaroni:
+    - { name: макароны, qty: 200, unit: г }
+    - { name: масло сливочное, qty: 30, unit: г }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  svezhie-ovoshchi:
+    - { name: огурец, qty: 2, unit: шт }
+    - { name: помидор, qty: 2, unit: шт }
+    - { name: перец болгарский, qty: 1, unit: шт }
+    - { name: зелень, qty: 1, unit: пучок }
+
+  zamorozka-ovoshchnaya:
+    - { name: смесь овощная замороженная, qty: 400, unit: г }
+    - { name: масло растительное, qty: 1, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  lapsha:
+    - { name: лапша, qty: 200, unit: г }
+    - { name: масло сливочное, qty: 30, unit: г }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  yachnevaya:
+    - { name: крупа ячневая, qty: 200, unit: г }
+    - { name: масло сливочное, qty: 30, unit: г }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  goroshek:
+    - { name: горошек зелёный, qty: 400, unit: г }
+    - { name: масло сливочное, qty: 20, unit: г }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  varyonaya-kukuruza:
+    - { name: кукуруза, qty: 2, unit: шт }
+    - { name: масло сливочное, qty: 30, unit: г }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  kapusta-tushyonaya:
+    - { name: капуста, qty: 700, unit: г }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: морковь, qty: 1, unit: шт }
+    - { name: томатная паста, qty: 2, unit: ст.л. }
+    - { name: масло растительное, qty: 3, unit: ст.л. }
+    - { name: лавровый лист, qty: 2, unit: шт }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  # ===== Мясо =====
+  steiki:
+    - { name: мясо говядина, qty: 500, unit: г }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: масло сливочное, qty: 20, unit: г }
+    - { name: чеснок, qty: 2, unit: зубчик }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  kotleti:
+    - { name: фарш мясной, qty: 500, unit: г }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: яйцо, qty: 1, unit: шт }
+    - { name: хлеб, qty: 2, unit: шт }
+    - { name: молоко, qty: 100, unit: мл }
+    - { name: чеснок, qty: 2, unit: зубчик }
+    - { name: масло растительное, qty: 3, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  riba-belaya:
+    - { name: рыба белая, qty: 500, unit: г }
+    - { name: лимон, qty: 1, unit: шт }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: мука, qty: 2, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  riba-krasnaya:
+    - { name: рыба красная, qty: 400, unit: г }
+    - { name: лимон, qty: 1, unit: шт }
+    - { name: масло растительное, qty: 1, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  gulyash:
+    - { name: мясо говядина, qty: 500, unit: г }
+    - { name: лук, qty: 2, unit: шт }
+    - { name: морковь, qty: 1, unit: шт }
+    - { name: томатная паста, qty: 2, unit: ст.л. }
+    - { name: мука, qty: 1, unit: ст.л. }
+    - { name: масло растительное, qty: 3, unit: ст.л. }
+    - { name: лавровый лист, qty: 2, unit: шт }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  kurinie-berda:
+    - { name: курица бёдра, qty: 600, unit: г }
+    - { name: чеснок, qty: 3, unit: зубчик }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: специи, qty: 1, unit: ч.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  kurinie-krilya:
+    - { name: курица крылья, qty: 600, unit: г }
+    - { name: чеснок, qty: 3, unit: зубчик }
+    - { name: соевый соус, qty: 3, unit: ст.л. }
+    - { name: мёд, qty: 1, unit: ст.л. }
+    - { name: масло растительное, qty: 1, unit: ст.л. }
+    - { name: специи, qty: 1, unit: ч.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  kurinie-nogi:
+    - { name: курица голень, qty: 600, unit: г }
+    - { name: чеснок, qty: 3, unit: зубчик }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: специи, qty: 1, unit: ч.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  kurinaya-grudka:
+    - { name: курица грудка, qty: 500, unit: г }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: чеснок, qty: 2, unit: зубчик }
+    - { name: специи, qty: 1, unit: ч.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  befstroganov:
+    - { name: мясо говядина, qty: 400, unit: г }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: сметана, qty: 200, unit: г }
+    - { name: томатная паста, qty: 1, unit: ст.л. }
+    - { name: мука, qty: 1, unit: ст.л. }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  krevetki:
+    - { name: креветки, qty: 400, unit: г }
+    - { name: чеснок, qty: 3, unit: зубчик }
+    - { name: лимон, qty: 1, unit: шт }
+    - { name: масло сливочное, qty: 40, unit: г }
+    - { name: зелень, qty: 1, unit: пучок }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  krolik:
+    - { name: кролик, qty: 800, unit: г }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: морковь, qty: 1, unit: шт }
+    - { name: чеснок, qty: 3, unit: зубчик }
+    - { name: сметана, qty: 200, unit: г }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: лавровый лист, qty: 2, unit: шт }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  utka:
+    - { name: утка, qty: 1, unit: шт }
+    - { name: яблоко, qty: 3, unit: шт }
+    - { name: чеснок, qty: 4, unit: зубчик }
+    - { name: мёд, qty: 2, unit: ст.л. }
+    - { name: специи, qty: 1, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  bekon:
+    - { name: бекон, qty: 200, unit: г }
+
+  # ===== Салаты =====
+  ogurtsi-pomidori:
+    - { name: огурец, qty: 2, unit: шт }
+    - { name: помидор, qty: 3, unit: шт }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: зелень, qty: 1, unit: пучок }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  koul-slou:
+    - { name: капуста, qty: 400, unit: г }
+    - { name: морковь, qty: 1, unit: шт }
+    - { name: майонез, qty: 3, unit: ст.л. }
+    - { name: сметана, qty: 2, unit: ст.л. }
+    - { name: горчица, qty: 1, unit: ч.л. }
+    - { name: уксус, qty: 1, unit: ст.л. }
+    - { name: сахар, qty: 1, unit: ч.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  svyokla-s-chesnokom-i-orekhami:
+    - { name: свёкла, qty: 2, unit: шт }
+    - { name: чеснок, qty: 3, unit: зубчик }
+    - { name: орехи грецкие, qty: 50, unit: г }
+    - { name: майонез, qty: 2, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  kapustnii-salat-vitaminnii-s-morkovkoi-y:
+    - { name: капуста, qty: 400, unit: г }
+    - { name: морковь, qty: 1, unit: шт }
+    - { name: яблоко, qty: 1, unit: шт }
+    - { name: лимон, qty: 1, unit: шт }
+    - { name: сахар, qty: 1, unit: ч.л. }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  krabovii:
+    - { name: палочки крабовые, qty: 200, unit: г }
+    - { name: кукуруза, qty: 1, unit: шт }
+    - { name: рис, qty: 100, unit: г }
+    - { name: яйцо, qty: 3, unit: шт }
+    - { name: огурец, qty: 1, unit: шт }
+    - { name: майонез, qty: 3, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  selyodka-pod-shuboi:
+    - { name: селёдка, qty: 1, unit: шт }
+    - { name: картофель, qty: 3, unit: шт }
+    - { name: свёкла, qty: 2, unit: шт }
+    - { name: морковь, qty: 2, unit: шт }
+    - { name: яйцо, qty: 3, unit: шт }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: майонез, qty: 200, unit: г }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  olive:
+    - { name: картофель, qty: 3, unit: шт }
+    - { name: морковь, qty: 1, unit: шт }
+    - { name: яйцо, qty: 4, unit: шт }
+    - { name: колбаса варёная, qty: 200, unit: г }
+    - { name: огурцы солёные, qty: 3, unit: шт }
+    - { name: горошек зелёный, qty: 200, unit: г }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: майонез, qty: 150, unit: г }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  s-kartoshkoi-i-yaitsom:
+    - { name: картофель, qty: 3, unit: шт }
+    - { name: яйцо, qty: 4, unit: шт }
+    - { name: лук зелёный, qty: 1, unit: пучок }
+    - { name: майонез, qty: 3, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  grecheskii:
+    - { name: помидор, qty: 3, unit: шт }
+    - { name: огурец, qty: 2, unit: шт }
+    - { name: перец болгарский, qty: 1, unit: шт }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: сыр фета, qty: 150, unit: г }
+    - { name: маслины, qty: 100, unit: г }
+    - { name: масло оливковое, qty: 2, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  vinegret:
+    - { name: свёкла, qty: 1, unit: шт }
+    - { name: картофель, qty: 2, unit: шт }
+    - { name: морковь, qty: 1, unit: шт }
+    - { name: огурцы солёные, qty: 2, unit: шт }
+    - { name: капуста квашеная, qty: 150, unit: г }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: горошек зелёный, qty: 100, unit: г }
+    - { name: масло растительное, qty: 3, unit: ст.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+
+  # ===== Супы =====
+  borshch:
+    - { name: мясо говядина, qty: 400, unit: г }
+    - { name: свёкла, qty: 2, unit: шт }
+    - { name: капуста, qty: 300, unit: г }
+    - { name: картофель, qty: 3, unit: шт }
+    - { name: морковь, qty: 1, unit: шт }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: томатная паста, qty: 2, unit: ст.л. }
+    - { name: чеснок, qty: 2, unit: зубчик }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: лавровый лист, qty: 2, unit: шт }
+    - { name: зелень, qty: 1, unit: пучок }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  shchi:
+    - { name: мясо говядина, qty: 400, unit: г }
+    - { name: капуста, qty: 400, unit: г }
+    - { name: картофель, qty: 3, unit: шт }
+    - { name: морковь, qty: 1, unit: шт }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: помидор, qty: 1, unit: шт }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: лавровый лист, qty: 2, unit: шт }
+    - { name: зелень, qty: 1, unit: пучок }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  gorokhovii:
+    - { name: горох, qty: 250, unit: г }
+    - { name: мясо свинина, qty: 300, unit: г }
+    - { name: картофель, qty: 3, unit: шт }
+    - { name: морковь, qty: 1, unit: шт }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: лавровый лист, qty: 2, unit: шт }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  solyanka:
+    - { name: мясо говядина, qty: 200, unit: г }
+    - { name: колбаса варёная, qty: 150, unit: г }
+    - { name: сосиски, qty: 150, unit: г }
+    - { name: огурцы солёные, qty: 3, unit: шт }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: томатная паста, qty: 2, unit: ст.л. }
+    - { name: маслины, qty: 50, unit: г }
+    - { name: лимон, qty: 1, unit: шт }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: лавровый лист, qty: 2, unit: шт }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  ukha-po-finski:
+    - { name: рыба красная, qty: 400, unit: г }
+    - { name: картофель, qty: 4, unit: шт }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: морковь, qty: 1, unit: шт }
+    - { name: сливки, qty: 200, unit: мл }
+    - { name: масло сливочное, qty: 20, unit: г }
+    - { name: лавровый лист, qty: 2, unit: шт }
+    - { name: зелень, qty: 1, unit: пучок }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  krem-sup-iz-chechevitsi:
+    - { name: чечевица, qty: 250, unit: г }
+    - { name: морковь, qty: 1, unit: шт }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: чеснок, qty: 2, unit: зубчик }
+    - { name: картофель, qty: 1, unit: шт }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: специи, qty: 1, unit: ч.л. }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  sup-iz-ribnoi-konservi:
+    - { name: рыбная консерва, qty: 1, unit: шт }
+    - { name: картофель, qty: 4, unit: шт }
+    - { name: морковь, qty: 1, unit: шт }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: рис, qty: 50, unit: г }
+    - { name: масло растительное, qty: 2, unit: ст.л. }
+    - { name: лавровый лист, qty: 2, unit: шт }
+    - { name: зелень, qty: 1, unit: пучок }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  kurinaya-lapsha:
+    - { name: курица филе, qty: 400, unit: г }
+    - { name: лапша, qty: 150, unit: г }
+    - { name: картофель, qty: 2, unit: шт }
+    - { name: морковь, qty: 1, unit: шт }
+    - { name: лук, qty: 1, unit: шт }
+    - { name: яйцо, qty: 1, unit: шт }
+    - { name: масло растительное, qty: 1, unit: ст.л. }
+    - { name: лавровый лист, qty: 2, unit: шт }
+    - { name: зелень, qty: 1, unit: пучок }
+    - { name: соль, qty: 0, unit: по вкусу }
+    - { name: перец чёрный, qty: 0, unit: по вкусу }
+
+  okroshka:
+    - { name: квас, qty: 1, unit: шт }
+    - { name: колбаса варёная, qty: 200, unit: г }
+    - { name: огурец, qty: 2, unit: шт }
+    - { name: редис, qty: 6, unit: шт }
+    - { name: картофель, qty: 2, unit: шт }
+    - { name: яйцо, qty: 3, unit: шт }
+    - { name: лук зелёный, qty: 1, unit: пучок }
+    - { name: укроп, qty: 1, unit: пучок }
+    - { name: сметана, qty: 100, unit: г }
+    - { name: горчица, qty: 1, unit: ч.л. }
+    - { name: соль, qty: 0, unit: по вкусу }

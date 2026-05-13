@@ -1,3 +1,5 @@
+# Источник правды по блюдам.
+
 version: 1
 portions: 2
 categories:
@@ -9,52 +11,268 @@ categories:
         name: Пирожки с яйцом и луком
         image: images/pirozhki-s-yaitsom-i-lukom.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: мука
+            qty: 300
+            unit: г
+          - name: молоко
+            qty: 150
+            unit: мл
+          - name: дрожжи сухие
+            qty: 1
+            unit: ч.л.
+          - name: яйцо
+            qty: 4
+            unit: шт
+          - name: лук зелёный
+            qty: 1
+            unit: пучок
+          - name: масло сливочное
+            qty: 30
+            unit: г
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: сахар
+            qty: 1
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: pirozhki-s-yablokom
         name: Пирожки с яблоком
         image: images/pirozhki-s-yablokom.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: мука
+            qty: 300
+            unit: г
+          - name: молоко
+            qty: 150
+            unit: мл
+          - name: дрожжи сухие
+            qty: 1
+            unit: ч.л.
+          - name: яйцо
+            qty: 1
+            unit: шт
+          - name: яблоко
+            qty: 3
+            unit: шт
+          - name: сахар
+            qty: 4
+            unit: ст.л.
+          - name: корица
+            qty: 1
+            unit: ч.л.
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: sloiki-s-vishnei
         name: Слойки с вишней
         image: images/sloiki-s-vishnei.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: тесто слоёное
+            qty: 500
+            unit: г
+          - name: вишня
+            qty: 200
+            unit: г
+          - name: сахар
+            qty: 3
+            unit: ст.л.
+          - name: крахмал
+            qty: 1
+            unit: ст.л.
+          - name: яйцо
+            qty: 1
+            unit: шт
       - id: sharlotka
         name: Шарлотка
         image: images/sharlotka.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: яйцо
+            qty: 4
+            unit: шт
+          - name: сахар
+            qty: 200
+            unit: г
+          - name: мука
+            qty: 200
+            unit: г
+          - name: яблоко
+            qty: 4
+            unit: шт
+          - name: ванилин
+            qty: 1
+            unit: ч.л.
+          - name: масло сливочное
+            qty: 20
+            unit: г
       - id: sloiki-s-yablokom-i-koritsei
         name: Слойки с яблоком и корицей
         image: images/sloiki-s-yablokom-i-koritsei.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: тесто слоёное
+            qty: 500
+            unit: г
+          - name: яблоко
+            qty: 3
+            unit: шт
+          - name: сахар
+            qty: 3
+            unit: ст.л.
+          - name: корица
+            qty: 1
+            unit: ч.л.
+          - name: яйцо
+            qty: 1
+            unit: шт
+          - name: масло сливочное
+            qty: 20
+            unit: г
       - id: mannik
         name: Манник
         image: images/mannik.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: манка
+            qty: 200
+            unit: г
+          - name: кефир
+            qty: 250
+            unit: мл
+          - name: яйцо
+            qty: 2
+            unit: шт
+          - name: сахар
+            qty: 150
+            unit: г
+          - name: мука
+            qty: 100
+            unit: г
+          - name: масло сливочное
+            qty: 50
+            unit: г
+          - name: разрыхлитель
+            qty: 1
+            unit: ч.л.
+          - name: ванилин
+            qty: 1
+            unit: ч.л.
       - id: pechene-sdobnoe
         name: Печенье сдобное
         image: images/pechene-sdobnoe.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: мука
+            qty: 300
+            unit: г
+          - name: масло сливочное
+            qty: 150
+            unit: г
+          - name: сахар
+            qty: 100
+            unit: г
+          - name: яйцо
+            qty: 1
+            unit: шт
+          - name: разрыхлитель
+            qty: 1
+            unit: ч.л.
+          - name: ванилин
+            qty: 1
+            unit: ч.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: keks
         name: Кекс
         image: images/keks.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: мука
+            qty: 250
+            unit: г
+          - name: сахар
+            qty: 200
+            unit: г
+          - name: яйцо
+            qty: 3
+            unit: шт
+          - name: масло сливочное
+            qty: 150
+            unit: г
+          - name: молоко
+            qty: 100
+            unit: мл
+          - name: разрыхлитель
+            qty: 1
+            unit: ч.л.
+          - name: изюм
+            qty: 100
+            unit: г
+          - name: ванилин
+            qty: 1
+            unit: ч.л.
       - id: chebureki
         name: Чебуреки
         image: images/chebureki.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: мука
+            qty: 400
+            unit: г
+          - name: вода
+            qty: 200
+            unit: мл
+          - name: мясо говядина
+            qty: 300
+            unit: г
+          - name: лук
+            qty: 2
+            unit: шт
+          - name: масло растительное
+            qty: 300
+            unit: мл
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: pirog-s-persikami
         name: Пирог с персиками
         image: images/pirog-s-persikami.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: мука
+            qty: 250
+            unit: г
+          - name: сахар
+            qty: 150
+            unit: г
+          - name: яйцо
+            qty: 3
+            unit: шт
+          - name: масло сливочное
+            qty: 100
+            unit: г
+          - name: персик
+            qty: 4
+            unit: шт
+          - name: разрыхлитель
+            qty: 1
+            unit: ч.л.
+          - name: ванилин
+            qty: 1
+            unit: ч.л.
   - id: breakfasts
     name: Завтраки
     pick: 7
@@ -63,77 +281,290 @@ categories:
         name: Блины
         image: images/blini.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: мука
+            qty: 200
+            unit: г
+          - name: молоко
+            qty: 500
+            unit: мл
+          - name: яйцо
+            qty: 2
+            unit: шт
+          - name: сахар
+            qty: 1
+            unit: ст.л.
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: oladi
         name: Оладьи
         image: images/oladi.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: мука
+            qty: 250
+            unit: г
+          - name: кефир
+            qty: 400
+            unit: мл
+          - name: яйцо
+            qty: 2
+            unit: шт
+          - name: сахар
+            qty: 2
+            unit: ст.л.
+          - name: сода
+            qty: 1
+            unit: ч.л.
+          - name: масло растительное
+            qty: 3
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: sirniki
         name: Сырники
         image: images/sirniki.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: творог
+            qty: 400
+            unit: г
+          - name: яйцо
+            qty: 2
+            unit: шт
+          - name: мука
+            qty: 4
+            unit: ст.л.
+          - name: сахар
+            qty: 3
+            unit: ст.л.
+          - name: ванилин
+            qty: 1
+            unit: ч.л.
+          - name: масло растительное
+            qty: 3
+            unit: ст.л.
+          - name: сметана
+            qty: 100
+            unit: г
       - id: mannaya-kasha
         name: Манная каша
         image: images/mannaya-kasha.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: манка
+            qty: 80
+            unit: г
+          - name: молоко
+            qty: 500
+            unit: мл
+          - name: сахар
+            qty: 2
+            unit: ст.л.
+          - name: масло сливочное
+            qty: 30
+            unit: г
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: ovsyanaya-kasha
         name: Овсяная каша
         image: images/ovsyanaya-kasha.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: хлопья овсяные
+            qty: 100
+            unit: г
+          - name: молоко
+            qty: 400
+            unit: мл
+          - name: сахар
+            qty: 2
+            unit: ст.л.
+          - name: масло сливочное
+            qty: 20
+            unit: г
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: yogurt
         name: Йогурт
         image: images/yogurt.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: йогурт
+            qty: 400
+            unit: г
       - id: glazunya
         name: Глазунья
         image: images/glazunya.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: яйцо
+            qty: 4
+            unit: шт
+          - name: масло растительное
+            qty: 1
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: skrembl-s-pomidorami
         name: Скрембл с помидорами
         image: images/skrembl-s-pomidorami.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: яйцо
+            qty: 4
+            unit: шт
+          - name: молоко
+            qty: 50
+            unit: мл
+          - name: помидор
+            qty: 2
+            unit: шт
+          - name: масло сливочное
+            qty: 20
+            unit: г
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: pshenichnaya-kasha
         name: Пшеничная каша
         image: images/pshenichnaya-kasha.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: крупа пшеничная
+            qty: 150
+            unit: г
+          - name: молоко
+            qty: 400
+            unit: мл
+          - name: сахар
+            qty: 2
+            unit: ст.л.
+          - name: масло сливочное
+            qty: 30
+            unit: г
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: grenki
         name: Гренки
         image: images/grenki.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: хлеб
+            qty: 6
+            unit: шт
+          - name: яйцо
+            qty: 2
+            unit: шт
+          - name: молоко
+            qty: 100
+            unit: мл
+          - name: сахар
+            qty: 1
+            unit: ст.л.
+          - name: масло сливочное
+            qty: 30
+            unit: г
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: goryachie-tosti-s-dzhemom
         name: Горячие тосты с джемом
         image: images/goryachie-tosti-s-dzhemom.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: хлеб
+            qty: 4
+            unit: шт
+          - name: джем
+            qty: 4
+            unit: ст.л.
+          - name: масло сливочное
+            qty: 30
+            unit: г
       - id: khlopya-s-molokom
         name: Хлопья с молоком
         image: images/khlopya-s-molokom.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: хлопья кукурузные
+            qty: 100
+            unit: г
+          - name: молоко
+            qty: 400
+            unit: мл
+          - name: сахар
+            qty: 1
+            unit: ст.л.
       - id: omlet
         name: Омлет
         image: images/omlet.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: яйцо
+            qty: 4
+            unit: шт
+          - name: молоко
+            qty: 100
+            unit: мл
+          - name: масло сливочное
+            qty: 20
+            unit: г
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: tvorog
         name: Творог
         image: images/tvorog.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: творог
+            qty: 400
+            unit: г
+          - name: сметана
+            qty: 100
+            unit: г
+          - name: сахар
+            qty: 2
+            unit: ст.л.
       - id: tvorozhnaya-massa
         name: Творожная масса
         image: images/tvorozhnaya-massa.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: творог
+            qty: 400
+            unit: г
+          - name: сметана
+            qty: 100
+            unit: г
+          - name: сахар
+            qty: 3
+            unit: ст.л.
+          - name: изюм
+            qty: 50
+            unit: г
+          - name: ванилин
+            qty: 1
+            unit: ч.л.
   - id: dishes
     name: Основные блюда
     pick: 2
@@ -142,47 +573,257 @@ categories:
         name: Плов
         image: images/plov.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: рис
+            qty: 300
+            unit: г
+          - name: курица филе
+            qty: 400
+            unit: г
+          - name: морковь
+            qty: 2
+            unit: шт
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: чеснок
+            qty: 3
+            unit: зубчик
+          - name: масло растительное
+            qty: 4
+            unit: ст.л.
+          - name: специи
+            qty: 1
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: lagman
         name: Лагман
         image: images/lagman.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: лапша
+            qty: 300
+            unit: г
+          - name: мясо говядина
+            qty: 400
+            unit: г
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: морковь
+            qty: 1
+            unit: шт
+          - name: перец болгарский
+            qty: 1
+            unit: шт
+          - name: помидор
+            qty: 2
+            unit: шт
+          - name: чеснок
+            qty: 3
+            unit: зубчик
+          - name: масло растительное
+            qty: 3
+            unit: ст.л.
+          - name: специи
+            qty: 1
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: kartoshka-zharenaya
         name: Картошка жареная
         image: images/kartoshka-zharenaya.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: картофель
+            qty: 800
+            unit: г
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: масло растительное
+            qty: 4
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: kartoshka-s-selyodkoi
         name: Картошка с селёдкой
         image: images/kartoshka-s-selyodkoi.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: картофель
+            qty: 800
+            unit: г
+          - name: селёдка
+            qty: 1
+            unit: шт
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: kuritsa-s-kartoshkoi-v-dukhovke
         name: Курица с картошкой в духовке
         image: images/kuritsa-s-kartoshkoi-v-dukhovke.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: курица филе
+            qty: 500
+            unit: г
+          - name: картофель
+            qty: 800
+            unit: г
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: чеснок
+            qty: 3
+            unit: зубчик
+          - name: сметана
+            qty: 100
+            unit: г
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: специи
+            qty: 1
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: zapekanka-gorokhovaya-kasha-s-myasom
         name: Запеканка гороховая каша с мясом
         image: images/zapekanka-gorokhovaya-kasha-s-myasom.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: горох
+            qty: 300
+            unit: г
+          - name: мясо свинина
+            qty: 300
+            unit: г
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: морковь
+            qty: 1
+            unit: шт
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: pelmeni
         name: Пельмени
         image: images/pelmeni.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: пельмени
+            qty: 500
+            unit: г
+          - name: масло сливочное
+            qty: 30
+            unit: г
+          - name: сметана
+            qty: 100
+            unit: г
+          - name: лавровый лист
+            qty: 2
+            unit: шт
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: chakhokhbili
         name: Чахохбили
         image: images/chakhokhbili.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: курица филе
+            qty: 600
+            unit: г
+          - name: лук
+            qty: 2
+            unit: шт
+          - name: помидор
+            qty: 4
+            unit: шт
+          - name: чеснок
+            qty: 3
+            unit: зубчик
+          - name: зелень
+            qty: 1
+            unit: пучок
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: специи
+            qty: 1
+            unit: ч.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: ragu
         name: Рагу
         image: images/ragu.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: мясо говядина
+            qty: 400
+            unit: г
+          - name: картофель
+            qty: 4
+            unit: шт
+          - name: морковь
+            qty: 1
+            unit: шт
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: перец болгарский
+            qty: 1
+            unit: шт
+          - name: помидор
+            qty: 2
+            unit: шт
+          - name: чеснок
+            qty: 2
+            unit: зубчик
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: лавровый лист
+            qty: 2
+            unit: шт
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
   - id: fruits_vegetables
     name: Фрукты и овощи
     pick: 2
@@ -191,72 +832,114 @@ categories:
         name: Бананы
         image: images/banani.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: банан
+            qty: 4
+            unit: шт
       - id: greipfruti
         name: Грейпфруты
         image: images/greipfruti.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: грейпфрут
+            qty: 2
+            unit: шт
       - id: apelsini
         name: Апельсины
         image: images/apelsini.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: апельсин
+            qty: 3
+            unit: шт
       - id: mandarini
         name: Мандарины
         image: images/mandarini.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: мандарин
+            qty: 6
+            unit: шт
       - id: yabloki
         name: Яблоки
         image: images/yabloki.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: яблоко
+            qty: 4
+            unit: шт
       - id: grushi
         name: Груши
         image: images/grushi.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: груша
+            qty: 3
+            unit: шт
       - id: vinograd
         name: Виноград
         image: images/vinograd.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: виноград
+            qty: 400
+            unit: г
       - id: kivi
         name: Киви
         image: images/kivi.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: киви
+            qty: 4
+            unit: шт
       - id: avokado
         name: Авокадо
         image: images/avokado.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: авокадо
+            qty: 2
+            unit: шт
       - id: persiki
         name: Персики
         image: images/persiki.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: персик
+            qty: 4
+            unit: шт
       - id: khurma
         name: Хурма
         image: images/khurma.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: хурма
+            qty: 3
+            unit: шт
       - id: slivi
         name: Сливы
         image: images/slivi.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: слива
+            qty: 8
+            unit: шт
       - id: abrikosi
         name: Абрикосы
         image: images/abrikosi.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: абрикос
+            qty: 8
+            unit: шт
       - id: nektarini
         name: Нектарины
         image: images/nektarini.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: нектарин
+            qty: 4
+            unit: шт
   - id: garnishes
     name: Гарниры
     pick: 1
@@ -265,57 +948,177 @@ categories:
         name: Пюре
         image: images/pyure.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: картофель
+            qty: 800
+            unit: г
+          - name: молоко
+            qty: 150
+            unit: мл
+          - name: масло сливочное
+            qty: 50
+            unit: г
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: grechka
         name: Гречка
         image: images/grechka.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: гречка
+            qty: 200
+            unit: г
+          - name: масло сливочное
+            qty: 30
+            unit: г
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: ris
         name: Рис
         image: images/ris.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: рис
+            qty: 200
+            unit: г
+          - name: масло сливочное
+            qty: 30
+            unit: г
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: makaroni
         name: Макароны
         image: images/makaroni.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: макароны
+            qty: 200
+            unit: г
+          - name: масло сливочное
+            qty: 30
+            unit: г
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: svezhie-ovoshchi
         name: Свежие овощи
         image: images/svezhie-ovoshchi.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: огурец
+            qty: 2
+            unit: шт
+          - name: помидор
+            qty: 2
+            unit: шт
+          - name: перец болгарский
+            qty: 1
+            unit: шт
+          - name: зелень
+            qty: 1
+            unit: пучок
       - id: zamorozka-ovoshchnaya
         name: Заморозка овощная
         image: images/zamorozka-ovoshchnaya.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: смесь овощная замороженная
+            qty: 400
+            unit: г
+          - name: масло растительное
+            qty: 1
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: lapsha
         name: Лапша
         image: images/lapsha.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: лапша
+            qty: 200
+            unit: г
+          - name: масло сливочное
+            qty: 30
+            unit: г
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: yachnevaya
         name: Ячневая
         image: images/yachnevaya.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: крупа ячневая
+            qty: 200
+            unit: г
+          - name: масло сливочное
+            qty: 30
+            unit: г
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: goroshek
         name: Горошек
         image: images/goroshek.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: горошек зелёный
+            qty: 400
+            unit: г
+          - name: масло сливочное
+            qty: 20
+            unit: г
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: varyonaya-kukuruza
         name: Варёная кукуруза
         image: images/varyonaya-kukuruza.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: кукуруза
+            qty: 2
+            unit: шт
+          - name: масло сливочное
+            qty: 30
+            unit: г
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: kapusta-tushyonaya
         name: Капуста тушёная
         image: images/kapusta-tushyonaya.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: капуста
+            qty: 700
+            unit: г
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: морковь
+            qty: 1
+            unit: шт
+          - name: томатная паста
+            qty: 2
+            unit: ст.л.
+          - name: масло растительное
+            qty: 3
+            unit: ст.л.
+          - name: лавровый лист
+            qty: 2
+            unit: шт
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
   - id: meat
     name: Мясо
     pick: 1
@@ -324,72 +1127,348 @@ categories:
         name: Стейки
         image: images/steiki.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: мясо говядина
+            qty: 500
+            unit: г
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: масло сливочное
+            qty: 20
+            unit: г
+          - name: чеснок
+            qty: 2
+            unit: зубчик
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: kotleti
         name: Котлеты
         image: images/kotleti.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: фарш мясной
+            qty: 500
+            unit: г
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: яйцо
+            qty: 1
+            unit: шт
+          - name: хлеб
+            qty: 2
+            unit: шт
+          - name: молоко
+            qty: 100
+            unit: мл
+          - name: чеснок
+            qty: 2
+            unit: зубчик
+          - name: масло растительное
+            qty: 3
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: riba-belaya
         name: Рыба белая
         image: images/riba-belaya.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: рыба белая
+            qty: 500
+            unit: г
+          - name: лимон
+            qty: 1
+            unit: шт
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: мука
+            qty: 2
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: riba-krasnaya
         name: Рыба красная
         image: images/riba-krasnaya.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: рыба красная
+            qty: 400
+            unit: г
+          - name: лимон
+            qty: 1
+            unit: шт
+          - name: масло растительное
+            qty: 1
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: gulyash
         name: Гуляш
         image: images/gulyash.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: мясо говядина
+            qty: 500
+            unit: г
+          - name: лук
+            qty: 2
+            unit: шт
+          - name: морковь
+            qty: 1
+            unit: шт
+          - name: томатная паста
+            qty: 2
+            unit: ст.л.
+          - name: мука
+            qty: 1
+            unit: ст.л.
+          - name: масло растительное
+            qty: 3
+            unit: ст.л.
+          - name: лавровый лист
+            qty: 2
+            unit: шт
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: kurinie-berda
         name: Куриные берда
         image: images/kurinie-berda.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: курица бёдра
+            qty: 600
+            unit: г
+          - name: чеснок
+            qty: 3
+            unit: зубчик
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: специи
+            qty: 1
+            unit: ч.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: kurinie-krilya
         name: Куриные крылья
         image: images/kurinie-krilya.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: курица крылья
+            qty: 600
+            unit: г
+          - name: чеснок
+            qty: 3
+            unit: зубчик
+          - name: соевый соус
+            qty: 3
+            unit: ст.л.
+          - name: мёд
+            qty: 1
+            unit: ст.л.
+          - name: масло растительное
+            qty: 1
+            unit: ст.л.
+          - name: специи
+            qty: 1
+            unit: ч.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: kurinie-nogi
         name: Куриные ноги
         image: images/kurinie-nogi.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: курица голень
+            qty: 600
+            unit: г
+          - name: чеснок
+            qty: 3
+            unit: зубчик
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: специи
+            qty: 1
+            unit: ч.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: kurinaya-grudka
         name: Куриная грудка
         image: images/kurinaya-grudka.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: курица грудка
+            qty: 500
+            unit: г
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: чеснок
+            qty: 2
+            unit: зубчик
+          - name: специи
+            qty: 1
+            unit: ч.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: befstroganov
         name: Бефстроганов
         image: images/befstroganov.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: мясо говядина
+            qty: 400
+            unit: г
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: сметана
+            qty: 200
+            unit: г
+          - name: томатная паста
+            qty: 1
+            unit: ст.л.
+          - name: мука
+            qty: 1
+            unit: ст.л.
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: krevetki
         name: Креветки
         image: images/krevetki.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: креветки
+            qty: 400
+            unit: г
+          - name: чеснок
+            qty: 3
+            unit: зубчик
+          - name: лимон
+            qty: 1
+            unit: шт
+          - name: масло сливочное
+            qty: 40
+            unit: г
+          - name: зелень
+            qty: 1
+            unit: пучок
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: krolik
         name: Кролик
         image: images/krolik.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: кролик
+            qty: 800
+            unit: г
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: морковь
+            qty: 1
+            unit: шт
+          - name: чеснок
+            qty: 3
+            unit: зубчик
+          - name: сметана
+            qty: 200
+            unit: г
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: лавровый лист
+            qty: 2
+            unit: шт
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: utka
         name: Утка
         image: images/utka.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: утка
+            qty: 1
+            unit: шт
+          - name: яблоко
+            qty: 3
+            unit: шт
+          - name: чеснок
+            qty: 4
+            unit: зубчик
+          - name: мёд
+            qty: 2
+            unit: ст.л.
+          - name: специи
+            qty: 1
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: bekon
         name: Бекон
         image: images/bekon.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: бекон
+            qty: 200
+            unit: г
   - id: salads
     name: Салаты
     pick: 1
@@ -398,52 +1477,274 @@ categories:
         name: Огурцы-помидоры
         image: images/ogurtsi-pomidori.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: огурец
+            qty: 2
+            unit: шт
+          - name: помидор
+            qty: 3
+            unit: шт
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: зелень
+            qty: 1
+            unit: пучок
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: koul-slou
         name: Коул-слоу
         image: images/koul-slou.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: капуста
+            qty: 400
+            unit: г
+          - name: морковь
+            qty: 1
+            unit: шт
+          - name: майонез
+            qty: 3
+            unit: ст.л.
+          - name: сметана
+            qty: 2
+            unit: ст.л.
+          - name: горчица
+            qty: 1
+            unit: ч.л.
+          - name: уксус
+            qty: 1
+            unit: ст.л.
+          - name: сахар
+            qty: 1
+            unit: ч.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: svyokla-s-chesnokom-i-orekhami
         name: Свёкла с чесноком и орехами
         image: images/svyokla-s-chesnokom-i-orekhami.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: свёкла
+            qty: 2
+            unit: шт
+          - name: чеснок
+            qty: 3
+            unit: зубчик
+          - name: орехи грецкие
+            qty: 50
+            unit: г
+          - name: майонез
+            qty: 2
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: kapustnii-salat-vitaminnii-s-morkovkoi-y
         name: Капустный салат витаминный с морковкой/яблоком
         image: images/kapustnii-salat-vitaminnii-s-morkovkoi-y.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: капуста
+            qty: 400
+            unit: г
+          - name: морковь
+            qty: 1
+            unit: шт
+          - name: яблоко
+            qty: 1
+            unit: шт
+          - name: лимон
+            qty: 1
+            unit: шт
+          - name: сахар
+            qty: 1
+            unit: ч.л.
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: krabovii
         name: Крабовый
         image: images/krabovii.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: палочки крабовые
+            qty: 200
+            unit: г
+          - name: кукуруза
+            qty: 1
+            unit: шт
+          - name: рис
+            qty: 100
+            unit: г
+          - name: яйцо
+            qty: 3
+            unit: шт
+          - name: огурец
+            qty: 1
+            unit: шт
+          - name: майонез
+            qty: 3
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: selyodka-pod-shuboi
         name: Селёдка под шубой
         image: images/selyodka-pod-shuboi.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: селёдка
+            qty: 1
+            unit: шт
+          - name: картофель
+            qty: 3
+            unit: шт
+          - name: свёкла
+            qty: 2
+            unit: шт
+          - name: морковь
+            qty: 2
+            unit: шт
+          - name: яйцо
+            qty: 3
+            unit: шт
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: майонез
+            qty: 200
+            unit: г
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: olive
         name: Оливье
         image: images/olive.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: картофель
+            qty: 3
+            unit: шт
+          - name: морковь
+            qty: 1
+            unit: шт
+          - name: яйцо
+            qty: 4
+            unit: шт
+          - name: колбаса варёная
+            qty: 200
+            unit: г
+          - name: огурцы солёные
+            qty: 3
+            unit: шт
+          - name: горошек зелёный
+            qty: 200
+            unit: г
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: майонез
+            qty: 150
+            unit: г
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: s-kartoshkoi-i-yaitsom
         name: С картошкой и яйцом
         image: images/s-kartoshkoi-i-yaitsom.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: картофель
+            qty: 3
+            unit: шт
+          - name: яйцо
+            qty: 4
+            unit: шт
+          - name: лук зелёный
+            qty: 1
+            unit: пучок
+          - name: майонез
+            qty: 3
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
       - id: grecheskii
         name: Греческий
         image: images/grecheskii.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: помидор
+            qty: 3
+            unit: шт
+          - name: огурец
+            qty: 2
+            unit: шт
+          - name: перец болгарский
+            qty: 1
+            unit: шт
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: сыр фета
+            qty: 150
+            unit: г
+          - name: маслины
+            qty: 100
+            unit: г
+          - name: масло оливковое
+            qty: 2
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: vinegret
         name: Винегрет
         image: images/vinegret.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: свёкла
+            qty: 1
+            unit: шт
+          - name: картофель
+            qty: 2
+            unit: шт
+          - name: морковь
+            qty: 1
+            unit: шт
+          - name: огурцы солёные
+            qty: 2
+            unit: шт
+          - name: капуста квашеная
+            qty: 150
+            unit: г
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: горошек зелёный
+            qty: 100
+            unit: г
+          - name: масло растительное
+            qty: 3
+            unit: ст.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
   - id: soups
     name: Супы
     pick: 2
@@ -452,44 +1753,332 @@ categories:
         name: Борщ
         image: images/borshch.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: мясо говядина
+            qty: 400
+            unit: г
+          - name: свёкла
+            qty: 2
+            unit: шт
+          - name: капуста
+            qty: 300
+            unit: г
+          - name: картофель
+            qty: 3
+            unit: шт
+          - name: морковь
+            qty: 1
+            unit: шт
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: томатная паста
+            qty: 2
+            unit: ст.л.
+          - name: чеснок
+            qty: 2
+            unit: зубчик
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: лавровый лист
+            qty: 2
+            unit: шт
+          - name: зелень
+            qty: 1
+            unit: пучок
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: shchi
         name: Щи
         image: images/shchi.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: мясо говядина
+            qty: 400
+            unit: г
+          - name: капуста
+            qty: 400
+            unit: г
+          - name: картофель
+            qty: 3
+            unit: шт
+          - name: морковь
+            qty: 1
+            unit: шт
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: помидор
+            qty: 1
+            unit: шт
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: лавровый лист
+            qty: 2
+            unit: шт
+          - name: зелень
+            qty: 1
+            unit: пучок
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: gorokhovii
         name: Гороховый
         image: images/gorokhovii.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: горох
+            qty: 250
+            unit: г
+          - name: мясо свинина
+            qty: 300
+            unit: г
+          - name: картофель
+            qty: 3
+            unit: шт
+          - name: морковь
+            qty: 1
+            unit: шт
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: лавровый лист
+            qty: 2
+            unit: шт
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: solyanka
         name: Солянка
         image: images/solyanka.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: мясо говядина
+            qty: 200
+            unit: г
+          - name: колбаса варёная
+            qty: 150
+            unit: г
+          - name: сосиски
+            qty: 150
+            unit: г
+          - name: огурцы солёные
+            qty: 3
+            unit: шт
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: томатная паста
+            qty: 2
+            unit: ст.л.
+          - name: маслины
+            qty: 50
+            unit: г
+          - name: лимон
+            qty: 1
+            unit: шт
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: лавровый лист
+            qty: 2
+            unit: шт
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: ukha-po-finski
         name: Уха по-фински
         image: images/ukha-po-finski.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: рыба красная
+            qty: 400
+            unit: г
+          - name: картофель
+            qty: 4
+            unit: шт
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: морковь
+            qty: 1
+            unit: шт
+          - name: сливки
+            qty: 200
+            unit: мл
+          - name: масло сливочное
+            qty: 20
+            unit: г
+          - name: лавровый лист
+            qty: 2
+            unit: шт
+          - name: зелень
+            qty: 1
+            unit: пучок
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: krem-sup-iz-chechevitsi
         name: Крем-суп из чечевицы
         image: images/krem-sup-iz-chechevitsi.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: чечевица
+            qty: 250
+            unit: г
+          - name: морковь
+            qty: 1
+            unit: шт
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: чеснок
+            qty: 2
+            unit: зубчик
+          - name: картофель
+            qty: 1
+            unit: шт
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: специи
+            qty: 1
+            unit: ч.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: sup-iz-ribnoi-konservi
         name: Суп из рыбной консервы
         image: images/sup-iz-ribnoi-konservi.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: рыбная консерва
+            qty: 1
+            unit: шт
+          - name: картофель
+            qty: 4
+            unit: шт
+          - name: морковь
+            qty: 1
+            unit: шт
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: рис
+            qty: 50
+            unit: г
+          - name: масло растительное
+            qty: 2
+            unit: ст.л.
+          - name: лавровый лист
+            qty: 2
+            unit: шт
+          - name: зелень
+            qty: 1
+            unit: пучок
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: kurinaya-lapsha
         name: Куриная лапша
         image: images/kurinaya-lapsha.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: курица филе
+            qty: 400
+            unit: г
+          - name: лапша
+            qty: 150
+            unit: г
+          - name: картофель
+            qty: 2
+            unit: шт
+          - name: морковь
+            qty: 1
+            unit: шт
+          - name: лук
+            qty: 1
+            unit: шт
+          - name: яйцо
+            qty: 1
+            unit: шт
+          - name: масло растительное
+            qty: 1
+            unit: ст.л.
+          - name: лавровый лист
+            qty: 2
+            unit: шт
+          - name: зелень
+            qty: 1
+            unit: пучок
+          - name: соль
+            qty: 0
+            unit: по вкусу
+          - name: перец чёрный
+            qty: 0
+            unit: по вкусу
       - id: okroshka
         name: Окрошка
         image: images/okroshka.webp
         tags: []
-        ingredients: []
+        ingredients:
+          - name: квас
+            qty: 1
+            unit: шт
+          - name: колбаса варёная
+            qty: 200
+            unit: г
+          - name: огурец
+            qty: 2
+            unit: шт
+          - name: редис
+            qty: 6
+            unit: шт
+          - name: картофель
+            qty: 2
+            unit: шт
+          - name: яйцо
+            qty: 3
+            unit: шт
+          - name: лук зелёный
+            qty: 1
+            unit: пучок
+          - name: укроп
+            qty: 1
+            unit: пучок
+          - name: сметана
+            qty: 100
+            unit: г
+          - name: горчица
+            qty: 1
+            unit: ч.л.
+          - name: соль
+            qty: 0
+            unit: по вкусу

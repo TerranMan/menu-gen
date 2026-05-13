@@ -1,6 +1,7 @@
 import Alpine from 'alpinejs';
 import dishesData from '../data/dishes.json';
 import { generateMenu, regenerateSlot } from './generator.js';
+import { aggregate, formatLine } from './shopping.js';
 import { load, save, toggle } from './store.js';
 import './styles.css';
 
@@ -102,6 +103,11 @@ document.addEventListener('alpine:init', () => {
     },
     blockedDishes() {
       return this.state.blocks.map((id) => this.dishById(id)).filter(Boolean);
+    },
+
+    shoppingList() {
+      const dishes = this.menu.flatMap((s) => s.dishes);
+      return aggregate(dishes).map((ing) => ({ ...ing, text: formatLine(ing) }));
     },
 
     persistMenu() {
