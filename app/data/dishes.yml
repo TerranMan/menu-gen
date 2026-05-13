@@ -1,6 +1,3 @@
-# Источник правды по блюдам.
-# Сгенерирован из legacy/settings.yml. Правится вручную.
-
 version: 1
 portions: 2
 categories:
@@ -10,52 +7,52 @@ categories:
     dishes:
       - id: pirozhki-s-yaitsom-i-lukom
         name: Пирожки с яйцом и луком
-        image: null
+        image: images/pirozhki-s-yaitsom-i-lukom.webp
         tags: []
         ingredients: []
       - id: pirozhki-s-yablokom
         name: Пирожки с яблоком
-        image: null
+        image: images/pirozhki-s-yablokom.webp
         tags: []
         ingredients: []
       - id: sloiki-s-vishnei
         name: Слойки с вишней
-        image: null
+        image: images/sloiki-s-vishnei.webp
         tags: []
         ingredients: []
       - id: sharlotka
         name: Шарлотка
-        image: null
+        image: images/sharlotka.webp
         tags: []
         ingredients: []
       - id: sloiki-s-yablokom-i-koritsei
         name: Слойки с яблоком и корицей
-        image: null
+        image: images/sloiki-s-yablokom-i-koritsei.webp
         tags: []
         ingredients: []
       - id: mannik
         name: Манник
-        image: null
+        image: images/mannik.webp
         tags: []
         ingredients: []
       - id: pechene-sdobnoe
         name: Печенье сдобное
-        image: null
+        image: images/pechene-sdobnoe.webp
         tags: []
         ingredients: []
       - id: keks
         name: Кекс
-        image: null
+        image: images/keks.webp
         tags: []
         ingredients: []
       - id: chebureki
         name: Чебуреки
-        image: null
+        image: images/chebureki.webp
         tags: []
         ingredients: []
       - id: pirog-s-persikami
         name: Пирог с персиками
-        image: null
+        image: images/pirog-s-persikami.webp
         tags: []
         ingredients: []
   - id: breakfasts
@@ -64,122 +61,122 @@ categories:
     dishes:
       - id: blini
         name: Блины
-        image: null
+        image: images/blini.webp
         tags: []
         ingredients: []
       - id: oladi
         name: Оладьи
-        image: null
+        image: images/oladi.webp
         tags: []
         ingredients: []
       - id: sirniki
         name: Сырники
-        image: null
+        image: images/sirniki.webp
         tags: []
         ingredients: []
       - id: mannaya-kasha
         name: Манная каша
-        image: null
+        image: images/mannaya-kasha.webp
         tags: []
         ingredients: []
       - id: ovsyanaya-kasha
         name: Овсяная каша
-        image: null
+        image: images/ovsyanaya-kasha.webp
         tags: []
         ingredients: []
       - id: yogurt
         name: Йогурт
-        image: null
+        image: images/yogurt.webp
         tags: []
         ingredients: []
       - id: bekon
         name: Бекон
-        image: null
+        image: images/bekon.webp
         tags: []
         ingredients: []
       - id: glazunya
         name: Глазунья
-        image: null
+        image: images/glazunya.webp
         tags: []
         ingredients: []
       - id: skrembl-s-pomidorami
         name: Скрембл с помидорами
-        image: null
+        image: images/skrembl-s-pomidorami.webp
         tags: []
         ingredients: []
       - id: pshenichnaya-kasha
         name: Пшеничная каша
-        image: null
+        image: images/pshenichnaya-kasha.webp
         tags: []
         ingredients: []
       - id: konservirovannie-yagodi
         name: Консервированные ягоды
-        image: null
+        image: images/konservirovannie-yagodi.webp
         tags: []
         ingredients: []
       - id: svezhie-yagodi
         name: Свежие ягоды
-        image: null
+        image: images/svezhie-yagodi.webp
         tags: []
         ingredients: []
       - id: konservirovannie-frukti
         name: Консервированные фрукты
-        image: null
+        image: images/konservirovannie-frukti.webp
         tags: []
         ingredients: []
       - id: svezhie-frukti
         name: Свежие фрукты
-        image: null
+        image: images/svezhie-frukti.webp
         tags: []
         ingredients: []
       - id: vetchina
         name: Ветчина
-        image: null
+        image: images/vetchina.webp
         tags: []
         ingredients: []
       - id: sosiski
         name: Сосиски
-        image: null
+        image: images/sosiski.webp
         tags: []
         ingredients: []
       - id: goroshek
         name: Горошек
-        image: null
+        image: images/goroshek.webp
         tags: []
         ingredients: []
       - id: grenki
         name: Гренки
-        image: null
+        image: images/grenki.webp
         tags: []
         ingredients: []
       - id: goryachie-tosti-s-dzhemom
         name: Горячие тосты с джемом
-        image: null
+        image: images/goryachie-tosti-s-dzhemom.webp
         tags: []
         ingredients: []
       - id: khlopya-s-molokom
         name: Хлопья с молоком
-        image: null
+        image: images/khlopya-s-molokom.webp
         tags: []
         ingredients: []
       - id: khlopya-s-yogurtom
         name: Хлопья с йогуртом
-        image: null
+        image: images/khlopya-s-yogurtom.webp
         tags: []
         ingredients: []
       - id: omlet
         name: Омлет
-        image: null
+        image: images/omlet.webp
         tags: []
         ingredients: []
       - id: tvorog
         name: Творог
-        image: null
+        image: images/tvorog.webp
         tags: []
         ingredients: []
       - id: tvorozhnaya-massa
         name: Творожная масса
-        image: null
+        image: images/tvorozhnaya-massa.webp
         tags: []
         ingredients: []
   - id: dishes
@@ -188,62 +185,62 @@ categories:
     dishes:
       - id: plov
         name: Плов
-        image: null
+        image: images/plov.webp
         tags: []
         ingredients: []
       - id: lagman
         name: Лагман
-        image: null
+        image: images/lagman.webp
         tags: []
         ingredients: []
       - id: okroshka
         name: Окрошка
-        image: null
+        image: images/okroshka.webp
         tags: []
         ingredients: []
       - id: kartoshka-zharenaya
         name: Картошка жареная
-        image: null
+        image: images/kartoshka-zharenaya.webp
         tags: []
         ingredients: []
       - id: kartoshka-s-selyodkoi
         name: Картошка с селёдкой
-        image: null
+        image: images/kartoshka-s-selyodkoi.webp
         tags: []
         ingredients: []
       - id: varyonaya-kukuruza
         name: Варёная кукуруза
-        image: null
+        image: images/varyonaya-kukuruza.webp
         tags: []
         ingredients: []
       - id: kapusta-tushyonaya
         name: Капуста тушёная
-        image: null
+        image: images/kapusta-tushyonaya.webp
         tags: []
         ingredients: []
       - id: kuritsa-s-kartoshkoi-v-dukhovke
         name: Курица с картошкой в духовке
-        image: null
+        image: images/kuritsa-s-kartoshkoi-v-dukhovke.webp
         tags: []
         ingredients: []
       - id: zapekanka-gorokhovaya-kasha-s-myasom
         name: Запеканка гороховая каша с мясом
-        image: null
+        image: images/zapekanka-gorokhovaya-kasha-s-myasom.webp
         tags: []
         ingredients: []
       - id: pelmeni
         name: Пельмени
-        image: null
+        image: images/pelmeni.webp
         tags: []
         ingredients: []
       - id: chakhokhbili
         name: Чахохбили
-        image: null
+        image: images/chakhokhbili.webp
         tags: []
         ingredients: []
       - id: ragu
         name: Рагу
-        image: null
+        image: images/ragu.webp
         tags: []
         ingredients: []
   - id: fruits_vegetables
@@ -252,77 +249,77 @@ categories:
     dishes:
       - id: banani
         name: Бананы
-        image: null
+        image: images/banani.webp
         tags: []
         ingredients: []
       - id: greipfruti
         name: Грейпфруты
-        image: null
+        image: images/greipfruti.webp
         tags: []
         ingredients: []
       - id: apelsini
         name: Апельсины
-        image: null
+        image: images/apelsini.webp
         tags: []
         ingredients: []
       - id: mandarini
         name: Мандарины
-        image: null
+        image: images/mandarini.webp
         tags: []
         ingredients: []
       - id: yabloki
         name: Яблоки
-        image: null
+        image: images/yabloki.webp
         tags: []
         ingredients: []
       - id: grushi
         name: Груши
-        image: null
+        image: images/grushi.webp
         tags: []
         ingredients: []
       - id: vinograd
         name: Виноград
-        image: null
+        image: images/vinograd.webp
         tags: []
         ingredients: []
       - id: kivi
         name: Киви
-        image: null
+        image: images/kivi.webp
         tags: []
         ingredients: []
       - id: avokado
         name: Авокадо
-        image: null
+        image: images/avokado.webp
         tags: []
         ingredients: []
       - id: persiki
         name: Персики
-        image: null
+        image: images/persiki.webp
         tags: []
         ingredients: []
       - id: khurma
         name: Хурма
-        image: null
+        image: images/khurma.webp
         tags: []
         ingredients: []
       - id: slivi
         name: Сливы
-        image: null
+        image: images/slivi.webp
         tags: []
         ingredients: []
       - id: yagodi-po-sezonu
         name: Ягоды по сезону
-        image: null
+        image: images/yagodi-po-sezonu.webp
         tags: []
         ingredients: []
       - id: abrikosi
         name: Абрикосы
-        image: null
+        image: images/abrikosi.webp
         tags: []
         ingredients: []
       - id: nektarini
         name: Нектарины
-        image: null
+        image: images/nektarini.webp
         tags: []
         ingredients: []
   - id: garnishes
@@ -331,42 +328,42 @@ categories:
     dishes:
       - id: pyure
         name: Пюре
-        image: null
+        image: images/pyure.webp
         tags: []
         ingredients: []
       - id: grechka
         name: Гречка
-        image: null
+        image: images/grechka.webp
         tags: []
         ingredients: []
       - id: ris
         name: Рис
-        image: null
+        image: images/ris.webp
         tags: []
         ingredients: []
       - id: makaroni
         name: Макароны
-        image: null
+        image: images/makaroni.webp
         tags: []
         ingredients: []
       - id: svezhie-ovoshchi
         name: Свежие овощи
-        image: null
+        image: images/svezhie-ovoshchi.webp
         tags: []
         ingredients: []
       - id: zamorozka-ovoshchnaya
         name: Заморозка овощная
-        image: null
+        image: images/zamorozka-ovoshchnaya.webp
         tags: []
         ingredients: []
       - id: lapsha
         name: Лапша
-        image: null
+        image: images/lapsha.webp
         tags: []
         ingredients: []
       - id: yachnevaya
         name: Ячневая
-        image: null
+        image: images/yachnevaya.webp
         tags: []
         ingredients: []
   - id: meat
@@ -375,82 +372,82 @@ categories:
     dishes:
       - id: steiki
         name: Стейки
-        image: null
+        image: images/steiki.webp
         tags: []
         ingredients: []
       - id: kotleti
         name: Котлеты
-        image: null
+        image: images/kotleti.webp
         tags: []
         ingredients: []
       - id: riba-belaya
         name: Рыба белая
-        image: null
+        image: images/riba-belaya.webp
         tags: []
         ingredients: []
       - id: riba-krasnaya
         name: Рыба красная
-        image: null
+        image: images/riba-krasnaya.webp
         tags: []
         ingredients: []
       - id: gulyash
         name: Гуляш
-        image: null
+        image: images/gulyash.webp
         tags: []
         ingredients: []
       - id: kurinie-berda
         name: Куриные берда
-        image: null
+        image: images/kurinie-berda.webp
         tags: []
         ingredients: []
       - id: kurinie-krilya
         name: Куриные крылья
-        image: null
+        image: images/kurinie-krilya.webp
         tags: []
         ingredients: []
       - id: kurinie-nogi
         name: Куриные ноги
-        image: null
+        image: images/kurinie-nogi.webp
         tags: []
         ingredients: []
       - id: kurinaya-grudka
         name: Куриная грудка
-        image: null
+        image: images/kurinaya-grudka.webp
         tags: []
         ingredients: []
       - id: befstroganov
         name: Бефстроганов
-        image: null
+        image: images/befstroganov.webp
         tags: []
         ingredients: []
       - id: krevetki
         name: Креветки
-        image: null
+        image: images/krevetki.webp
         tags: []
         ingredients: []
       - id: vetchina-2
         name: Ветчина
-        image: null
+        image: images/vetchina-2.webp
         tags: []
         ingredients: []
       - id: sosiski-2
         name: Сосиски
-        image: null
+        image: images/sosiski-2.webp
         tags: []
         ingredients: []
       - id: sardelki
         name: Сардельки
-        image: null
+        image: images/sardelki.webp
         tags: []
         ingredients: []
       - id: krolik
         name: Кролик
-        image: null
+        image: images/krolik.webp
         tags: []
         ingredients: []
       - id: utka
         name: Утка
-        image: null
+        image: images/utka.webp
         tags: []
         ingredients: []
   - id: salads
@@ -459,52 +456,52 @@ categories:
     dishes:
       - id: ogurtsi-pomidori
         name: Огурцы-помидоры
-        image: null
+        image: images/ogurtsi-pomidori.webp
         tags: []
         ingredients: []
       - id: koul-slou
         name: Коул-слоу
-        image: null
+        image: images/koul-slou.webp
         tags: []
         ingredients: []
       - id: svyokla-s-chesnokom-i-orekhami
         name: Свёкла с чесноком и орехами
-        image: null
+        image: images/svyokla-s-chesnokom-i-orekhami.webp
         tags: []
         ingredients: []
       - id: kapustnii-salat-vitaminnii-s-morkovkoi-y
         name: Капустный салат витаминный с морковкой/яблоком
-        image: null
+        image: images/kapustnii-salat-vitaminnii-s-morkovkoi-y.webp
         tags: []
         ingredients: []
       - id: krabovii
         name: Крабовый
-        image: null
+        image: images/krabovii.webp
         tags: []
         ingredients: []
       - id: selyodka-pod-shuboi
         name: Селёдка под шубой
-        image: null
+        image: images/selyodka-pod-shuboi.webp
         tags: []
         ingredients: []
       - id: olive
         name: Оливье
-        image: null
+        image: images/olive.webp
         tags: []
         ingredients: []
       - id: s-kartoshkoi-i-yaitsom
         name: С картошкой и яйцом
-        image: null
+        image: images/s-kartoshkoi-i-yaitsom.webp
         tags: []
         ingredients: []
       - id: grecheskii
         name: Греческий
-        image: null
+        image: images/grecheskii.webp
         tags: []
         ingredients: []
       - id: vinegret
         name: Винегрет
-        image: null
+        image: images/vinegret.webp
         tags: []
         ingredients: []
   - id: soups
@@ -513,41 +510,41 @@ categories:
     dishes:
       - id: borshch
         name: Борщ
-        image: null
+        image: images/borshch.webp
         tags: []
         ingredients: []
       - id: shchi
         name: Щи
-        image: null
+        image: images/shchi.webp
         tags: []
         ingredients: []
       - id: gorokhovii
         name: Гороховый
-        image: null
+        image: images/gorokhovii.webp
         tags: []
         ingredients: []
       - id: solyanka
         name: Солянка
-        image: null
+        image: images/solyanka.webp
         tags: []
         ingredients: []
       - id: ukha-po-finski
         name: Уха по-фински
-        image: null
+        image: images/ukha-po-finski.webp
         tags: []
         ingredients: []
       - id: krem-sup-iz-chechevitsi
         name: Крем-суп из чечевицы
-        image: null
+        image: images/krem-sup-iz-chechevitsi.webp
         tags: []
         ingredients: []
       - id: sup-iz-ribnoi-konservi
         name: Суп из рыбной консервы
-        image: null
+        image: images/sup-iz-ribnoi-konservi.webp
         tags: []
         ingredients: []
       - id: kurinaya-lapsha
         name: Куриная лапша
-        image: null
+        image: images/kurinaya-lapsha.webp
         tags: []
         ingredients: []

@@ -4,6 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#c0392b" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="icons/icon-192.png" />
     <title>Генератор меню</title>
   </head>
   <body>
@@ -23,7 +26,12 @@
           </template>
           <template x-for="dish in slot.dishes" :key="dish.id">
             <div class="dish-row">
-              <span class="dish-emoji" x-text="emojiFor(slot.categoryId)"></span>
+              <template x-if="dish.image">
+                <img class="dish-img" :src="imageUrl(dish.image)" :alt="dish.name" loading="lazy" />
+              </template>
+              <template x-if="!dish.image">
+                <span class="dish-emoji" x-text="emojiFor(slot.categoryId)"></span>
+              </template>
               <span class="dish-name" x-text="dish.name"></span>
               <div class="dish-actions">
                 <button

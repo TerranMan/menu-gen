@@ -20,8 +20,14 @@ document.addEventListener('alpine:init', () => {
     data: dishesData,
     state: load(),
     menu: [],
+    base: import.meta.env.BASE_URL,
     showFavorites: false,
     showBlocks: false,
+
+    imageUrl(path) {
+      if (!path) return null;
+      return this.base + path;
+    },
 
     init() {
       if (this.state.lastMenu) {
@@ -122,3 +128,11 @@ document.addEventListener('alpine:init', () => {
 });
 
 Alpine.start();
+
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch((err) => {
+      console.warn('SW registration failed:', err);
+    });
+  });
+}

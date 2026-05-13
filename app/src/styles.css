@@ -113,8 +113,24 @@ header.top h1 {
 }
 
 .dish-emoji {
-  font-size: 22px;
+  font-size: 28px;
   flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-soft);
+  border-radius: 8px;
+}
+
+.dish-img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: var(--accent-soft);
 }
 
 .dish-name {
