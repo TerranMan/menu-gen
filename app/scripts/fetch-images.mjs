@@ -21,6 +21,7 @@ const PEXELS_KEY = process.env.PEXELS_API_KEY ?? '';
 
 const ARGS = new Set(process.argv.slice(2));
 const FORCE = ARGS.has('--force'); // переcкачать даже если файл есть
+const PEXELS_FIRST = ARGS.has('--pexels-first');
 const LIMIT = (() => {
   for (const a of ARGS) {
     const m = a.match(/^--limit=(\d+)$/);
@@ -33,7 +34,7 @@ const LIMIT = (() => {
 // Не обязательны; если нет — поиск идёт по русскому имени и упрощённой версии.
 const EN_HINT = {
   // bakery
-  'pirozhki-s-yaitsom-i-lukom': 'pirozhki egg onion',
+  'pirozhki-s-yaitsom-i-lukom': 'baked pirozhki pastry buns Russian',
   'pirozhki-s-yablokom': 'pirozhki apple',
   'sloiki-s-vishnei': 'cherry puff pastry',
   sharlotka: 'sharlotka Russian apple pie',
@@ -221,8 +222,7 @@ async function searchPexels(query) {
   }));
 }
 
-async function findImage(dish) {
-  // Wikimedia: русский + EN_HINT + первое слово
+async function tryWikimedia(dish) {
   const wikiQueries = [];
   const hint = EN_HINT[dish.id];
   if (hint) wikiQueries.push(hint);
@@ -234,7 +234,6 @@ async function findImage(dish) {
   if (hint && hint.split(/\s+/).length > 1) {
     wikiQueries.push(hint.split(/\s+/)[0]);
   }
-
   for (const q of wikiQueries) {
     try {
       const hits = await searchCommons(q);
@@ -243,18 +242,29 @@ async function findImage(dish) {
       console.warn(`  wiki "${q}" failed: ${e.message}`);
     }
   }
+  return null;
+}
 
-  // Pexels fallback — только если есть API key, и только английские запросы
-  if (PEXELS_KEY && hint) {
+async function tryPexels(dish) {
+  if (!PEXELS_KEY) return null;
+  const hint = EN_HINT[dish.id];
+  const queries = [hint, dish.name].filter(Boolean);
+  for (const q of queries) {
     try {
-      const hits = await searchPexels(hint);
-      if (hits.length > 0) return { source: 'pexels', hit: hits[0], query: hint };
+      const hits = await searchPexels(q);
+      if (hits.length > 0) return { source: 'pexels', hit: hits[0], query: q };
     } catch (e) {
-      console.warn(`  pexels "${hint}" failed: ${e.message}`);
+      console.warn(`  pexels "${q}" failed: ${e.message}`);
     }
   }
-
   return null;
+}
+
+async function findImage(dish) {
+  if (PEXELS_FIRST) {
+    return (await tryPexels(dish)) ?? (await tryWikimedia(dish));
+  }
+  return (await tryWikimedia(dish)) ?? (await tryPexels(dish));
 }
 
 function plainText(extmeta, key) {
