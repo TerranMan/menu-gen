@@ -79,6 +79,7 @@
                     inputmode="decimal"
                     min="0"
                     step="0.5"
+                    :class="{ 'is-default': ing.isDefault }"
                     :placeholder="`₽/${ing.unit}`"
                     :value="priceFor(ing.key)"
                     @input.debounce.400ms="setPrice(ing.key, $event.target.value)"

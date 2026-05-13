@@ -269,6 +269,12 @@ header.top h1 {
 .shopping-price input[type='number']:focus {
   outline: none;
   border-color: var(--accent);
+  color: var(--text);
+}
+
+.shopping-price input[type='number'].is-default {
+  color: var(--muted);
+  font-style: italic;
 }
 
 .shopping-cost {

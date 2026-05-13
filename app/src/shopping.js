@@ -31,10 +31,11 @@ export function priceKey(ing) {
 }
 
 // Стоимость строки: qty × цена за единицу. null если цены нет или unit=по вкусу.
+// p = 0 считается валидной ценой (специи).
 export function lineCost(ing, prices) {
   if (ing.unit === 'по вкусу') return null;
   const p = prices[priceKey(ing)];
-  if (typeof p !== 'number' || p <= 0) return null;
+  if (typeof p !== 'number' || p < 0) return null;
   return Math.round(ing.qty * p);
 }
 

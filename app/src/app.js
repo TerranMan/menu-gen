@@ -1,9 +1,12 @@
 import Alpine from 'alpinejs';
 import dishesData from '../data/dishes.json';
+import pricesData from '../data/prices.json';
 import { generateMenu, regenerateSlot } from './generator.js';
 import { aggregate, formatLine, priceKey, lineCost, totalCost, formatMoney } from './shopping.js';
 import { load, save, toggle } from './store.js';
 import './styles.css';
+
+const DEFAULT_PRICES = pricesData.prices ?? {};
 
 const EMOJI = {
   bakery: '🥐',
@@ -105,15 +108,23 @@ document.addEventListener('alpine:init', () => {
       return this.state.blocks.map((id) => this.dishById(id)).filter(Boolean);
     },
 
+    effectivePrices() {
+      return { ...DEFAULT_PRICES, ...this.state.prices };
+    },
+
     shoppingList() {
       const dishes = this.menu.flatMap((s) => s.dishes);
+      const prices = this.effectivePrices();
       return aggregate(dishes).map((ing) => {
         const key = priceKey(ing);
+        const userValue = this.state.prices[key];
+        const defaultValue = DEFAULT_PRICES[key];
         return {
           ...ing,
           key,
           text: formatLine(ing),
-          cost: lineCost(ing, this.state.prices),
+          cost: lineCost(ing, prices),
+          isDefault: typeof userValue !== 'number' && typeof defaultValue === 'number',
         };
       });
     },
@@ -121,18 +132,23 @@ document.addEventListener('alpine:init', () => {
     weekTotal() {
       const dishes = this.menu.flatMap((s) => s.dishes);
       const list = aggregate(dishes);
-      const { sum, missing } = totalCost(list, this.state.prices);
+      const { sum, missing } = totalCost(list, this.effectivePrices());
       return { text: formatMoney(sum), missing };
     },
 
     priceFor(key) {
       const v = this.state.prices[key];
-      return typeof v === 'number' ? v : '';
+      if (typeof v === 'number') return v;
+      const d = DEFAULT_PRICES[key];
+      return typeof d === 'number' ? d : '';
     },
 
     setPrice(key, value) {
       const n = Number(value);
       if (!Number.isFinite(n) || n <= 0) {
+        delete this.state.prices[key];
+      } else if (n === DEFAULT_PRICES[key]) {
+        // совпадает с дефолтом — не засоряем localStorage
         delete this.state.prices[key];
       } else {
         this.state.prices[key] = n;

@@ -82,13 +82,13 @@ function buildDishes() {
 
 function buildPrices() {
   if (!existsSync(PRICES_YML)) {
-    writeFileSync(PRICES_JSON, JSON.stringify({ updated_at: null, ingredients: [] }), 'utf-8');
+    writeFileSync(PRICES_JSON, JSON.stringify({ prices: {} }), 'utf-8');
     console.log('prices.json: справочник цен пока пуст (prices.yml отсутствует)');
     return;
   }
   const doc = YAML.parse(readFileSync(PRICES_YML, 'utf-8'));
   writeFileSync(PRICES_JSON, JSON.stringify(doc), 'utf-8');
-  console.log(`prices.json: ${(doc.ingredients ?? []).length} ингредиентов`);
+  console.log(`prices.json: ${Object.keys(doc.prices ?? {}).length} цен`);
 }
 
 buildDishes();
