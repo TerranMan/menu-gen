@@ -1,0 +1,553 @@
+# Источник правды по блюдам.
+# Сгенерирован из legacy/settings.yml. Правится вручную.
+
+version: 1
+portions: 2
+categories:
+  - id: bakery
+    name: Выпечка
+    pick: 1
+    dishes:
+      - id: pirozhki-s-yaitsom-i-lukom
+        name: Пирожки с яйцом и луком
+        image: null
+        tags: []
+        ingredients: []
+      - id: pirozhki-s-yablokom
+        name: Пирожки с яблоком
+        image: null
+        tags: []
+        ingredients: []
+      - id: sloiki-s-vishnei
+        name: Слойки с вишней
+        image: null
+        tags: []
+        ingredients: []
+      - id: sharlotka
+        name: Шарлотка
+        image: null
+        tags: []
+        ingredients: []
+      - id: sloiki-s-yablokom-i-koritsei
+        name: Слойки с яблоком и корицей
+        image: null
+        tags: []
+        ingredients: []
+      - id: mannik
+        name: Манник
+        image: null
+        tags: []
+        ingredients: []
+      - id: pechene-sdobnoe
+        name: Печенье сдобное
+        image: null
+        tags: []
+        ingredients: []
+      - id: keks
+        name: Кекс
+        image: null
+        tags: []
+        ingredients: []
+      - id: chebureki
+        name: Чебуреки
+        image: null
+        tags: []
+        ingredients: []
+      - id: pirog-s-persikami
+        name: Пирог с персиками
+        image: null
+        tags: []
+        ingredients: []
+  - id: breakfasts
+    name: Завтраки
+    pick: 7
+    dishes:
+      - id: blini
+        name: Блины
+        image: null
+        tags: []
+        ingredients: []
+      - id: oladi
+        name: Оладьи
+        image: null
+        tags: []
+        ingredients: []
+      - id: sirniki
+        name: Сырники
+        image: null
+        tags: []
+        ingredients: []
+      - id: mannaya-kasha
+        name: Манная каша
+        image: null
+        tags: []
+        ingredients: []
+      - id: ovsyanaya-kasha
+        name: Овсяная каша
+        image: null
+        tags: []
+        ingredients: []
+      - id: yogurt
+        name: Йогурт
+        image: null
+        tags: []
+        ingredients: []
+      - id: bekon
+        name: Бекон
+        image: null
+        tags: []
+        ingredients: []
+      - id: glazunya
+        name: Глазунья
+        image: null
+        tags: []
+        ingredients: []
+      - id: skrembl-s-pomidorami
+        name: Скрембл с помидорами
+        image: null
+        tags: []
+        ingredients: []
+      - id: pshenichnaya-kasha
+        name: Пшеничная каша
+        image: null
+        tags: []
+        ingredients: []
+      - id: konservirovannie-yagodi
+        name: Консервированные ягоды
+        image: null
+        tags: []
+        ingredients: []
+      - id: svezhie-yagodi
+        name: Свежие ягоды
+        image: null
+        tags: []
+        ingredients: []
+      - id: konservirovannie-frukti
+        name: Консервированные фрукты
+        image: null
+        tags: []
+        ingredients: []
+      - id: svezhie-frukti
+        name: Свежие фрукты
+        image: null
+        tags: []
+        ingredients: []
+      - id: vetchina
+        name: Ветчина
+        image: null
+        tags: []
+        ingredients: []
+      - id: sosiski
+        name: Сосиски
+        image: null
+        tags: []
+        ingredients: []
+      - id: goroshek
+        name: Горошек
+        image: null
+        tags: []
+        ingredients: []
+      - id: grenki
+        name: Гренки
+        image: null
+        tags: []
+        ingredients: []
+      - id: goryachie-tosti-s-dzhemom
+        name: Горячие тосты с джемом
+        image: null
+        tags: []
+        ingredients: []
+      - id: khlopya-s-molokom
+        name: Хлопья с молоком
+        image: null
+        tags: []
+        ingredients: []
+      - id: khlopya-s-yogurtom
+        name: Хлопья с йогуртом
+        image: null
+        tags: []
+        ingredients: []
+      - id: omlet
+        name: Омлет
+        image: null
+        tags: []
+        ingredients: []
+      - id: tvorog
+        name: Творог
+        image: null
+        tags: []
+        ingredients: []
+      - id: tvorozhnaya-massa
+        name: Творожная масса
+        image: null
+        tags: []
+        ingredients: []
+  - id: dishes
+    name: Основные блюда
+    pick: 2
+    dishes:
+      - id: plov
+        name: Плов
+        image: null
+        tags: []
+        ingredients: []
+      - id: lagman
+        name: Лагман
+        image: null
+        tags: []
+        ingredients: []
+      - id: okroshka
+        name: Окрошка
+        image: null
+        tags: []
+        ingredients: []
+      - id: kartoshka-zharenaya
+        name: Картошка жареная
+        image: null
+        tags: []
+        ingredients: []
+      - id: kartoshka-s-selyodkoi
+        name: Картошка с селёдкой
+        image: null
+        tags: []
+        ingredients: []
+      - id: varyonaya-kukuruza
+        name: Варёная кукуруза
+        image: null
+        tags: []
+        ingredients: []
+      - id: kapusta-tushyonaya
+        name: Капуста тушёная
+        image: null
+        tags: []
+        ingredients: []
+      - id: kuritsa-s-kartoshkoi-v-dukhovke
+        name: Курица с картошкой в духовке
+        image: null
+        tags: []
+        ingredients: []
+      - id: zapekanka-gorokhovaya-kasha-s-myasom
+        name: Запеканка гороховая каша с мясом
+        image: null
+        tags: []
+        ingredients: []
+      - id: pelmeni
+        name: Пельмени
+        image: null
+        tags: []
+        ingredients: []
+      - id: chakhokhbili
+        name: Чахохбили
+        image: null
+        tags: []
+        ingredients: []
+      - id: ragu
+        name: Рагу
+        image: null
+        tags: []
+        ingredients: []
+  - id: fruits_vegetables
+    name: Фрукты и овощи
+    pick: 2
+    dishes:
+      - id: banani
+        name: Бананы
+        image: null
+        tags: []
+        ingredients: []
+      - id: greipfruti
+        name: Грейпфруты
+        image: null
+        tags: []
+        ingredients: []
+      - id: apelsini
+        name: Апельсины
+        image: null
+        tags: []
+        ingredients: []
+      - id: mandarini
+        name: Мандарины
+        image: null
+        tags: []
+        ingredients: []
+      - id: yabloki
+        name: Яблоки
+        image: null
+        tags: []
+        ingredients: []
+      - id: grushi
+        name: Груши
+        image: null
+        tags: []
+        ingredients: []
+      - id: vinograd
+        name: Виноград
+        image: null
+        tags: []
+        ingredients: []
+      - id: kivi
+        name: Киви
+        image: null
+        tags: []
+        ingredients: []
+      - id: avokado
+        name: Авокадо
+        image: null
+        tags: []
+        ingredients: []
+      - id: persiki
+        name: Персики
+        image: null
+        tags: []
+        ingredients: []
+      - id: khurma
+        name: Хурма
+        image: null
+        tags: []
+        ingredients: []
+      - id: slivi
+        name: Сливы
+        image: null
+        tags: []
+        ingredients: []
+      - id: yagodi-po-sezonu
+        name: Ягоды по сезону
+        image: null
+        tags: []
+        ingredients: []
+      - id: abrikosi
+        name: Абрикосы
+        image: null
+        tags: []
+        ingredients: []
+      - id: nektarini
+        name: Нектарины
+        image: null
+        tags: []
+        ingredients: []
+  - id: garnishes
+    name: Гарниры
+    pick: 1
+    dishes:
+      - id: pyure
+        name: Пюре
+        image: null
+        tags: []
+        ingredients: []
+      - id: grechka
+        name: Гречка
+        image: null
+        tags: []
+        ingredients: []
+      - id: ris
+        name: Рис
+        image: null
+        tags: []
+        ingredients: []
+      - id: makaroni
+        name: Макароны
+        image: null
+        tags: []
+        ingredients: []
+      - id: svezhie-ovoshchi
+        name: Свежие овощи
+        image: null
+        tags: []
+        ingredients: []
+      - id: zamorozka-ovoshchnaya
+        name: Заморозка овощная
+        image: null
+        tags: []
+        ingredients: []
+      - id: lapsha
+        name: Лапша
+        image: null
+        tags: []
+        ingredients: []
+      - id: yachnevaya
+        name: Ячневая
+        image: null
+        tags: []
+        ingredients: []
+  - id: meat
+    name: Мясо
+    pick: 1
+    dishes:
+      - id: steiki
+        name: Стейки
+        image: null
+        tags: []
+        ingredients: []
+      - id: kotleti
+        name: Котлеты
+        image: null
+        tags: []
+        ingredients: []
+      - id: riba-belaya
+        name: Рыба белая
+        image: null
+        tags: []
+        ingredients: []
+      - id: riba-krasnaya
+        name: Рыба красная
+        image: null
+        tags: []
+        ingredients: []
+      - id: gulyash
+        name: Гуляш
+        image: null
+        tags: []
+        ingredients: []
+      - id: kurinie-berda
+        name: Куриные берда
+        image: null
+        tags: []
+        ingredients: []
+      - id: kurinie-krilya
+        name: Куриные крылья
+        image: null
+        tags: []
+        ingredients: []
+      - id: kurinie-nogi
+        name: Куриные ноги
+        image: null
+        tags: []
+        ingredients: []
+      - id: kurinaya-grudka
+        name: Куриная грудка
+        image: null
+        tags: []
+        ingredients: []
+      - id: befstroganov
+        name: Бефстроганов
+        image: null
+        tags: []
+        ingredients: []
+      - id: krevetki
+        name: Креветки
+        image: null
+        tags: []
+        ingredients: []
+      - id: vetchina-2
+        name: Ветчина
+        image: null
+        tags: []
+        ingredients: []
+      - id: sosiski-2
+        name: Сосиски
+        image: null
+        tags: []
+        ingredients: []
+      - id: sardelki
+        name: Сардельки
+        image: null
+        tags: []
+        ingredients: []
+      - id: krolik
+        name: Кролик
+        image: null
+        tags: []
+        ingredients: []
+      - id: utka
+        name: Утка
+        image: null
+        tags: []
+        ingredients: []
+  - id: salads
+    name: Салаты
+    pick: 1
+    dishes:
+      - id: ogurtsi-pomidori
+        name: Огурцы-помидоры
+        image: null
+        tags: []
+        ingredients: []
+      - id: koul-slou
+        name: Коул-слоу
+        image: null
+        tags: []
+        ingredients: []
+      - id: svyokla-s-chesnokom-i-orekhami
+        name: Свёкла с чесноком и орехами
+        image: null
+        tags: []
+        ingredients: []
+      - id: kapustnii-salat-vitaminnii-s-morkovkoi-y
+        name: Капустный салат витаминный с морковкой/яблоком
+        image: null
+        tags: []
+        ingredients: []
+      - id: krabovii
+        name: Крабовый
+        image: null
+        tags: []
+        ingredients: []
+      - id: selyodka-pod-shuboi
+        name: Селёдка под шубой
+        image: null
+        tags: []
+        ingredients: []
+      - id: olive
+        name: Оливье
+        image: null
+        tags: []
+        ingredients: []
+      - id: s-kartoshkoi-i-yaitsom
+        name: С картошкой и яйцом
+        image: null
+        tags: []
+        ingredients: []
+      - id: grecheskii
+        name: Греческий
+        image: null
+        tags: []
+        ingredients: []
+      - id: vinegret
+        name: Винегрет
+        image: null
+        tags: []
+        ingredients: []
+  - id: soups
+    name: Супы
+    pick: 2
+    dishes:
+      - id: borshch
+        name: Борщ
+        image: null
+        tags: []
+        ingredients: []
+      - id: shchi
+        name: Щи
+        image: null
+        tags: []
+        ingredients: []
+      - id: gorokhovii
+        name: Гороховый
+        image: null
+        tags: []
+        ingredients: []
+      - id: solyanka
+        name: Солянка
+        image: null
+        tags: []
+        ingredients: []
+      - id: ukha-po-finski
+        name: Уха по-фински
+        image: null
+        tags: []
+        ingredients: []
+      - id: krem-sup-iz-chechevitsi
+        name: Крем-суп из чечевицы
+        image: null
+        tags: []
+        ingredients: []
+      - id: sup-iz-ribnoi-konservi
+        name: Суп из рыбной консервы
+        image: null
+        tags: []
+        ingredients: []
+      - id: kurinaya-lapsha
+        name: Куриная лапша
+        image: null
+        tags: []
+        ingredients: []

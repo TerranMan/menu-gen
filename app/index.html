@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#c0392b" />
+    <title>Генератор меню</title>
+  </head>
+  <body>
+    <div class="app" x-data="menuApp" x-cloak>
+      <header class="top">
+        <h1>🍽️ Меню на неделю</h1>
+        <div class="toolbar">
+          <button class="btn primary" @click="regenerateAll()">Сгенерировать заново</button>
+        </div>
+      </header>
+
+      <template x-for="slot in menu" :key="slot.categoryId">
+        <section class="category">
+          <h2 x-text="slot.categoryName"></h2>
+          <template x-if="slot.dishes.length === 0">
+            <p class="empty-hint">Нет подходящих блюд — снимите блокировки или добавьте позиции.</p>
+          </template>
+          <template x-for="dish in slot.dishes" :key="dish.id">
+            <div class="dish-row">
+              <span class="dish-emoji" x-text="emojiFor(slot.categoryId)"></span>
+              <span class="dish-name" x-text="dish.name"></span>
+              <div class="dish-actions">
+                <button
+                  class="icon-btn"
+                  :class="{ active: isFavorite(dish.id) }"
+                  :title="isFavorite(dish.id) ? 'Убрать из избранного' : 'В избранное'"
+                  @click="toggleFavorite(dish.id)"
+                >
+                  <span x-text="isFavorite(dish.id) ? '★' : '☆'"></span>
+                </button>
+                <button
+                  class="icon-btn"
+                  title="Заменить это блюдо"
+                  @click="regenerateOne(slot.categoryId, dish.id)"
+                >↻</button>
+                <button
+                  class="icon-btn"
+                  title="Не показывать"
+                  @click="toggleBlock(dish.id)"
+                >✕</button>
+              </div>
+            </div>
+          </template>
+        </section>
+      </template>
+
+      <div class="lists">
+        <details>
+          <summary>
+            ★ Избранное (<span x-text="state.favorites.length"></span>)
+          </summary>
+          <template x-if="favoriteDishes().length === 0">
+            <p class="empty-hint">Пусто. Нажмите ☆ у блюда чтобы добавить.</p>
+          </template>
+          <ul>
+            <template x-for="d in favoriteDishes()" :key="d.id">
+              <li>
+                <span x-text="d.name"></span>
+                <button class="icon-btn" @click="toggleFavorite(d.id)" title="Убрать">✕</button>
+              </li>
+            </template>
+          </ul>
+        </details>
+
+        <details>
+          <summary>
+            ✕ Заблокировано (<span x-text="state.blocks.length"></span>)
+          </summary>
+          <template x-if="blockedDishes().length === 0">
+            <p class="empty-hint">Пусто.</p>
+          </template>
+          <ul>
+            <template x-for="d in blockedDishes()" :key="d.id">
+              <li>
+                <span x-text="d.name"></span>
+                <button class="icon-btn" @click="toggleBlock(d.id)" title="Вернуть">↺</button>
+              </li>
+            </template>
+          </ul>
+        </details>
+      </div>
+
+      <footer class="bottom">
+        <span x-text="`${data.categories.reduce((s, c) => s + c.dishes.length, 0)} блюд в базе`"></span>
+      </footer>
+    </div>
+
+    <style>
+      [x-cloak] { display: none !important; }
+    </style>
+
+    <script type="module" src="/src/app.js"></script>
+  </body>
+</html>

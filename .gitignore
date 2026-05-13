@@ -1,0 +1,37 @@
+# Node
+node_modules/
+*.log
+npm-debug.log*
+
+# Build artifacts
+app/dist/
+app/data/dishes.json
+app/data/prices.json
+app/data/credits.json
+
+# Tauri
+tauri/target/
+
+# Editors / harness
+.vscode/
+.idea/
+.claude/
+*.swp
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Secrets
+.env
+.env.local
+
+# Legacy PyInstaller artifacts (keep .py/.spec, drop heavy build outputs)
+legacy/toexe/build/
+legacy/toexe/dist/
+legacy/toexe/*.rar
+legacy/toexe/*.zip
+
+# Playwright (rarely needed locally)
+playwright-report/
+test-results/
