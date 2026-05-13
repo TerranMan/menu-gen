@@ -133,6 +133,19 @@ header.top h1 {
   background: var(--accent-soft);
 }
 
+.dish-emoji-big {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--accent-soft), #f7c6c0);
+  border-radius: 8px;
+  font-size: 32px;
+  line-height: 1;
+}
+
 .dish-name {
   flex: 1;
   font-size: 16px;

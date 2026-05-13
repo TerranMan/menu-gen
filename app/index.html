@@ -30,7 +30,7 @@
                 <img class="dish-img" :src="imageUrl(dish.image)" :alt="dish.name" loading="lazy" />
               </template>
               <template x-if="!dish.image">
-                <span class="dish-emoji" x-text="emojiFor(slot.categoryId)"></span>
+                <span class="dish-emoji-big" x-text="dishEmoji(dish, slot.categoryId)"></span>
               </template>
               <span class="dish-name" x-text="dish.name"></span>
               <div class="dish-actions">

@@ -61,6 +61,11 @@ function buildDishes() {
         }
       }
 
+      // Если image null — нужен emoji-фолбэк
+      if (!d.image && !d.emoji) {
+        issues.push(`${d.id}: image=null и нет emoji — UI покажет category-fallback`);
+      }
+
       if (Array.isArray(d.ingredients)) {
         for (const ing of d.ingredients) {
           if (!ing.name) fail(`${d.id}: ингредиент без name`);

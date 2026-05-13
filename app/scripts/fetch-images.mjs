@@ -19,16 +19,28 @@ const API = 'https://commons.wikimedia.org/w/api.php';
 const PEXELS_API = 'https://api.pexels.com/v1/search';
 const PEXELS_KEY = process.env.PEXELS_API_KEY ?? '';
 
-const ARGS = new Set(process.argv.slice(2));
-const FORCE = ARGS.has('--force'); // переcкачать даже если файл есть
+const RAW_ARGS = process.argv.slice(2);
+const ARGS = new Set(RAW_ARGS);
+const FORCE = ARGS.has('--force');
 const PEXELS_FIRST = ARGS.has('--pexels-first');
+const CANDIDATES = ARGS.has('--candidates');
+const JSON_LOG = ARGS.has('--json');
 const LIMIT = (() => {
-  for (const a of ARGS) {
+  for (const a of RAW_ARGS) {
     const m = a.match(/^--limit=(\d+)$/);
     if (m) return Number(m[1]);
   }
   return Infinity;
 })();
+const ONLY = (() => {
+  for (const a of RAW_ARGS) {
+    const m = a.match(/^--only=(.+)$/);
+    if (m) return new Set(m[1].split(',').map((s) => s.trim()).filter(Boolean));
+  }
+  return null;
+})();
+
+const CAND_DIR = (id) => resolve(IMG_DIR, '.candidates', id);
 
 // English-подсказки для русских блюд — Commons лучше находит их.
 // Не обязательны; если нет — поиск идёт по русскому имени и упрощённой версии.
@@ -273,6 +285,69 @@ function plainText(extmeta, key) {
   return String(v).replace(/<[^>]+>/g, '').trim();
 }
 
+async function searchPexelsMulti(query, count) {
+  if (!PEXELS_KEY) return [];
+  const params = new URLSearchParams({ query, per_page: String(count), orientation: 'landscape' });
+  const r = await fetch(`${PEXELS_API}?${params}`, {
+    headers: { Authorization: PEXELS_KEY, 'User-Agent': UA },
+  });
+  if (!r.ok) throw new Error(`Pexels HTTP ${r.status}`);
+  const data = await r.json();
+  return data.photos ?? [];
+}
+
+async function fetchCandidates(dish, count = 5) {
+  const hint = EN_HINT[dish.id];
+  const queries = [hint, dish.name].filter(Boolean);
+  const seen = new Set();
+  const collected = [];
+  for (const q of queries) {
+    if (collected.length >= count) break;
+    try {
+      const hits = await searchPexelsMulti(q, count);
+      for (const p of hits) {
+        if (seen.has(p.id)) continue;
+        seen.add(p.id);
+        collected.push({ query: q, photo: p });
+        if (collected.length >= count) break;
+      }
+    } catch (e) {
+      console.warn(`  pexels-multi "${q}" failed: ${e.message}`);
+    }
+  }
+  return collected.slice(0, count);
+}
+
+async function processCandidates(dish, credits) {
+  const dir = CAND_DIR(dish.id);
+  mkdirSync(dir, { recursive: true });
+  const cands = await fetchCandidates(dish, 5);
+  if (cands.length === 0) {
+    return { status: 'miss', dish, candidates: [] };
+  }
+  const written = [];
+  for (let i = 0; i < cands.length; i++) {
+    const { query, photo } = cands[i];
+    const path = resolve(dir, `cand-${i}.webp`);
+    try {
+      const buf = await fetchBuffer(photo.src.large || photo.src.original);
+      await sharp(buf).resize(1024, 1024, { fit: 'inside', withoutEnlargement: true }).webp({ quality: 82 }).toFile(path);
+      written.push({
+        index: i,
+        path: `images/.candidates/${dish.id}/cand-${i}.webp`,
+        absolute: path,
+        query,
+        photographer: photo.photographer,
+        source: photo.url,
+        pexels_id: photo.id,
+      });
+    } catch (e) {
+      console.warn(`  ${dish.id} cand-${i} failed: ${e.message}`);
+    }
+  }
+  return { status: 'candidates', dish, candidates: written };
+}
+
 async function processDish(dish, credits) {
   const outFile = resolve(IMG_DIR, `${dish.id}.webp`);
   if (!FORCE && existsSync(outFile)) {
@@ -319,33 +394,52 @@ async function main() {
   const doc = YAML.parse(raw);
   const credits = existsSync(CREDITS) ? JSON.parse(readFileSync(CREDITS, 'utf-8')) : {};
 
-  const stats = { ok: 0, skip: 0, miss: 0, error: 0 };
+  const stats = { ok: 0, skip: 0, miss: 0, error: 0, candidates: 0 };
+  const results = [];
   let processed = 0;
 
   for (const cat of doc.categories) {
     for (const dish of cat.dishes) {
       if (processed >= LIMIT) break;
+      if (ONLY && !ONLY.has(dish.id)) continue;
       processed++;
-      console.log(`[${processed}] ${dish.id} (${dish.name})`);
-      const res = await processDish(dish, credits);
-      stats[res.status]++;
+      if (!JSON_LOG) console.log(`[${processed}] ${dish.id} (${dish.name})`);
 
-      // Сохраняем YAML и credits после каждого успешного скачивания
-      if (res.status === 'ok') {
+      let res;
+      if (CANDIDATES) {
+        res = await processCandidates(dish, credits);
+      } else {
+        res = await processDish(dish, credits);
+      }
+      stats[res.status] = (stats[res.status] ?? 0) + 1;
+      results.push({
+        id: dish.id,
+        name: dish.name,
+        status: res.status,
+        candidates: res.candidates,
+      });
+
+      // Сохраняем YAML и credits только в обычном режиме
+      if (!CANDIDATES && res.status === 'ok') {
         writeFileSync(DISHES_YML, YAML.stringify(doc, { lineWidth: 0 }), 'utf-8');
         writeFileSync(CREDITS, JSON.stringify(credits, null, 2), 'utf-8');
       }
-      // мягкая пауза
       await new Promise((r) => setTimeout(r, 400));
     }
     if (processed >= LIMIT) break;
   }
 
-  // Финальная запись (на случай если только skip)
-  writeFileSync(DISHES_YML, YAML.stringify(doc, { lineWidth: 0 }), 'utf-8');
-  writeFileSync(CREDITS, JSON.stringify(credits, null, 2), 'utf-8');
+  if (!CANDIDATES) {
+    writeFileSync(DISHES_YML, YAML.stringify(doc, { lineWidth: 0 }), 'utf-8');
+    writeFileSync(CREDITS, JSON.stringify(credits, null, 2), 'utf-8');
+  }
 
-  console.log(`\nИтог: ok=${stats.ok}, skip=${stats.skip}, miss=${stats.miss}, error=${stats.error}`);
+  if (JSON_LOG) {
+    console.log(JSON.stringify({ stats, results }, null, 2));
+  } else {
+    const parts = Object.entries(stats).filter(([, v]) => v).map(([k, v]) => `${k}=${v}`);
+    console.log(`\nИтог: ${parts.join(', ')}`);
+  }
 }
 
 main().catch((e) => {

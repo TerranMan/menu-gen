@@ -934,7 +934,8 @@ categories:
             unit: шт
       - id: nektarini
         name: Нектарины
-        image: images/nektarini.webp
+        image: null
+        emoji: "🍑"
         tags: []
         ingredients:
           - name: нектарин

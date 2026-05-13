@@ -46,6 +46,10 @@ document.addEventListener('alpine:init', () => {
       return EMOJI[catId] ?? '🍽️';
     },
 
+    dishEmoji(dish, catId) {
+      return dish.emoji || EMOJI[catId] || '🍽️';
+    },
+
     regenerateAll() {
       this.menu = generateMenu(this.data, this.state);
       this.persistMenu();

@@ -9,6 +9,9 @@ app/data/dishes.json
 app/data/prices.json
 app/data/credits.json
 
+# Image candidates (temp staging for Pexels picks)
+app/public/images/.candidates/
+
 # Tauri
 tauri/target/
 
