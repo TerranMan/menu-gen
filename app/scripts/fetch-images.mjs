@@ -34,16 +34,16 @@ const LIMIT = (() => {
 // Не обязательны; если нет — поиск идёт по русскому имени и упрощённой версии.
 const EN_HINT = {
   // bakery
-  'pirozhki-s-yaitsom-i-lukom': 'baked pirozhki pastry buns Russian',
-  'pirozhki-s-yablokom': 'pirozhki apple',
+  'pirozhki-s-yaitsom-i-lukom': 'golden baked stuffed buns rustic plate',
+  'pirozhki-s-yablokom': 'apple turnover hand pie pastry',
   'sloiki-s-vishnei': 'cherry puff pastry',
   sharlotka: 'sharlotka Russian apple pie',
-  'sloiki-s-yablokom-i-koritsei': 'apple cinnamon puff pastry',
+  'sloiki-s-yablokom-i-koritsei': 'apple strudel flaky puff pastry slice',
   mannik: 'mannik manna cake Russian semolina dessert',
   'pechene-sdobnoe': 'sweet biscuit cookies',
   keks: 'pound cake',
   chebureki: 'chebureki',
-  'pirog-s-persikami': 'peach pie',
+  'pirog-s-persikami': 'baked peach pie dessert slice plate',
 
   // breakfasts
   blini: 'blini Russian pancakes',
@@ -74,7 +74,7 @@ const EN_HINT = {
   // dishes
   plov: 'plov Uzbek pilaf rice meat carrot dish',
   lagman: 'lagman Uzbek noodle soup beef',
-  okroshka: 'okroshka soup',
+  okroshka: 'okroshka cold Russian summer soup vegetables',
   'kartoshka-zharenaya': 'fried potatoes',
   'kartoshka-s-selyodkoi': 'potatoes with herring',
   'varyonaya-kukuruza': 'boiled corn cob',
@@ -100,7 +100,7 @@ const EN_HINT = {
   slivi: 'plums fruit',
   'yagodi-po-sezonu': 'mixed berries',
   abrikosi: 'apricots',
-  nektarini: 'nectarines',
+  nektarini: 'fresh nectarines fruit yellow smooth skin',
 
   // garnishes
   pyure: 'mashed potatoes',
@@ -110,14 +110,14 @@ const EN_HINT = {
   'svezhie-ovoshchi': 'fresh vegetables plate',
   'zamorozka-ovoshchnaya': 'frozen vegetables mix',
   lapsha: 'noodles cooked',
-  yachnevaya: 'barley porridge',
+  yachnevaya: 'plain oatmeal porridge breakfast bowl spoon',
 
   // meat
   steiki: 'steak meat',
   kotleti: 'kotleti Russian cooked meat patties cutlets',
   'riba-belaya': 'cooked cod fillet white fish plate',
   'riba-krasnaya': 'salmon fillet',
-  gulyash: 'goulash',
+  gulyash: 'Hungarian beef goulash stew bowl',
   'kurinie-berda': 'chicken thighs',
   'kurinie-krilya': 'chicken wings',
   'kurinie-nogi': 'chicken legs',
@@ -132,10 +132,10 @@ const EN_HINT = {
 
   // salads
   'ogurtsi-pomidori': 'cucumber tomato salad',
-  'koul-slou': 'coleslaw',
+  'koul-slou': 'coleslaw cabbage salad bowl creamy',
   'svyokla-s-chesnokom-i-orekhami': 'beet salad nuts',
   'kapustnii-salat-vitaminnii-s-morkovkoi-y': 'cabbage carrot salad',
-  krabovii: 'crab salad',
+  krabovii: 'Russian crab salad rice corn mayonnaise bowl',
   'selyodka-pod-shuboi': 'shuba dressed herring salad',
   olive: 'olivier salad',
   's-kartoshkoi-i-yaitsom': 'potato egg salad',
