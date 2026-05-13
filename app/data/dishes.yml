@@ -1,3 +1,5 @@
+# Источник правды по блюдам.
+
 version: 1
 portions: 2
 categories:
@@ -247,11 +249,6 @@ categories:
         image: images/slivi.webp
         tags: []
         ingredients: []
-      - id: yagodi-po-sezonu
-        name: Ягоды по сезону
-        image: images/yagodi-po-sezonu.webp
-        tags: []
-        ingredients: []
       - id: abrikosi
         name: Абрикосы
         image: images/abrikosi.webp
@@ -260,26 +257,6 @@ categories:
       - id: nektarini
         name: Нектарины
         image: images/nektarini.webp
-        tags: []
-        ingredients: []
-      - id: svezhie-yagodi
-        name: Свежие ягоды
-        image: images/svezhie-yagodi.webp
-        tags: []
-        ingredients: []
-      - id: konservirovannie-yagodi
-        name: Консервированные ягоды
-        image: images/konservirovannie-yagodi.webp
-        tags: []
-        ingredients: []
-      - id: svezhie-frukti
-        name: Свежие фрукты
-        image: images/svezhie-frukti.webp
-        tags: []
-        ingredients: []
-      - id: konservirovannie-frukti
-        name: Консервированные фрукты
-        image: images/konservirovannie-frukti.webp
         tags: []
         ingredients: []
   - id: garnishes
@@ -398,21 +375,6 @@ categories:
       - id: krevetki
         name: Креветки
         image: images/krevetki.webp
-        tags: []
-        ingredients: []
-      - id: vetchina
-        name: Ветчина
-        image: images/vetchina.webp
-        tags: []
-        ingredients: []
-      - id: sosiski
-        name: Сосиски
-        image: images/sosiski.webp
-        tags: []
-        ingredients: []
-      - id: sardelki
-        name: Сардельки
-        image: images/sardelki.webp
         tags: []
         ingredients: []
       - id: krolik

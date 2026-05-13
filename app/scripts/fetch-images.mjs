@@ -16,6 +16,8 @@ const IMG_DIR = resolve(ROOT, 'public', 'images');
 
 const UA = 'menu-gen/0.1 (family menu generator; https://github.com/TerranMan/menu-gen)';
 const API = 'https://commons.wikimedia.org/w/api.php';
+const PEXELS_API = 'https://api.pexels.com/v1/search';
+const PEXELS_KEY = process.env.PEXELS_API_KEY ?? '';
 
 const ARGS = new Set(process.argv.slice(2));
 const FORCE = ARGS.has('--force'); // переcкачать даже если файл есть
@@ -194,29 +196,64 @@ async function searchCommons(query) {
     .filter((p) => (p.info.width ?? 0) >= 400 && (p.info.height ?? 0) >= 300);
 }
 
-async function findImage(dish) {
-  const queries = [];
-  const hint = EN_HINT[dish.id];
-  if (hint) queries.push(hint); // English hint первым — на Commons больше теггов на английском
-  queries.push(dish.name);
+async function searchPexels(query) {
+  if (!PEXELS_KEY) return [];
+  const params = new URLSearchParams({ query, per_page: '5', orientation: 'landscape' });
+  const r = await fetch(`${PEXELS_API}?${params}`, {
+    headers: { Authorization: PEXELS_KEY, 'User-Agent': UA },
+  });
+  if (!r.ok) throw new Error(`Pexels HTTP ${r.status}`);
+  const data = await r.json();
+  return (data.photos ?? []).map((p) => ({
+    title: `Pexels #${p.id} by ${p.photographer}`,
+    info: {
+      mime: 'image/jpeg',
+      url: p.src.original,
+      thumburl: p.src.large,
+      width: p.width,
+      height: p.height,
+      descriptionurl: p.url,
+      extmetadata: {
+        Artist: { value: p.photographer },
+        LicenseShortName: { value: 'Pexels License' },
+      },
+    },
+  }));
+}
 
+async function findImage(dish) {
+  // Wikimedia: русский + EN_HINT + первое слово
+  const wikiQueries = [];
+  const hint = EN_HINT[dish.id];
+  if (hint) wikiQueries.push(hint);
+  wikiQueries.push(dish.name);
   const fw = firstWord(dish.name);
   if (fw.length >= 4 && fw.toLowerCase() !== dish.name.toLowerCase()) {
-    queries.push(fw);
+    wikiQueries.push(fw);
   }
-  // Если у EN_HINT длинный multi-word — fallback на первое слово
   if (hint && hint.split(/\s+/).length > 1) {
-    queries.push(hint.split(/\s+/)[0]);
+    wikiQueries.push(hint.split(/\s+/)[0]);
   }
 
-  for (const q of queries) {
+  for (const q of wikiQueries) {
     try {
       const hits = await searchCommons(q);
-      if (hits.length > 0) return { hit: hits[0], query: q };
+      if (hits.length > 0) return { source: 'wikimedia', hit: hits[0], query: q };
     } catch (e) {
-      console.warn(`  search "${q}" failed: ${e.message}`);
+      console.warn(`  wiki "${q}" failed: ${e.message}`);
     }
   }
+
+  // Pexels fallback — только если есть API key, и только английские запросы
+  if (PEXELS_KEY && hint) {
+    try {
+      const hits = await searchPexels(hint);
+      if (hits.length > 0) return { source: 'pexels', hit: hits[0], query: hint };
+    } catch (e) {
+      console.warn(`  pexels "${hint}" failed: ${e.message}`);
+    }
+  }
+
   return null;
 }
 

@@ -1,6 +1,6 @@
 // Простой service worker: precache shell на install, cache-first для статики.
 // Версия меняется при каждом билде через Vite-injection (CACHE_VERSION).
-const CACHE_VERSION = 'menu-gen-v1';
+const CACHE_VERSION = 'menu-gen-v2';
 const PRECACHE = [
   './',
   'manifest.webmanifest',
