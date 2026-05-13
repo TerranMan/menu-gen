@@ -214,31 +214,84 @@ header.top h1 {
 }
 
 .shopping {
-  columns: 2;
-  column-gap: 20px;
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
 }
 
 .shopping li {
-  display: block;
-  break-inside: avoid;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border);
 }
 
-.shopping label {
+.shopping li:last-child {
+  border-bottom: none;
+}
+
+.shopping-item {
   display: flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
   user-select: none;
+  min-width: 0;
 }
 
-.shopping input[type='checkbox']:checked + span {
+.shopping-item input[type='checkbox']:checked ~ .shopping-name {
   text-decoration: line-through;
   color: var(--muted);
 }
 
+.shopping-name {
+  font-size: 14px;
+}
+
+.shopping-price {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shopping-price input[type='number'] {
+  width: 70px;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  background: var(--bg);
+  text-align: right;
+}
+
+.shopping-price input[type='number']:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.shopping-cost {
+  font-size: 13px;
+  color: var(--muted);
+  min-width: 55px;
+  text-align: right;
+}
+
+.missing-hint {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: normal;
+  margin-left: 6px;
+}
+
 @media (max-width: 600px) {
-  .shopping {
-    columns: 1;
+  .shopping li {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .shopping-price {
+    justify-content: flex-end;
   }
 }
 

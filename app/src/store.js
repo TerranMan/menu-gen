@@ -7,6 +7,7 @@ const empty = () => ({
   favorites: [],
   blocks: [],
   lastMenu: null,
+  prices: {}, // ключ "name__unit" → число (₽ за 1 единицу)
 });
 
 export function load() {

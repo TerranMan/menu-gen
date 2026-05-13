@@ -61,15 +61,30 @@
       <div class="lists">
         <details open>
           <summary>
-            🛒 Список покупок (<span x-text="shoppingList().length"></span>)
+            🛒 Список покупок (<span x-text="shoppingList().length"></span>) —
+            <span x-text="weekTotal().text"></span>
+            <span class="missing-hint" x-show="weekTotal().missing > 0"
+              x-text="`+ ${weekTotal().missing} без цены`"></span>
           </summary>
           <ul class="shopping">
-            <template x-for="ing in shoppingList()" :key="ing.name + ing.unit">
+            <template x-for="ing in shoppingList()" :key="ing.key">
               <li>
-                <label>
+                <label class="shopping-item">
                   <input type="checkbox" />
-                  <span x-text="ing.text"></span>
+                  <span class="shopping-name" x-text="ing.text"></span>
                 </label>
+                <div class="shopping-price">
+                  <input
+                    type="number"
+                    inputmode="decimal"
+                    min="0"
+                    step="0.5"
+                    :placeholder="`₽/${ing.unit}`"
+                    :value="priceFor(ing.key)"
+                    @input.debounce.400ms="setPrice(ing.key, $event.target.value)"
+                  />
+                  <span class="shopping-cost" x-text="ing.cost != null ? `= ${ing.cost} ₽` : ''"></span>
+                </div>
               </li>
             </template>
           </ul>

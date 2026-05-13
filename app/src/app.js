@@ -1,7 +1,7 @@
 import Alpine from 'alpinejs';
 import dishesData from '../data/dishes.json';
 import { generateMenu, regenerateSlot } from './generator.js';
-import { aggregate, formatLine } from './shopping.js';
+import { aggregate, formatLine, priceKey, lineCost, totalCost, formatMoney } from './shopping.js';
 import { load, save, toggle } from './store.js';
 import './styles.css';
 
@@ -107,7 +107,37 @@ document.addEventListener('alpine:init', () => {
 
     shoppingList() {
       const dishes = this.menu.flatMap((s) => s.dishes);
-      return aggregate(dishes).map((ing) => ({ ...ing, text: formatLine(ing) }));
+      return aggregate(dishes).map((ing) => {
+        const key = priceKey(ing);
+        return {
+          ...ing,
+          key,
+          text: formatLine(ing),
+          cost: lineCost(ing, this.state.prices),
+        };
+      });
+    },
+
+    weekTotal() {
+      const dishes = this.menu.flatMap((s) => s.dishes);
+      const list = aggregate(dishes);
+      const { sum, missing } = totalCost(list, this.state.prices);
+      return { text: formatMoney(sum), missing };
+    },
+
+    priceFor(key) {
+      const v = this.state.prices[key];
+      return typeof v === 'number' ? v : '';
+    },
+
+    setPrice(key, value) {
+      const n = Number(value);
+      if (!Number.isFinite(n) || n <= 0) {
+        delete this.state.prices[key];
+      } else {
+        this.state.prices[key] = n;
+      }
+      save(this.state);
     },
 
     persistMenu() {
