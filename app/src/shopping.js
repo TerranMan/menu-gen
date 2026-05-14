@@ -1,9 +1,20 @@
 // Агрегация ингредиентов по всем блюдам недельного меню.
 // Группировка по (name, unit). "по вкусу" не суммируется — оставляем как пометку.
+// scaleQty применяется в двух местах: к ингредиентам внутри карточки (до агрегации)
+// и к финальному qty группы внутри aggregate (один раз на группу, без накопления ceil).
 
 const fmt = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
 
-export function aggregate(dishes) {
+const UPWARD_UNITS = new Set(['шт', 'зубчик', 'пучок']);
+
+export function scaleQty(qty, unit, factor) {
+  if (unit === 'по вкусу') return qty;
+  const raw = qty * factor;
+  if (UPWARD_UNITS.has(unit)) return Math.ceil(raw);
+  return Math.round(raw * 10) / 10;
+}
+
+export function aggregate(dishes, factor = 1) {
   const map = new Map();
   for (const d of dishes) {
     for (const ing of d.ingredients ?? []) {
@@ -15,6 +26,9 @@ export function aggregate(dishes) {
         map.set(key, { ...ing });
       }
     }
+  }
+  for (const ing of map.values()) {
+    ing.qty = scaleQty(ing.qty, ing.unit, factor);
   }
   const list = [...map.values()];
   list.sort((a, b) => a.name.localeCompare(b.name, 'ru'));

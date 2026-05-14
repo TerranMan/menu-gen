@@ -46,6 +46,55 @@ header.top h1 {
   font-weight: 600;
 }
 
+.persons {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+
+.btn-step {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--text);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.btn-step:hover:not(:disabled) {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.btn-step:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.persons-count {
+  min-width: 18px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.persons-label {
+  font-size: 13px;
+  color: var(--muted);
+  margin-left: 2px;
+}
+
 .btn {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -147,8 +196,73 @@ header.top h1 {
 }
 
 .dish-name {
-  flex: 1;
   font-size: 16px;
+}
+
+.dish-name-toggle {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  min-width: 0;
+}
+
+.dish-name-toggle:hover .dish-name {
+  color: var(--accent);
+}
+
+.dish-name-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.chevron {
+  color: var(--muted);
+  transition: transform 0.15s ease;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.chevron.open {
+  transform: rotate(90deg);
+  color: var(--accent);
+}
+
+.dish-block {
+  border-bottom: 1px dashed var(--border);
+}
+
+.dish-block:last-child {
+  border-bottom: none;
+}
+
+.dish-block .dish-row {
+  border-bottom: none;
+}
+
+.ingredients-list {
+  list-style: none;
+  margin: 0 0 8px 66px;
+  padding: 0;
+}
+
+.ingredients-list li {
+  font-size: 13px;
+  color: var(--muted);
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.ingredients-list li:last-child {
+  border-bottom: none;
 }
 
 .dish-actions {
@@ -334,5 +448,11 @@ footer.bottom {
   .toolbar {
     width: 100%;
     justify-content: stretch;
+  }
+  .persons {
+    order: 2;
+  }
+  .ingredients-list {
+    margin-left: 0;
   }
 }

@@ -13,6 +13,24 @@
     <div class="app" x-data="menuApp" x-cloak>
       <header class="top">
         <h1>🍽️ Меню на неделю</h1>
+        <div class="persons" role="group" aria-label="Количество персон">
+          <button
+            type="button"
+            class="btn-step"
+            :disabled="state.persons <= minPersons"
+            @click="decPersons()"
+            aria-label="Меньше персон"
+          >−</button>
+          <span class="persons-count" x-text="state.persons" aria-live="polite"></span>
+          <button
+            type="button"
+            class="btn-step"
+            :disabled="state.persons >= maxPersons"
+            @click="incPersons()"
+            aria-label="Больше персон"
+          >+</button>
+          <span class="persons-label">персон</span>
+        </div>
         <div class="toolbar">
           <button class="btn primary" @click="regenerateAll()">Сгенерировать заново</button>
         </div>
@@ -25,34 +43,55 @@
             <p class="empty-hint">Нет подходящих блюд — снимите блокировки или добавьте позиции.</p>
           </template>
           <template x-for="dish in slot.dishes" :key="dish.id">
-            <div class="dish-row">
-              <template x-if="dish.image">
-                <img class="dish-img" :src="imageUrl(dish.image)" :alt="dish.name" loading="lazy" />
-              </template>
-              <template x-if="!dish.image">
-                <span class="dish-emoji-big" x-text="dishEmoji(dish, slot.categoryId)"></span>
-              </template>
-              <span class="dish-name" x-text="dish.name"></span>
-              <div class="dish-actions">
+            <div class="dish-block">
+              <div class="dish-row">
+                <template x-if="dish.image">
+                  <img class="dish-img" :src="imageUrl(dish.image)" :alt="dish.name" loading="lazy" />
+                </template>
+                <template x-if="!dish.image">
+                  <span class="dish-emoji-big" x-text="dishEmoji(dish, slot.categoryId)"></span>
+                </template>
                 <button
-                  class="icon-btn"
-                  :class="{ active: isFavorite(dish.id) }"
-                  :title="isFavorite(dish.id) ? 'Убрать из избранного' : 'В избранное'"
-                  @click="toggleFavorite(dish.id)"
+                  type="button"
+                  class="dish-name-toggle"
+                  :aria-expanded="isExpanded(dish.id)"
+                  :aria-controls="`ing-${dish.id}`"
+                  @click="toggleExpanded(dish.id)"
                 >
-                  <span x-text="isFavorite(dish.id) ? '★' : '☆'"></span>
+                  <span class="dish-name" x-text="dish.name"></span>
+                  <span class="chevron" :class="{ open: isExpanded(dish.id) }">▸</span>
                 </button>
-                <button
-                  class="icon-btn"
-                  title="Заменить это блюдо"
-                  @click="regenerateOne(slot.categoryId, dish.id)"
-                >↻</button>
-                <button
-                  class="icon-btn"
-                  title="Не показывать"
-                  @click="toggleBlock(dish.id)"
-                >✕</button>
+                <div class="dish-actions">
+                  <button
+                    class="icon-btn"
+                    :class="{ active: isFavorite(dish.id) }"
+                    :title="isFavorite(dish.id) ? 'Убрать из избранного' : 'В избранное'"
+                    @click="toggleFavorite(dish.id)"
+                  >
+                    <span x-text="isFavorite(dish.id) ? '★' : '☆'"></span>
+                  </button>
+                  <button
+                    class="icon-btn"
+                    title="Заменить это блюдо"
+                    @click="regenerateOne(slot.categoryId, dish.id)"
+                  >↻</button>
+                  <button
+                    class="icon-btn"
+                    title="Не показывать"
+                    @click="toggleBlock(dish.id)"
+                  >✕</button>
+                </div>
               </div>
+              <template x-if="isExpanded(dish.id)">
+                <ul class="ingredients-list" :id="`ing-${dish.id}`">
+                  <template x-if="(dish.ingredients ?? []).length === 0">
+                    <li class="empty-hint">Без ингредиентов</li>
+                  </template>
+                  <template x-for="ing in scaledIngredients(dish)" :key="ing.name + '__' + ing.unit">
+                    <li x-text="formatIngredient(ing)"></li>
+                  </template>
+                </ul>
+              </template>
             </div>
           </template>
         </section>
