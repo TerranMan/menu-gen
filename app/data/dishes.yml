@@ -335,7 +335,7 @@ categories:
             qty: 400
             unit: г
           - name: яйцо
-            qty: 2
+            qty: 1
             unit: шт
           - name: мука
             qty: 4
@@ -466,8 +466,8 @@ categories:
         tags: []
         ingredients:
           - name: хлеб
-            qty: 6
-            unit: шт
+            qty: 150
+            unit: г
           - name: яйцо
             qty: 2
             unit: шт
@@ -489,8 +489,8 @@ categories:
         tags: []
         ingredients:
           - name: хлеб
-            qty: 4
-            unit: шт
+            qty: 100
+            unit: г
           - name: джем
             qty: 4
             unit: ст.л.
@@ -584,7 +584,7 @@ categories:
             qty: 2
             unit: шт
           - name: лук
-            qty: 1
+            qty: 3
             unit: шт
           - name: чеснок
             qty: 3
@@ -1162,8 +1162,8 @@ categories:
             qty: 1
             unit: шт
           - name: хлеб
-            qty: 2
-            unit: шт
+            qty: 100
+            unit: г
           - name: молоко
             qty: 100
             unit: мл
@@ -1422,7 +1422,7 @@ categories:
             qty: 3
             unit: зубчик
           - name: сметана
-            qty: 200
+            qty: 320
             unit: г
           - name: масло растительное
             qty: 2
@@ -1445,7 +1445,7 @@ categories:
             qty: 1
             unit: шт
           - name: яблоко
-            qty: 3
+            qty: 6
             unit: шт
           - name: чеснок
             qty: 4
