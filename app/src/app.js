@@ -2,7 +2,7 @@ import Alpine from 'alpinejs';
 import dishesData from '../data/dishes.json';
 import pricesData from '../data/prices.json';
 import { generateMenu, regenerateSlot, pickMore } from './generator.js';
-import { aggregate, formatLine, priceKey, lineCost, totalCost, formatMoney, scaleQty } from './shopping.js';
+import { aggregate, formatLine, priceKey, lineCost, totalCost, formatMoney, scaleQty, formatCardIngredient } from './shopping.js';
 import { load, save, toggle, MIN_PERSONS, MAX_PERSONS, BASE_PORTIONS } from './store.js';
 import './styles.css';
 
@@ -272,9 +272,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     formatIngredient(ing) {
-      return ing.unit === 'по вкусу'
-        ? `${ing.name} — по вкусу`
-        : `${ing.name} — ${ing.qty} ${ing.unit}`;
+      return formatCardIngredient(ing);
     },
   }));
 });
