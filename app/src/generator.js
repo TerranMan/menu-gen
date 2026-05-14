@@ -35,11 +35,13 @@ function buildPool(category, { favorites, blocks }, excludeIds = []) {
 
 export function generateMenu(data, state) {
   return data.categories.map((cat) => {
+    const override = state.picks?.[cat.id];
+    const effective = Number.isInteger(override) ? override : cat.pick;
     const pool = buildPool(cat, state);
     return {
       categoryId: cat.id,
       categoryName: cat.name,
-      dishes: weightedSample(pool, cat.pick),
+      dishes: weightedSample(pool, effective),
     };
   });
 }
@@ -51,4 +53,14 @@ export function regenerateSlot(data, state, categoryId, currentDishId) {
   if (pool.length === 0) return null; // нечем заменить
   const [picked] = weightedSample(pool, 1);
   return picked ?? null;
+}
+
+// Добрать n блюд из категории, исключая уже выбранные.
+// Используется когда пользователь увеличивает per-category счётчик.
+export function pickMore(data, state, categoryId, excludeIds, n) {
+  if (n <= 0) return [];
+  const cat = data.categories.find((c) => c.id === categoryId);
+  if (!cat) return [];
+  const pool = buildPool(cat, state, excludeIds);
+  return weightedSample(pool, n);
 }

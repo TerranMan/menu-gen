@@ -1,7 +1,7 @@
 import Alpine from 'alpinejs';
 import dishesData from '../data/dishes.json';
 import pricesData from '../data/prices.json';
-import { generateMenu, regenerateSlot } from './generator.js';
+import { generateMenu, regenerateSlot, pickMore } from './generator.js';
 import { aggregate, formatLine, priceKey, lineCost, totalCost, formatMoney, scaleQty } from './shopping.js';
 import { load, save, toggle, MIN_PERSONS, MAX_PERSONS, BASE_PORTIONS } from './store.js';
 import './styles.css';
@@ -85,6 +85,57 @@ document.addEventListener('alpine:init', () => {
       if (clamped === this.state.persons) return;
       this.state.persons = clamped;
       save(this.state);
+    },
+
+    maxPickFor(catId) {
+      const cat = this.data.categories.find((c) => c.id === catId);
+      return cat ? cat.dishes.length : 0;
+    },
+
+    defaultPickFor(catId) {
+      const cat = this.data.categories.find((c) => c.id === catId);
+      return cat ? cat.pick : 0;
+    },
+
+    effectivePick(catId) {
+      const v = this.state.picks[catId];
+      return Number.isInteger(v) ? v : this.defaultPickFor(catId);
+    },
+
+    setPick(catId, n) {
+      const max = this.maxPickFor(catId);
+      const clamped = Math.min(max, Math.max(0, n | 0));
+      const current = this.effectivePick(catId);
+      if (clamped === current) return;
+
+      if (clamped === this.defaultPickFor(catId)) {
+        delete this.state.picks[catId];
+      } else {
+        this.state.picks[catId] = clamped;
+      }
+
+      const slot = this.menu.find((s) => s.categoryId === catId);
+      if (slot) {
+        if (clamped > current) {
+          const excludeIds = slot.dishes.map((d) => d.id);
+          const added = pickMore(this.data, this.state, catId, excludeIds, clamped - current);
+          slot.dishes.push(...added);
+        } else if (clamped < current) {
+          const dropped = slot.dishes.splice(clamped);
+          for (const d of dropped) delete this.expanded[d.id];
+        }
+      }
+
+      save(this.state);
+      this.persistMenu();
+    },
+
+    incPick(catId) {
+      this.setPick(catId, this.effectivePick(catId) + 1);
+    },
+
+    decPick(catId) {
+      this.setPick(catId, this.effectivePick(catId) - 1);
     },
 
     regenerateAll() {

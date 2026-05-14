@@ -38,8 +38,30 @@
 
       <template x-for="slot in menu" :key="slot.categoryId">
         <section class="category">
-          <h2 x-text="slot.categoryName"></h2>
-          <template x-if="slot.dishes.length === 0">
+          <h2>
+            <span class="category-title" x-text="slot.categoryName"></span>
+            <span class="cat-stepper" role="group" :aria-label="`Блюд в категории ${slot.categoryName}`">
+              <button
+                type="button"
+                class="btn-step btn-step-sm"
+                :disabled="effectivePick(slot.categoryId) <= 0"
+                @click="decPick(slot.categoryId)"
+                aria-label="Меньше блюд"
+              >−</button>
+              <span class="cat-stepper-count" x-text="effectivePick(slot.categoryId)" aria-live="polite"></span>
+              <button
+                type="button"
+                class="btn-step btn-step-sm"
+                :disabled="effectivePick(slot.categoryId) >= maxPickFor(slot.categoryId)"
+                @click="incPick(slot.categoryId)"
+                aria-label="Больше блюд"
+              >+</button>
+            </span>
+          </h2>
+          <template x-if="slot.dishes.length === 0 && effectivePick(slot.categoryId) === 0">
+            <p class="empty-hint">Категория отключена. Нажмите «+» чтобы добавить блюда.</p>
+          </template>
+          <template x-if="slot.dishes.length === 0 && effectivePick(slot.categoryId) > 0">
             <p class="empty-hint">Нет подходящих блюд — снимите блокировки или добавьте позиции.</p>
           </template>
           <template x-for="dish in slot.dishes" :key="dish.id">

@@ -147,6 +147,39 @@ header.top h1 {
   color: var(--muted);
   margin: 0 0 10px;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.category-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.cat-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.btn-step-sm {
+  width: 22px;
+  height: 22px;
+  font-size: 14px;
+}
+
+.cat-stepper-count {
+  min-width: 16px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text);
 }
 
 .dish-row {

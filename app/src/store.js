@@ -9,6 +9,7 @@ const MAX_PERSONS = 12;
 const empty = () => ({
   version: 1,
   persons: BASE_PORTIONS,
+  picks: {}, // categoryId → integer ≥ 0 (override default cat.pick)
   favorites: [],
   blocks: [],
   lastMenu: null,
@@ -33,6 +34,15 @@ function sanitizePrices(p) {
   );
 }
 
+function sanitizePicks(p) {
+  if (!p || typeof p !== 'object' || Array.isArray(p)) return {};
+  return Object.fromEntries(
+    Object.entries(p).filter(
+      ([k, v]) => typeof k === 'string' && Number.isInteger(v) && v >= 0 && v <= 100
+    )
+  );
+}
+
 export function load() {
   try {
     const raw = localStorage.getItem(KEY);
@@ -42,6 +52,7 @@ export function load() {
     return {
       version: 1,
       persons: sanitizePersons(parsed.persons),
+      picks: sanitizePicks(parsed.picks),
       favorites: sanitizeIds(parsed.favorites),
       blocks: sanitizeIds(parsed.blocks),
       lastMenu: Array.isArray(parsed.lastMenu) ? parsed.lastMenu : null,
