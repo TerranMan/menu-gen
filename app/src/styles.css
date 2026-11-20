@@ -627,6 +627,23 @@ header.top h1 {
   margin-top: 5px;
 }
 
+.dough-details {
+  margin-top: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.dough-details summary {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dough-details[open] summary {
+  margin-bottom: 8px;
+}
+
 .ingredients-list li {
   font-size: 13px;
   color: var(--muted);

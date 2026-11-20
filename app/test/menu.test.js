@@ -212,3 +212,18 @@ test('stock deducts only the matching units and covered products leave the shopp
     { ...ingredients[3], inStock: 0 },
   ]);
 });
+
+test('the dough catalog covers homemade dough, packaged dough and pasta used in the dishes', () => {
+  const readYaml = (name) => YAML.parse(readFileSync(new URL(`../data/${name}.yml`, import.meta.url), 'utf8'));
+  const dishes = readYaml('dishes').categories.flatMap((category) => category.dishes);
+  const recipes = readYaml('recipes');
+  const dough = readYaml('dough');
+  const packaged = new Set(['тесто слоёное', 'лапша', 'макароны', 'пельмени']);
+  const expected = dishes.filter((dish) => dish.id === 'sirniki' ||
+    dish.ingredients.some(({ name }) => packaged.has(name)) ||
+    recipes[dish.id].steps.some((step) => /тест(?:о|а|у|е|ом)(?=[\s,.!?]|$)/iu.test(step)));
+  assert.deepEqual(new Set(Object.keys(dough)), new Set(expected.map(({ id }) => id)));
+  assert.notEqual(dough.blini.type, dough.oladi.type);
+  assert.notEqual(dough.lagman.type, dough.lapsha.type);
+  assert.equal(dough['sloiki-s-vishnei'].replaces, 'тесто слоёное');
+});

@@ -141,6 +141,23 @@
                       <li x-text="step"></li>
                     </template>
                   </ol>
+                  <template x-if="dish.dough">
+                    <details class="dough-details">
+                      <summary x-text="`Тесто · ${dish.dough.type}`"></summary>
+                      <p class="recipe-meta" x-show="dish.dough.replaces"
+                        x-text="`Домашний вариант. В покупках указан готовый продукт — ${dish.dough.replaces}.`"></p>
+                      <ul class="ingredients-list">
+                        <template x-for="ing in scaledIngredients(dish, state.persons, dish.dough.ingredients)" :key="ing.name + '__' + ing.unit">
+                          <li x-text="formatIngredient(ing)"></li>
+                        </template>
+                      </ul>
+                      <ol class="recipe-steps">
+                        <template x-for="(step, index) in dish.dough.steps" :key="index">
+                          <li x-text="step"></li>
+                        </template>
+                      </ol>
+                    </details>
+                  </template>
                 </div>
               </template>
             </div>
@@ -492,6 +509,24 @@
                 <li x-text="step"></li>
               </template>
             </ol>
+            <template x-if="recipePreview.dish.dough">
+              <details class="dough-details">
+                <summary x-text="`Тесто · ${recipePreview.dish.dough.type}`"></summary>
+                <p class="recipe-meta" x-show="recipePreview.dish.dough.replaces"
+                  x-text="`Домашний вариант. В покупках указан готовый продукт — ${recipePreview.dish.dough.replaces}.`"></p>
+                <ul class="ingredients-list">
+                  <template x-for="ing in scaledIngredients(recipePreview.dish, recipePreview.servings, recipePreview.dish.dough.ingredients)"
+                    :key="ing.name + '__' + ing.unit">
+                    <li x-text="formatIngredient(ing)"></li>
+                  </template>
+                </ul>
+                <ol class="recipe-steps">
+                  <template x-for="(step, index) in recipePreview.dish.dough.steps" :key="index">
+                    <li x-text="step"></li>
+                  </template>
+                </ol>
+              </details>
+            </template>
           </div>
         </template>
       </dialog>

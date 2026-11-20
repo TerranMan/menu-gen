@@ -3,7 +3,7 @@
 // существование указанных файлов картинок.
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { resolve, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
 
@@ -12,6 +12,7 @@ const ROOT = resolve(__dirname, '..');
 const DISHES_YML = resolve(ROOT, 'data', 'dishes.yml');
 const DISHES_JSON = resolve(ROOT, 'data', 'dishes.json');
 const RECIPES_YML = resolve(ROOT, 'data', 'recipes.yml');
+const DOUGH_YML = resolve(ROOT, 'data', 'dough.yml');
 const PRICES_YML = resolve(ROOT, 'data', 'prices.yml');
 const PRICES_JSON = resolve(ROOT, 'data', 'prices.json');
 const ALLOWED_UNITS = new Set([
@@ -23,29 +24,65 @@ function fail(msg) {
   process.exit(1);
 }
 
-function readRecipes() {
-  if (!existsSync(RECIPES_YML)) fail(`не найден ${RECIPES_YML}`);
-  const recipes = YAML.parse(readFileSync(RECIPES_YML, 'utf8'));
+function readRecipeMap(path) {
+  if (!existsSync(path)) fail(`не найден ${path}`);
+  const recipes = YAML.parse(readFileSync(path, 'utf8'));
   if (!recipes || typeof recipes !== 'object' || Array.isArray(recipes)) {
-    fail('recipes.yml: ожидается словарь рецептов по id блюд');
+    fail(`${basename(path)}: ожидается словарь рецептов по id блюд`);
   }
   return recipes;
+}
+
+function hasSteps(steps) {
+  return Array.isArray(steps) && steps.length > 0 &&
+    steps.every((step) => typeof step === 'string' && step.trim());
 }
 
 function validateRecipe(id, recipe) {
   if (!recipe || !Number.isInteger(recipe.portions) || recipe.portions < 1 ||
       !Number.isInteger(recipe.minutes) || recipe.minutes < 1 ||
       (recipe.wholeBatch !== undefined && typeof recipe.wholeBatch !== 'boolean') ||
-      !Array.isArray(recipe.steps) || recipe.steps.length === 0 ||
-      recipe.steps.some((step) => typeof step !== 'string' || !step.trim())) {
+      !hasSteps(recipe.steps)) {
     fail(`${id}: рецепт должен содержать положительные portions/minutes и непустые steps`);
   }
+}
+
+function buildDough(dish, dough) {
+  if (!dough || typeof dough.type !== 'string' || !dough.type.trim() || !hasSteps(dough.steps) ||
+      !Array.isArray(dough.ingredients) || !dough.ingredients.length) {
+    fail(`${dish.id}: тесто должно содержать type, ingredients и steps`);
+  }
+  const mainIngredients = dish.ingredients ?? [];
+  if (dough.replaces !== undefined && !mainIngredients.some((ing) => ing.name === dough.replaces)) {
+    fail(`${dish.id}: готового продукта ${dough.replaces} нет в составе блюда`);
+  }
+  const keys = new Set();
+  const ingredients = dough.ingredients.map((item) => {
+    const isReference = typeof item === 'string';
+    const main = mainIngredients.find((ing) => isReference
+      ? ing.name === item
+      : ing.name === item?.name && ing.unit === item?.unit);
+    const ing = isReference ? main : item;
+    if (!ing || typeof ing.name !== 'string' || !ing.name.trim() || !ALLOWED_UNITS.has(ing.unit) ||
+        !Number.isFinite(ing.qty) || ing.qty < 0 || (ing.qty === 0 && ing.unit !== 'по вкусу')) {
+      fail(`${dish.id}: некорректный ингредиент теста ${JSON.stringify(item)}`);
+    }
+    if (!dough.replaces && (!main || ing.qty > main.qty)) {
+      fail(`${dish.id}: количество ${ing.name} в тесте должно укладываться в состав блюда`);
+    }
+    const key = `${ing.name}/${ing.unit}`;
+    if (keys.has(key)) fail(`${dish.id}: дублирующийся ингредиент теста ${ing.name}`);
+    keys.add(key);
+    return ing;
+  });
+  return { ...dough, ingredients };
 }
 
 function buildDishes() {
   if (!existsSync(DISHES_YML)) fail(`не найден ${DISHES_YML}`);
   const doc = YAML.parse(readFileSync(DISHES_YML, 'utf-8'));
-  const recipes = readRecipes();
+  const recipes = readRecipeMap(RECIPES_YML);
+  const dough = readRecipeMap(DOUGH_YML);
 
   if (!Array.isArray(doc.categories)) fail('dishes.yml: categories должен быть массивом');
 
@@ -71,6 +108,7 @@ function buildDishes() {
       total++;
       validateRecipe(d.id, recipes[d.id]);
       d.recipe = recipes[d.id];
+      if (Object.hasOwn(dough, d.id)) d.dough = buildDough(d, dough[d.id]);
 
       if (d.image) {
         const imgPath = resolve(ROOT, 'public', d.image);
@@ -100,6 +138,9 @@ function buildDishes() {
 
   for (const id of Object.keys(recipes)) {
     if (!allIds.has(id)) fail(`recipes.yml: неизвестное блюдо ${id}`);
+  }
+  for (const id of Object.keys(dough)) {
+    if (!allIds.has(id)) fail(`dough.yml: неизвестное блюдо ${id}`);
   }
 
   writeFileSync(DISHES_JSON, JSON.stringify(doc), 'utf-8');

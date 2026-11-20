@@ -76,7 +76,11 @@ test('first online visit is enough to reopen and use the shopping list offline',
   assert.equal(await breakfasts(page).locator('.dish-row').count(), 7);
   assert.equal(await milk.isChecked(), true);
   await breakfasts(page).getByRole('button', { name: /^Блины/ }).click();
-  assert.equal(await page.locator('#recipe-blini .recipe-steps li').count(), 2);
+  const blini = page.locator('#recipe-blini');
+  assert.equal(await blini.locator(':scope > .recipe-steps li').count(), 2);
+  const dough = blini.locator('.dough-details');
+  await dough.getByText('Тесто · Жидкое блинное на молоке', { exact: true }).click();
+  await dough.getByText('мука — 100 г', { exact: true }).waitFor();
   await page.getByRole('button', { name: 'Больше персон' }).click();
   assert.equal(await milk.isChecked(), false);
   await milk.check();
@@ -357,4 +361,24 @@ test('the catalog keeps the shopping link and opens the list for the previous vi
   await page.getByText('По плану недели', { exact: true }).waitFor();
   assert.equal(await page.getByRole('checkbox', { name: 'мясо говядина — 133,3 г', exact: true }).isVisible(), true);
   assert.equal(await page.locator('#shopping').evaluate((element) => element.open), true);
+});
+
+test('dough cards differentiate pastry types and scale the homemade dough ingredients with the recipe', async (t) => {
+  const { page } = await openMenu(t, {
+    version: 1, persons: 4,
+    lastMenu: [{ categoryId: 'bakery', dishIds: ['chebureki'] }],
+  });
+  await page.getByRole('button', { name: /^Чебуреки/ }).click();
+  const chebureki = page.locator('#recipe-chebureki .dough-details');
+  await chebureki.getByText('Тесто · Пресное на воде', { exact: true }).click();
+  await chebureki.getByText('мука — 400 г', { exact: true }).waitFor();
+  assert.equal(await chebureki.getByText(/^яйцо/).count(), 0);
+
+  await page.getByRole('button', { name: 'Каталог', exact: true }).click();
+  await page.getByRole('searchbox').fill('слойки с вишней');
+  await page.getByRole('button', { name: /^Слойки с вишней/ }).click();
+  const puff = page.getByRole('dialog', { name: 'Слойки с вишней' }).locator('.dough-details');
+  await puff.getByText('Тесто · Быстрое слоёное бездрожжевое', { exact: true }).click();
+  await puff.getByText('мука — 105 г', { exact: true }).waitFor();
+  assert.equal(await puff.getByText(/В покупках указан готовый продукт — тесто слоёное/).isVisible(), true);
 });

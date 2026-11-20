@@ -87,9 +87,9 @@ document.addEventListener('alpine:init', () => {
       return `Выход — ${this.formatPortions(this.recipeYield(dish, persons))} · около ${dish.recipe.minutes} мин`;
     },
 
-    scaledIngredients(dish, persons = this.state.persons) {
+    scaledIngredients(dish, persons = this.state.persons, ingredients = dish.ingredients) {
       const factor = recipeFactor(dish.recipe, persons);
-      return (dish.ingredients ?? []).map((ing) => ({
+      return (ingredients ?? []).map((ing) => ({
         ...ing,
         qty: scaleQty(ing.qty, ing.unit, factor, { roundPieces: false }),
       }));
