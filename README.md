@@ -12,9 +12,10 @@ GitHub Pages, опционально собирается в Windows exe чер�
 - Избранное (★) и блок-лист (✕) — управляют вероятностью попадания в меню
 - Перегенерация одного блюда (↻) без сброса остального
 - Список покупок с агрегацией ингредиентов и оценочной стоимостью по Москве
+- Отметки о покупках сохраняются при перезагрузке, пока количество продукта в списке совпадает
 - Раскрывающийся состав каждого блюда прямо в карточке
 - Stepper персон в шапке (1..12) — масштабирует ингредиенты и сумму покупок
-- Работает офлайн (service worker), устанавливается на Android как PWA
+- Меню и список покупок доступны офлайн после первого онлайн-запуска PWA
 
 ## Структура
 
@@ -28,19 +29,18 @@ app/
 ├── public/
 │   ├── images/            # webp 1024px max, q82
 │   ├── icons/             # PWA-иконки
-│   ├── manifest.webmanifest
-│   └── sw.js              # service worker (stale-while-revalidate)
+│   └── manifest.webmanifest
 ├── scripts/
 │   ├── build-data.mjs     # yml → json + валидация
 │   ├── fetch-images.mjs   # Pexels API → webp
-│   ├── fetch-prices.mjs   # Playwright (currently unused, ручной seed)
 │   └── migrate-legacy.mjs # one-shot: legacy/settings.yml → dishes.yml
 └── src/
     ├── app.js             # Alpine root
     ├── generator.js       # выбор блюд с весами
     ├── shopping.js        # агрегация + scaleQty
     ├── store.js           # localStorage с санитацией
-    └── styles.css
+    ├── styles.css
+    └── sw.js              # service worker получает список файлов при сборке
 
 tauri/                     # Windows exe (Phase 5)
 legacy/                    # старая PySimpleGUI версия
@@ -51,9 +51,11 @@ legacy/                    # старая PySimpleGUI версия
 
 ```powershell
 cd app
-npm install
+npm ci
 npm run dev               # http://localhost:5173
 ```
+
+При запуске dev-сервера JSON генерируется из YAML автоматически.
 
 ## Команды
 
@@ -62,8 +64,13 @@ npm run dev               # http://localhost:5173
 | `npm run dev` | Vite dev-server с HMR |
 | `npm run build` | Сборка PWA в `app/dist/` |
 | `npm run build:data` | yml → json + валидация id/единиц/картинок |
+| `npm test` | Тесты генератора, покупок и восстановления данных |
+| `npm run test:e2e` | Проверка собранного приложения в Chromium |
 | `npm run fetch:images` | Скачать недостающие картинки с Pexels (нужен `PEXELS_API_KEY` в `app/.env`) |
 | `npm run migrate` | One-shot миграция `legacy/settings.yml` → `dishes.yml` |
+
+Для первого прогона браузерных тестов выполните `npx playwright install chromium`,
+потом `npm run build` и `npm run test:e2e` из каталога `app`.
 
 ## Редактирование блюд
 

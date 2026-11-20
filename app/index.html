@@ -48,29 +48,29 @@
                 @click="decPick(slot.categoryId)"
                 aria-label="Меньше блюд"
               >−</button>
-              <span class="cat-stepper-count" x-text="effectivePick(slot.categoryId)" aria-live="polite"></span>
+              <span class="cat-stepper-count" x-text="slot.dishes.length" aria-live="polite"></span>
               <button
                 type="button"
                 class="btn-step btn-step-sm"
-                :disabled="effectivePick(slot.categoryId) >= maxPickFor(slot.categoryId)"
+                :disabled="effectivePick(slot.categoryId) >= availableCount(slot.categoryId)"
                 @click="incPick(slot.categoryId)"
                 aria-label="Больше блюд"
               >+</button>
             </span>
           </h2>
           <template x-if="slot.dishes.length === 0 && effectivePick(slot.categoryId) === 0">
-            <p class="empty-hint">Категория отключена. Нажмите «+» чтобы добавить блюда.</p>
+            <p class="empty-hint">Категория отключена.</p>
           </template>
-          <template x-if="slot.dishes.length === 0 && effectivePick(slot.categoryId) > 0">
-            <p class="empty-hint">Нет подходящих блюд — снимите блокировки или добавьте позиции.</p>
+          <template x-if="slot.dishes.length < effectivePick(slot.categoryId)">
+            <p class="empty-hint" x-text="`Подобрано ${slot.dishes.length} из ${effectivePick(slot.categoryId)}. Снимите блокировки, чтобы добавить блюда.`"></p>
           </template>
           <template x-for="dish in slot.dishes" :key="dish.id">
-            <div class="dish-block">
+            <div class="dish-block" x-data="{ imageFailed: false }">
               <div class="dish-row">
-                <template x-if="dish.image">
-                  <img class="dish-img" :src="imageUrl(dish.image)" :alt="dish.name" loading="lazy" />
+                <template x-if="dish.image && !imageFailed">
+                  <img class="dish-img" :src="imageUrl(dish.image)" :alt="dish.name" loading="lazy" @error="imageFailed = true" />
                 </template>
-                <template x-if="!dish.image">
+                <template x-if="!dish.image || imageFailed">
                   <span class="dish-emoji-big" x-text="dishEmoji(dish, slot.categoryId)"></span>
                 </template>
                 <button
@@ -95,11 +95,14 @@
                   <button
                     class="icon-btn"
                     title="Заменить это блюдо"
+                    aria-label="Заменить это блюдо"
+                    :disabled="slot.dishes.length >= availableCount(slot.categoryId)"
                     @click="regenerateOne(slot.categoryId, dish.id)"
                   >↻</button>
                   <button
                     class="icon-btn"
                     title="Не показывать"
+                    aria-label="Не показывать"
                     @click="toggleBlock(dish.id)"
                   >✕</button>
                 </div>
@@ -131,7 +134,7 @@
             <template x-for="ing in shoppingList()" :key="ing.key">
               <li>
                 <label class="shopping-item">
-                  <input type="checkbox" />
+                  <input type="checkbox" :checked="ing.checked" @change="setChecked(ing, $event.target.checked)" />
                   <span class="shopping-name" x-text="ing.text"></span>
                 </label>
                 <div class="shopping-price">
@@ -180,7 +183,7 @@
             <template x-for="d in blockedDishes()" :key="d.id">
               <li>
                 <span x-text="d.name"></span>
-                <button class="icon-btn" @click="toggleBlock(d.id)" title="Вернуть">↺</button>
+                <button class="icon-btn" @click="toggleBlock(d.id)" title="Вернуть" aria-label="Вернуть">↺</button>
               </li>
             </template>
           </ul>

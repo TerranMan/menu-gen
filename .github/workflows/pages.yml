@@ -17,6 +17,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      DEPLOY_TARGET: pages
     steps:
       - uses: actions/checkout@v4
 
@@ -30,11 +32,21 @@ jobs:
         working-directory: app
         run: npm ci
 
+      - name: Run unit tests
+        working-directory: app
+        run: npm test
+
       - name: Build PWA
         working-directory: app
-        env:
-          DEPLOY_TARGET: pages
         run: npm run build
+
+      - name: Install Chromium
+        working-directory: app
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser tests
+        working-directory: app
+        run: npm run test:e2e
 
       - uses: actions/upload-pages-artifact@v3
         with:

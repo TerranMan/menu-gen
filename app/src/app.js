@@ -35,12 +35,12 @@ document.addEventListener('alpine:init', () => {
     },
 
     init() {
-      if (this.state.lastMenu) {
-        this.menu = this.hydrate(this.state.lastMenu);
-        if (this.menu.length === 0) this.regenerateAll();
-      } else {
+      if (!this.state.lastMenu) {
         this.regenerateAll();
+        return;
       }
+      this.menu = this.hydrate(this.state.lastMenu);
+      this.persistMenu();
     },
 
     emojiFor(catId) {
@@ -84,12 +84,13 @@ document.addEventListener('alpine:init', () => {
       const clamped = Math.min(MAX_PERSONS, Math.max(MIN_PERSONS, n | 0));
       if (clamped === this.state.persons) return;
       this.state.persons = clamped;
+      this.pruneShoppingChecks();
       save(this.state);
     },
 
-    maxPickFor(catId) {
+    availableCount(catId) {
       const cat = this.data.categories.find((c) => c.id === catId);
-      return cat ? cat.dishes.length : 0;
+      return cat?.dishes.filter((dish) => !this.isBlocked(dish.id)).length ?? 0;
     },
 
     defaultPickFor(catId) {
@@ -98,40 +99,38 @@ document.addEventListener('alpine:init', () => {
     },
 
     effectivePick(catId) {
+      const cat = this.data.categories.find((category) => category.id === catId);
+      if (!cat) return 0;
       const v = this.state.picks[catId];
-      return Number.isInteger(v) ? v : this.defaultPickFor(catId);
+      return Number.isInteger(v) ? Math.min(v, cat.dishes.length) : cat.pick;
     },
 
-    setPick(catId, n) {
-      const max = this.maxPickFor(catId);
-      const clamped = Math.min(max, Math.max(0, n | 0));
-      const current = this.effectivePick(catId);
-      if (clamped === current) return;
+    resizeSlot(slot, count) {
+      if (slot.dishes.length > count) {
+        const removed = slot.dishes.splice(count);
+        for (const dish of removed) delete this.expanded[dish.id];
+      }
+      const selectedIds = slot.dishes.map((dish) => dish.id);
+      const added = pickMore(this.data, this.state, slot.categoryId, selectedIds, count - selectedIds.length);
+      slot.dishes.push(...added);
+    },
 
-      if (clamped === this.defaultPickFor(catId)) {
+    setPick(catId, count) {
+      const slot = this.menu.find((s) => s.categoryId === catId);
+      if (!slot || count < 0 || count === this.effectivePick(catId)) return;
+
+      if (count === this.defaultPickFor(catId)) {
         delete this.state.picks[catId];
       } else {
-        this.state.picks[catId] = clamped;
+        this.state.picks[catId] = count;
       }
-
-      const slot = this.menu.find((s) => s.categoryId === catId);
-      if (slot) {
-        if (clamped > current) {
-          const excludeIds = slot.dishes.map((d) => d.id);
-          const added = pickMore(this.data, this.state, catId, excludeIds, clamped - current);
-          slot.dishes.push(...added);
-        } else if (clamped < current) {
-          const dropped = slot.dishes.splice(clamped);
-          for (const d of dropped) delete this.expanded[d.id];
-        }
-      }
-
-      save(this.state);
+      this.resizeSlot(slot, count);
       this.persistMenu();
     },
 
     incPick(catId) {
-      this.setPick(catId, this.effectivePick(catId) + 1);
+      const count = this.effectivePick(catId);
+      if (count < this.availableCount(catId)) this.setPick(catId, count + 1);
     },
 
     decPick(catId) {
@@ -141,16 +140,22 @@ document.addEventListener('alpine:init', () => {
     regenerateAll() {
       this.menu = generateMenu(this.data, this.state);
       this.expanded = {};
+      this.state.checked = {};
       this.persistMenu();
+    },
+
+    replacementFor(slot, currentDishId) {
+      const selectedIds = slot.dishes.map((dish) => dish.id);
+      return regenerateSlot(this.data, this.state, slot.categoryId, currentDishId, selectedIds);
     },
 
     regenerateOne(catId, currentDishId) {
       const slot = this.menu.find((s) => s.categoryId === catId);
-      if (!slot) return;
-      const replacement = regenerateSlot(this.data, this.state, catId, currentDishId);
+      const idx = slot?.dishes.findIndex((d) => d.id === currentDishId) ?? -1;
+      if (idx === -1) return;
+      const replacement = this.replacementFor(slot, currentDishId);
       if (!replacement) return;
-      const idx = slot.dishes.findIndex((d) => d.id === currentDishId);
-      if (idx !== -1) slot.dishes.splice(idx, 1, replacement);
+      slot.dishes.splice(idx, 1, replacement);
       delete this.expanded[currentDishId];
       this.persistMenu();
     },
@@ -174,16 +179,18 @@ document.addEventListener('alpine:init', () => {
       toggle(this.state.blocks, id);
       const fi = this.state.favorites.indexOf(id);
       if (fi !== -1) this.state.favorites.splice(fi, 1);
-      save(this.state);
-      // если забанили блюдо что в меню — заменить
-      for (const slot of this.menu) {
+      const cat = this.data.categories.find((category) => category.dishes.some((dish) => dish.id === id));
+      const slot = this.menu.find((s) => s.categoryId === cat?.id);
+      if (slot && this.isBlocked(id)) {
         const idx = slot.dishes.findIndex((d) => d.id === id);
         if (idx !== -1) {
-          const replacement = regenerateSlot(this.data, this.state, slot.categoryId, id);
+          const replacement = this.replacementFor(slot, id);
           if (replacement) slot.dishes.splice(idx, 1, replacement);
           else slot.dishes.splice(idx, 1);
           delete this.expanded[id];
         }
+      } else if (slot) {
+        this.resizeSlot(slot, this.effectivePick(slot.categoryId));
       }
       this.persistMenu();
     },
@@ -207,10 +214,13 @@ document.addEventListener('alpine:init', () => {
       return { ...DEFAULT_PRICES, ...this.state.prices };
     },
 
+    shoppingIngredients() {
+      return aggregate(this.menu.flatMap((s) => s.dishes), this.factor);
+    },
+
     shoppingList() {
-      const list = aggregate(this.menu.flatMap((s) => s.dishes), this.factor);
       const prices = this.effectivePrices();
-      return list.map((ing) => {
+      return this.shoppingIngredients().map((ing) => {
         const key = priceKey(ing);
         const userValue = this.state.prices[key];
         const defaultValue = DEFAULT_PRICES[key];
@@ -218,6 +228,7 @@ document.addEventListener('alpine:init', () => {
           ...ing,
           key,
           text: formatLine(ing),
+          checked: this.state.checked[key] === ing.qty,
           cost: lineCost(ing, prices),
           isDefault: typeof userValue !== 'number' && typeof defaultValue === 'number',
         };
@@ -225,9 +236,21 @@ document.addEventListener('alpine:init', () => {
     },
 
     weekTotal() {
-      const list = aggregate(this.menu.flatMap((s) => s.dishes), this.factor);
-      const { sum, missing } = totalCost(list, this.effectivePrices());
+      const { sum, missing } = totalCost(this.shoppingIngredients(), this.effectivePrices());
       return { text: formatMoney(sum), missing };
+    },
+
+    setChecked(ingredient, checked) {
+      if (checked) this.state.checked[ingredient.key] = ingredient.qty;
+      else delete this.state.checked[ingredient.key];
+      save(this.state);
+    },
+
+    pruneShoppingChecks() {
+      const quantities = new Map(this.shoppingIngredients().map((ing) => [priceKey(ing), ing.qty]));
+      for (const [key, qty] of Object.entries(this.state.checked)) {
+        if (quantities.get(key) !== qty) delete this.state.checked[key];
+      }
     },
 
     priceFor(key) {
@@ -255,20 +278,22 @@ document.addEventListener('alpine:init', () => {
         categoryId: s.categoryId,
         dishIds: s.dishes.map((d) => d.id),
       }));
+      this.pruneShoppingChecks();
       save(this.state);
     },
 
     hydrate(saved) {
-      return saved
-        .map((s) => {
-          const cat = this.data.categories.find((c) => c.id === s.categoryId);
-          if (!cat) return null;
-          const dishes = s.dishIds
-            .map((id) => cat.dishes.find((d) => d.id === id))
-            .filter(Boolean);
-          return { categoryId: cat.id, categoryName: cat.name, dishes };
-        })
-        .filter(Boolean);
+      const savedByCategory = new Map(saved.map((slot) => [slot.categoryId, slot.dishIds]));
+      return this.data.categories.map((cat) => {
+        const dishIds = savedByCategory.get(cat.id) ?? [];
+        const dishes = dishIds
+          .filter((id) => !this.isBlocked(id))
+          .map((id) => cat.dishes.find((dish) => dish.id === id))
+          .filter(Boolean);
+        const slot = { categoryId: cat.id, categoryName: cat.name, dishes };
+        this.resizeSlot(slot, this.effectivePick(cat.id));
+        return slot;
+      });
     },
 
     formatIngredient(ing) {

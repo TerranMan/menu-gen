@@ -46,17 +46,11 @@ export function generateMenu(data, state) {
   });
 }
 
-export function regenerateSlot(data, state, categoryId, currentDishId) {
-  const cat = data.categories.find((c) => c.id === categoryId);
-  if (!cat) return null;
-  const pool = buildPool(cat, state, [currentDishId]);
-  if (pool.length === 0) return null; // нечем заменить
-  const [picked] = weightedSample(pool, 1);
-  return picked ?? null;
+export function regenerateSlot(data, state, categoryId, currentDishId, selectedIds = []) {
+  return pickMore(data, state, categoryId, [currentDishId, ...selectedIds], 1)[0] ?? null;
 }
 
 // Добрать n блюд из категории, исключая уже выбранные.
-// Используется когда пользователь увеличивает per-category счётчик.
 export function pickMore(data, state, categoryId, excludeIds, n) {
   if (n <= 0) return [];
   const cat = data.categories.find((c) => c.id === categoryId);

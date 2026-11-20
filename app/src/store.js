@@ -13,6 +13,7 @@ const empty = () => ({
   favorites: [],
   blocks: [],
   lastMenu: null,
+  checked: {}, // ключ списка покупок → количество на момент отметки
   prices: {}, // ключ "name__unit" → число (₽ за 1 единицу)
 });
 
@@ -22,7 +23,7 @@ function sanitizePersons(v) {
 }
 
 function sanitizeIds(arr) {
-  return Array.isArray(arr) ? arr.filter((x) => typeof x === 'string') : [];
+  return Array.isArray(arr) ? [...new Set(arr.filter((x) => typeof x === 'string'))] : [];
 }
 
 function sanitizePrices(p) {
@@ -43,19 +44,33 @@ function sanitizePicks(p) {
   );
 }
 
+function sanitizeMenu(menu) {
+  if (!Array.isArray(menu)) return null;
+  return menu
+    .filter((slot) => typeof slot?.categoryId === 'string' && Array.isArray(slot.dishIds))
+    .map((slot) => ({ categoryId: slot.categoryId, dishIds: sanitizeIds(slot.dishIds) }));
+}
+
+function sanitizeChecked(checked) {
+  if (!checked || typeof checked !== 'object' || Array.isArray(checked)) return {};
+  return Object.fromEntries(Object.entries(checked).filter(([, qty]) => Number.isFinite(qty) && qty >= 0));
+}
+
 export function load() {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return empty();
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object' || parsed.version !== 1) return empty();
+    const blocks = sanitizeIds(parsed.blocks);
     return {
       version: 1,
       persons: sanitizePersons(parsed.persons),
       picks: sanitizePicks(parsed.picks),
-      favorites: sanitizeIds(parsed.favorites),
-      blocks: sanitizeIds(parsed.blocks),
-      lastMenu: Array.isArray(parsed.lastMenu) ? parsed.lastMenu : null,
+      favorites: sanitizeIds(parsed.favorites).filter((id) => !blocks.includes(id)),
+      blocks,
+      lastMenu: sanitizeMenu(parsed.lastMenu),
+      checked: sanitizeChecked(parsed.checked),
       prices: sanitizePrices(parsed.prices),
     };
   } catch {

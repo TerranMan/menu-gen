@@ -315,9 +315,14 @@ header.top h1 {
   line-height: 1;
 }
 
-.icon-btn:hover {
+.icon-btn:hover:not(:disabled) {
   background: var(--accent-soft);
   color: var(--accent);
+}
+
+.icon-btn:disabled {
+  cursor: default;
+  opacity: 0.45;
 }
 
 .icon-btn.active {

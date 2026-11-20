@@ -5,10 +5,13 @@
   "type": "module",
   "description": "Генератор семейного меню на неделю",
   "scripts": {
+    "predev": "npm run build:data",
     "dev": "vite",
     "build": "node scripts/build-data.mjs && vite build",
     "preview": "vite preview",
     "build:data": "node scripts/build-data.mjs",
+    "test": "node --test",
+    "test:e2e": "node --test e2e/smoke.mjs",
     "migrate": "node scripts/migrate-legacy.mjs",
     "fetch:images": "node scripts/fetch-images.mjs",
     "tauri": "tauri"
