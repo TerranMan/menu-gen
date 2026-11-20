@@ -94,7 +94,6 @@ function migrate() {
 
   const doc = {
     version: 1,
-    portions: 2,
     categories,
   };
 

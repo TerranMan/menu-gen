@@ -70,6 +70,8 @@ test('first online visit is enough to reopen and use the shopping list offline',
   await page.reload();
   assert.equal(await breakfasts(page).locator('.dish-row').count(), 7);
   assert.equal(await milk.isChecked(), true);
+  await breakfasts(page).getByRole('button', { name: /^Блины/ }).click();
+  assert.equal(await page.locator('#recipe-blini .recipe-steps li').count(), 2);
   await page.getByRole('button', { name: 'Больше персон' }).click();
   assert.equal(await milk.isChecked(), false);
   await milk.check();
@@ -79,6 +81,25 @@ test('first online visit is enough to reopen and use the shopping list offline',
   await page.getByRole('button', { name: 'Сгенерировать заново' }).click();
   assert.equal(await milk.isChecked(), false);
   assert.equal(await breakfasts(page).locator('.dish-row').count(), 7);
+});
+
+test('whole duck batches show the same yield and quantities on the card and shopping list', async (t) => {
+  const { page } = await openMenu(t, {
+    version: 1,
+    persons: 3,
+    picks: { bakery: 0, breakfasts: 0, dishes: 0, fruits_vegetables: 0, garnishes: 0, salads: 0, soups: 0 },
+    lastMenu: [{ categoryId: 'meat', dishIds: ['utka'] }],
+  });
+  const card = page.locator('#recipe-utka');
+  await page.getByRole('button', { name: /^Утка/ }).click();
+  assert.match(await card.locator('.recipe-meta').textContent(), /6 порций/);
+  assert.equal(await card.locator('.recipe-steps li').count(), 3);
+  assert.equal(await card.getByText('утка — 1 шт', { exact: true }).isVisible(), true);
+  assert.equal(await page.getByRole('checkbox', { name: 'утка — 1 шт', exact: true }).count(), 1);
+  assert.equal(await page.getByRole('checkbox', { name: 'яблоко — 6 шт', exact: true }).count(), 1);
+  for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Больше персон' }).click();
+  assert.match(await card.locator('.recipe-meta').textContent(), /12 порций/);
+  assert.equal(await page.getByRole('checkbox', { name: 'утка — 2 шт', exact: true }).count(), 1);
 });
 
 test('old saved menus recover malformed entries and show category shortages', async (t) => {
@@ -103,4 +124,28 @@ test('old saved menus recover malformed entries and show category shortages', as
   await blocked.locator('summary').click();
   await blocked.getByRole('listitem').filter({ hasText: 'Оладьи' }).getByRole('button', { name: 'Вернуть' }).click();
   assert.deepEqual(await slot.locator('.dish-name').allTextContents(), ['Омлет', 'Оладьи']);
+});
+
+test('cottage cheese casserole and pea porridge are separate cards with recipes and images', async (t) => {
+  const { page } = await openMenu(t, {
+    version: 1,
+    lastMenu: [
+      { categoryId: 'bakery', dishIds: ['tvorozhnaya-zapekanka'] },
+      { categoryId: 'dishes', dishIds: ['zapekanka-gorokhovaya-kasha-s-myasom', 'pelmeni'] },
+    ],
+  });
+  for (const dish of [
+    { name: 'Творожная запеканка', id: 'tvorozhnaya-zapekanka', ingredient: 'творог — 500 г' },
+    { name: 'Гороховая каша с мясом', id: 'gorokhovaya-kasha-s-myasom', ingredient: 'горох — 120 г' },
+  ]) {
+    await page.getByRole('button', { name: new RegExp(`^${dish.name}`) }).click();
+    const card = page.locator(`#recipe-${dish.id}`);
+    assert.equal(await card.getByText(dish.ingredient, { exact: true }).isVisible(), true);
+    assert.equal(await card.locator('.recipe-steps li').count(), 3);
+    const photo = page.getByRole('img', { name: dish.name, exact: true });
+    await photo.scrollIntoViewIfNeeded();
+    assert.match(await photo.getAttribute('src'), new RegExp(`/images/${dish.id}\\.webp$`));
+    await page.waitForFunction((name) => Array.from(document.images)
+      .some((image) => image.alt === name && image.naturalWidth > 0), dish.name);
+  }
 });

@@ -1,7 +1,6 @@
 // Агрегация ингредиентов по всем блюдам недельного меню.
 // Группировка по (name, unit). "по вкусу" не суммируется — оставляем как пометку.
-// scaleQty применяется в двух местах: к ингредиентам внутри карточки (до агрегации)
-// и к финальному qty группы внутри aggregate (один раз на группу, без накопления ceil).
+// В списке покупок округление применяется после сложения масштабированных количеств.
 // Ложки нормализуются в граммы/мл перед агрегацией шопинг-листа, чтобы одинаковые
 // ингредиенты не дублировались («сахар 15 ст.л.» + «сахар 150 г» → одна строка в г).
 
@@ -47,29 +46,39 @@ function normalizeForShopping(ing) {
   return { name: ing.name, qty: ing.qty * spec[ing.unit], unit: spec.unit };
 }
 
-export function scaleQty(qty, unit, factor) {
+export function recipeFactor(recipe, persons) {
+  const factor = persons / recipe.portions;
+  return recipe.wholeBatch ? Math.ceil(factor) : factor;
+}
+
+export function scaleQty(qty, unit, factor, { roundPieces = true } = {}) {
   if (unit === 'по вкусу') return qty;
   const raw = qty * factor;
-  if (UPWARD_UNITS.has(unit)) return Math.ceil(raw);
+  if (roundPieces && UPWARD_UNITS.has(unit)) {
+    // Убираем погрешность сложения дробных порций около целого числа.
+    return Math.ceil(raw - Number.EPSILON * raw * 2);
+  }
   return Math.round(raw * 10) / 10;
 }
 
 export function aggregate(dishes, factor = 1) {
   const map = new Map();
   for (const d of dishes) {
+    const multiplier = typeof factor === 'function' ? factor(d) : factor;
     for (const ing of d.ingredients ?? []) {
       const norm = normalizeForShopping(ing);
       const key = `${norm.name}__${norm.unit}`;
+      const qty = norm.unit === 'по вкусу' ? norm.qty : norm.qty * multiplier;
       const existing = map.get(key);
       if (existing) {
-        existing.qty += norm.qty;
+        existing.qty += qty;
       } else {
-        map.set(key, { ...norm });
+        map.set(key, { ...norm, qty });
       }
     }
   }
   for (const ing of map.values()) {
-    ing.qty = scaleQty(ing.qty, ing.unit, factor);
+    ing.qty = scaleQty(ing.qty, ing.unit, 1);
   }
   const list = [...map.values()];
   list.sort((a, b) => a.name.localeCompare(b.name, 'ru'));

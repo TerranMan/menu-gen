@@ -2,11 +2,13 @@ import Alpine from 'alpinejs';
 import dishesData from '../data/dishes.json';
 import pricesData from '../data/prices.json';
 import { generateMenu, regenerateSlot, pickMore } from './generator.js';
-import { aggregate, formatLine, priceKey, lineCost, totalCost, formatMoney, scaleQty, formatCardIngredient } from './shopping.js';
-import { load, save, toggle, MIN_PERSONS, MAX_PERSONS, BASE_PORTIONS } from './store.js';
+import { aggregate, formatLine, priceKey, lineCost, totalCost, formatMoney, recipeFactor, scaleQty, formatCardIngredient } from './shopping.js';
+import { load, save, toggle, MIN_PERSONS, MAX_PERSONS } from './store.js';
 import './styles.css';
 
 const DEFAULT_PRICES = pricesData.prices ?? {};
+const portionRules = new Intl.PluralRules('ru');
+const portionWords = { one: 'порция', few: 'порции', many: 'порций' };
 
 const EMOJI = {
   bakery: '🥐',
@@ -51,15 +53,19 @@ document.addEventListener('alpine:init', () => {
       return dish.emoji || EMOJI[catId] || '🍽️';
     },
 
-    get factor() {
-      return this.state.persons / BASE_PORTIONS;
+    recipeSummary(dish) {
+      const { recipe } = dish;
+      const portions = recipe.wholeBatch
+        ? recipe.portions * recipeFactor(recipe, this.state.persons)
+        : this.state.persons;
+      return `Выход — ${portions} ${portionWords[portionRules.select(portions)]} · около ${recipe.minutes} мин`;
     },
 
     scaledIngredients(dish) {
-      const f = this.factor;
+      const factor = recipeFactor(dish.recipe, this.state.persons);
       return (dish.ingredients ?? []).map((ing) => ({
         ...ing,
-        qty: scaleQty(ing.qty, ing.unit, f),
+        qty: scaleQty(ing.qty, ing.unit, factor, { roundPieces: false }),
       }));
     },
 
@@ -215,7 +221,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     shoppingIngredients() {
-      return aggregate(this.menu.flatMap((s) => s.dishes), this.factor);
+      return aggregate(this.menu.flatMap((s) => s.dishes), (dish) => recipeFactor(dish.recipe, this.state.persons));
     },
 
     shoppingList() {

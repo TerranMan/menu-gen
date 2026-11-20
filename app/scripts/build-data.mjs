@@ -11,10 +11,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 const DISHES_YML = resolve(ROOT, 'data', 'dishes.yml');
 const DISHES_JSON = resolve(ROOT, 'data', 'dishes.json');
+const RECIPES_YML = resolve(ROOT, 'data', 'recipes.yml');
 const PRICES_YML = resolve(ROOT, 'data', 'prices.yml');
 const PRICES_JSON = resolve(ROOT, 'data', 'prices.json');
-const IMAGES_DIR = resolve(ROOT, 'public', 'images');
-
 const ALLOWED_UNITS = new Set([
   'г', 'мл', 'шт', 'ст.л.', 'ч.л.', 'зубчик', 'пучок', 'по вкусу',
 ]);
@@ -24,9 +23,29 @@ function fail(msg) {
   process.exit(1);
 }
 
+function readRecipes() {
+  if (!existsSync(RECIPES_YML)) fail(`не найден ${RECIPES_YML}`);
+  const recipes = YAML.parse(readFileSync(RECIPES_YML, 'utf8'));
+  if (!recipes || typeof recipes !== 'object' || Array.isArray(recipes)) {
+    fail('recipes.yml: ожидается словарь рецептов по id блюд');
+  }
+  return recipes;
+}
+
+function validateRecipe(id, recipe) {
+  if (!recipe || !Number.isInteger(recipe.portions) || recipe.portions < 1 ||
+      !Number.isInteger(recipe.minutes) || recipe.minutes < 1 ||
+      (recipe.wholeBatch !== undefined && typeof recipe.wholeBatch !== 'boolean') ||
+      !Array.isArray(recipe.steps) || recipe.steps.length === 0 ||
+      recipe.steps.some((step) => typeof step !== 'string' || !step.trim())) {
+    fail(`${id}: рецепт должен содержать положительные portions/minutes и непустые steps`);
+  }
+}
+
 function buildDishes() {
   if (!existsSync(DISHES_YML)) fail(`не найден ${DISHES_YML}`);
   const doc = YAML.parse(readFileSync(DISHES_YML, 'utf-8'));
+  const recipes = readRecipes();
 
   if (!Array.isArray(doc.categories)) fail('dishes.yml: categories должен быть массивом');
 
@@ -43,13 +62,15 @@ function buildDishes() {
       fail(`категория ${cat.id}: пустой список блюд`);
     }
     if (cat.pick > cat.dishes.length) {
-      issues.push(`${cat.id}: pick=${cat.pick} > ${cat.dishes.length} блюд — будет повтор при генерации`);
+      issues.push(`${cat.id}: pick=${cat.pick} > ${cat.dishes.length} блюд — меню будет меньше запрошенного`);
     }
     for (const d of cat.dishes) {
       if (!d.id || !d.name) fail(`блюдо без id/name в ${cat.id}: ${JSON.stringify(d)}`);
       if (allIds.has(d.id)) fail(`дублирующийся id: ${d.id}`);
       allIds.add(d.id);
       total++;
+      validateRecipe(d.id, recipes[d.id]);
+      d.recipe = recipes[d.id];
 
       if (d.image) {
         const imgPath = resolve(ROOT, 'public', d.image);
@@ -75,6 +96,10 @@ function buildDishes() {
         }
       }
     }
+  }
+
+  for (const id of Object.keys(recipes)) {
+    if (!allIds.has(id)) fail(`recipes.yml: неизвестное блюдо ${id}`);
   }
 
   writeFileSync(DISHES_JSON, JSON.stringify(doc), 'utf-8');

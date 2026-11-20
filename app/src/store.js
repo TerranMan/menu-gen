@@ -2,13 +2,13 @@
 // Один ключ, один JSON. Любая дрянь в parsed → дефолты.
 
 const KEY = 'menu_gen_v1';
-const BASE_PORTIONS = 2;
+const DEFAULT_PERSONS = 2;
 const MIN_PERSONS = 1;
 const MAX_PERSONS = 12;
 
 const empty = () => ({
   version: 1,
-  persons: BASE_PORTIONS,
+  persons: DEFAULT_PERSONS,
   picks: {}, // categoryId → integer ≥ 0 (override default cat.pick)
   favorites: [],
   blocks: [],
@@ -18,21 +18,34 @@ const empty = () => ({
 });
 
 function sanitizePersons(v) {
-  if (!Number.isInteger(v)) return BASE_PORTIONS;
+  if (!Number.isInteger(v)) return DEFAULT_PERSONS;
   return Math.min(MAX_PERSONS, Math.max(MIN_PERSONS, v));
 }
 
 function sanitizeIds(arr) {
-  return Array.isArray(arr) ? [...new Set(arr.filter((x) => typeof x === 'string'))] : [];
+  if (!Array.isArray(arr)) return [];
+  const ids = arr.filter((id) => typeof id === 'string').map((id) =>
+    id === 'zapekanka-gorokhovaya-kasha-s-myasom' ? 'gorokhovaya-kasha-s-myasom' : id);
+  return [...new Set(ids)];
 }
 
 function sanitizePrices(p) {
   if (!p || typeof p !== 'object' || Array.isArray(p)) return {};
-  return Object.fromEntries(
+  const prices = Object.fromEntries(
     Object.entries(p).filter(
       ([k, v]) => typeof k === 'string' && typeof v === 'number' && Number.isFinite(v) && v > 0
     )
   );
+  for (const [oldKey, newKey, amount] of [
+    ['картофель__шт', 'картофель__г', 100],
+    ['квас__шт', 'квас__мл', 1000],
+  ]) {
+    if (Object.hasOwn(prices, oldKey)) {
+      prices[newKey] ??= prices[oldKey] / amount;
+      delete prices[oldKey];
+    }
+  }
+  return prices;
 }
 
 function sanitizePicks(p) {
@@ -93,4 +106,4 @@ export function toggle(arr, id) {
   return arr;
 }
 
-export { MIN_PERSONS, MAX_PERSONS, BASE_PORTIONS };
+export { MIN_PERSONS, MAX_PERSONS };

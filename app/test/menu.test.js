@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import YAML from 'yaml';
 import { generateMenu, regenerateSlot } from '../src/generator.js';
-import { aggregate, totalCost } from '../src/shopping.js';
+import { aggregate, recipeFactor, totalCost } from '../src/shopping.js';
 import { load } from '../src/store.js';
 
 const category = {
@@ -48,6 +48,30 @@ test('every quantified catalog ingredient has a price after normalization', () =
   assert.equal(totalCost(aggregate(dishes), readYaml('prices').prices).missing, 0);
 });
 
+test('shopping uses each recipe yield and rounds a whole batch only once', () => {
+  const dishes = [
+    {
+      recipe: { portions: 6, wholeBatch: true },
+      ingredients: [{ name: 'утка', qty: 1, unit: 'шт' }, { name: 'яблоко', qty: 6, unit: 'шт' }],
+    },
+    {
+      recipe: { portions: 4 },
+      ingredients: [{ name: 'яблоко', qty: 1, unit: 'шт' }, { name: 'мука', qty: 200, unit: 'г' }],
+    },
+    {
+      recipe: { portions: 12 },
+      ingredients: [{ name: 'яблоко', qty: 1, unit: 'шт' }],
+    },
+  ];
+  const list = aggregate(dishes, (dish) => recipeFactor(dish.recipe, 3));
+  assert.deepEqual(list, [
+    { name: 'мука', qty: 150, unit: 'г' },
+    { name: 'утка', qty: 1, unit: 'шт' },
+    { name: 'яблоко', qty: 7, unit: 'шт' },
+  ]);
+  assert.equal(recipeFactor(dishes[0].recipe, 7), 2);
+});
+
 test('saved menus and shopping checks are sanitized without dropping valid preferences', (t) => {
   const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
   t.after(() => {
@@ -64,7 +88,7 @@ test('saved menus and shopping checks are sanitized without dropping valid prefe
         blocks: ['oladi'],
         lastMenu: [null, { categoryId: 'bakery' }, { categoryId: 'breakfasts', dishIds: ['blini', 1, 'blini'] }],
         checked: { 'яйцо__шт': 2, 'соль__по вкусу': 0, invalid: -1 },
-        prices: { 'яйцо__шт': 18 },
+        prices: { 'яйцо__шт': 18, 'квас__шт': 120, 'картофель__шт': 10, 'картофель__г': 0.14 },
       }),
     },
   });
@@ -76,6 +100,6 @@ test('saved menus and shopping checks are sanitized without dropping valid prefe
     blocks: ['oladi'],
     lastMenu: [{ categoryId: 'breakfasts', dishIds: ['blini'] }],
     checked: { 'яйцо__шт': 2, 'соль__по вкусу': 0 },
-    prices: { 'яйцо__шт': 18 },
+    prices: { 'яйцо__шт': 18, 'квас__мл': 0.12, 'картофель__г': 0.14 },
   });
 });

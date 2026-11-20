@@ -281,10 +281,35 @@ header.top h1 {
   border-bottom: none;
 }
 
+.dish-details {
+  margin: 4px 0 14px 66px;
+}
+
+.recipe-meta {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.dish-details h3 {
+  margin: 0 0 5px;
+  font-size: 14px;
+}
+
 .ingredients-list {
-  list-style: none;
-  margin: 0 0 8px 66px;
+  margin: 0 0 12px;
   padding: 0;
+  list-style: none;
+}
+
+.recipe-steps {
+  margin: 0;
+  padding-inline-start: 21px;
+  font-size: 14px;
+}
+
+.recipe-steps li + li {
+  margin-top: 5px;
 }
 
 .ingredients-list li {
@@ -490,7 +515,7 @@ footer.bottom {
   .persons {
     order: 2;
   }
-  .ingredients-list {
+  .dish-details {
     margin-left: 0;
   }
 }

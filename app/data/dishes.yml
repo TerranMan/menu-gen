@@ -1,7 +1,6 @@
 # Источник правды по блюдам.
 
 version: 1
-portions: 2
 categories:
   - id: bakery
     name: Выпечка
@@ -273,6 +272,35 @@ categories:
           - name: ванилин
             qty: 1
             unit: ч.л.
+      - id: tvorozhnaya-zapekanka
+        name: Творожная запеканка
+        image: images/tvorozhnaya-zapekanka.webp
+        tags: []
+        ingredients:
+          - name: творог
+            qty: 500
+            unit: г
+          - name: яйцо
+            qty: 2
+            unit: шт
+          - name: манка
+            qty: 40
+            unit: г
+          - name: сахар
+            qty: 45
+            unit: г
+          - name: сметана
+            qty: 80
+            unit: г
+          - name: масло сливочное
+            qty: 20
+            unit: г
+          - name: ванилин
+            qty: 1
+            unit: г
+          - name: соль
+            qty: 0
+            unit: по вкусу
   - id: breakfasts
     name: Завтраки
     pick: 7
@@ -705,9 +733,9 @@ categories:
           - name: перец чёрный
             qty: 0
             unit: по вкусу
-      - id: zapekanka-gorokhovaya-kasha-s-myasom
-        name: Запеканка гороховая каша с мясом
-        image: images/zapekanka-gorokhovaya-kasha-s-myasom.webp
+      - id: gorokhovaya-kasha-s-myasom
+        name: Гороховая каша с мясом
+        image: images/gorokhovaya-kasha-s-myasom.webp
         tags: []
         ingredients:
           - name: горох
@@ -717,9 +745,6 @@ categories:
             qty: 300
             unit: г
           - name: лук
-            qty: 1
-            unit: шт
-          - name: морковь
             qty: 1
             unit: шт
           - name: масло растительное
@@ -795,8 +820,8 @@ categories:
             qty: 400
             unit: г
           - name: картофель
-            qty: 4
-            unit: шт
+            qty: 400
+            unit: г
           - name: морковь
             qty: 1
             unit: шт
@@ -934,7 +959,7 @@ categories:
             unit: шт
       - id: nektarini
         name: Нектарины
-        image: null
+        image: images/nektarini.webp
         emoji: "🍑"
         tags: []
         ingredients:
@@ -1050,7 +1075,7 @@ categories:
             qty: 0
             unit: по вкусу
       - id: yachnevaya
-        name: Ячневая
+        name: Ячневая каша
         image: images/yachnevaya.webp
         tags: []
         ingredients:
@@ -1255,7 +1280,7 @@ categories:
             qty: 0
             unit: по вкусу
       - id: kurinie-berda
-        name: Куриные берда
+        name: Куриные бёдра
         image: images/kurinie-berda.webp
         tags: []
         ingredients:
@@ -1583,9 +1608,9 @@ categories:
           - name: палочки крабовые
             qty: 200
             unit: г
-          - name: кукуруза
-            qty: 1
-            unit: шт
+          - name: кукуруза консервированная
+            qty: 200
+            unit: г
           - name: рис
             qty: 100
             unit: г
@@ -1610,8 +1635,8 @@ categories:
             qty: 1
             unit: шт
           - name: картофель
-            qty: 3
-            unit: шт
+            qty: 300
+            unit: г
           - name: свёкла
             qty: 2
             unit: шт
@@ -1636,8 +1661,8 @@ categories:
         tags: []
         ingredients:
           - name: картофель
-            qty: 3
-            unit: шт
+            qty: 300
+            unit: г
           - name: морковь
             qty: 1
             unit: шт
@@ -1668,8 +1693,8 @@ categories:
         tags: []
         ingredients:
           - name: картофель
-            qty: 3
-            unit: шт
+            qty: 300
+            unit: г
           - name: яйцо
             qty: 4
             unit: шт
@@ -1723,8 +1748,8 @@ categories:
             qty: 1
             unit: шт
           - name: картофель
-            qty: 2
-            unit: шт
+            qty: 200
+            unit: г
           - name: морковь
             qty: 1
             unit: шт
@@ -1765,8 +1790,8 @@ categories:
             qty: 300
             unit: г
           - name: картофель
-            qty: 3
-            unit: шт
+            qty: 300
+            unit: г
           - name: морковь
             qty: 1
             unit: шт
@@ -1806,8 +1831,8 @@ categories:
             qty: 400
             unit: г
           - name: картофель
-            qty: 3
-            unit: шт
+            qty: 300
+            unit: г
           - name: морковь
             qty: 1
             unit: шт
@@ -1844,8 +1869,8 @@ categories:
             qty: 300
             unit: г
           - name: картофель
-            qty: 3
-            unit: шт
+            qty: 300
+            unit: г
           - name: морковь
             qty: 1
             unit: шт
@@ -1914,8 +1939,8 @@ categories:
             qty: 400
             unit: г
           - name: картофель
-            qty: 4
-            unit: шт
+            qty: 400
+            unit: г
           - name: лук
             qty: 1
             unit: шт
@@ -1958,8 +1983,8 @@ categories:
             qty: 2
             unit: зубчик
           - name: картофель
-            qty: 1
-            unit: шт
+            qty: 100
+            unit: г
           - name: масло растительное
             qty: 2
             unit: ст.л.
@@ -1981,8 +2006,8 @@ categories:
             qty: 1
             unit: шт
           - name: картофель
-            qty: 4
-            unit: шт
+            qty: 400
+            unit: г
           - name: морковь
             qty: 1
             unit: шт
@@ -2019,8 +2044,8 @@ categories:
             qty: 150
             unit: г
           - name: картофель
-            qty: 2
-            unit: шт
+            qty: 200
+            unit: г
           - name: морковь
             qty: 1
             unit: шт
@@ -2051,8 +2076,8 @@ categories:
         tags: []
         ingredients:
           - name: квас
-            qty: 1
-            unit: шт
+            qty: 1000
+            unit: мл
           - name: колбаса варёная
             qty: 200
             unit: г
@@ -2063,8 +2088,8 @@ categories:
             qty: 6
             unit: шт
           - name: картофель
-            qty: 2
-            unit: шт
+            qty: 200
+            unit: г
           - name: яйцо
             qty: 3
             unit: шт
