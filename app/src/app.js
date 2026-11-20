@@ -4,7 +4,7 @@ import pricesData from '../data/prices.json';
 import { generateMenu, regenerateSlot, pickMore } from './generator.js';
 import {
   aggregate, formatLine, priceKey, lineCost, totalCost, formatMoney,
-  recipeFactor, scaleQty, formatCardIngredient, groupShopping, shoppingText, subtractStock, KITCHEN_MEASURES,
+  recipeFactor, recipeIngredients, scaleQty, formatCardIngredient, groupShopping, shoppingText, subtractStock, KITCHEN_MEASURES,
 } from './shopping.js';
 import { loadLegacyState, loadSavedState, saveChanges, snapshot, toggle, MIN_PERSONS, MAX_PERSONS } from './store.js';
 import { planner } from './planner.js';
@@ -41,6 +41,7 @@ document.addEventListener('alpine:init', () => {
     expanded: {},
     copyMessage: '',
     copyText: '',
+    editingPrices: false,
     priceDate: pricesData.updated_at?.split('-').reverse().join('.'),
     kitchenMeasures: KITCHEN_MEASURES,
     storageMessage: '',
@@ -161,17 +162,54 @@ document.addEventListener('alpine:init', () => {
         : persons;
     },
 
-    recipeSummary(dish, persons = this.state.persons) {
-      return `Выход — ${this.formatPortions(this.recipeYield(dish, persons))} · около ${this.recipeTime(dish)}`;
+    recipeSummary(dish, persons = this.state.persons, homemade = false) {
+      return `Выход — ${this.formatPortions(this.recipeYield(dish, persons))} · около ${this.recipeTime(dish, homemade)}`;
     },
 
-    recipeTime(dish) {
+    recipeTime(dish, homemade = false) {
       const { minutes, timeNote } = dish.recipe;
-      return `${minutes} мин${timeNote ? ` ${timeNote}` : ''}`;
+      const duration = homemade && dish.dough?.replaces ? dish.dough.minutes : minutes;
+      return `${duration} мин${timeNote ? ` ${timeNote}` : ''}`;
     },
 
     doughHeading(dough) {
       return `${dough.title ?? 'Тесто'} · ${dough.type}`;
+    },
+
+    isHomemade(dish, mealId = null) {
+      if (!dish.dough?.replaces) return false;
+      if (!mealId) return this.state.homemade[dish.id] === true;
+      return this.state.week[mealId]?.some((entry) => entry.dishId === dish.id && entry.homemade === true) ?? false;
+    },
+
+    async setHomemade(dish, input, mealId = null) {
+      if (!dish.dough?.replaces) return;
+      const checked = input.checked;
+      let saved = false;
+      if (mealId) {
+        const entry = this.state.week[mealId]?.find((item) => item.dishId === dish.id && !item.from);
+        if (entry && this.recipePreview?.weekStart === this.state.weekStart && !this.batchRecord(mealId, dish.id)) {
+          if (checked) entry.homemade = true;
+          else delete entry.homemade;
+          saved = await this.persistWeek();
+        }
+      } else {
+        if (checked) this.state.homemade[dish.id] = true;
+        else delete this.state.homemade[dish.id];
+        this.pruneShoppingChecks('menu');
+        saved = await this.saveState();
+      }
+      if (!saved) input.checked = this.isHomemade(dish, mealId);
+    },
+
+    recipeSteps(dish, homemade) {
+      if (!homemade) return dish.recipe.steps;
+      if (dish.dough.complete) return dish.dough.steps;
+      return [...dish.dough.steps, ...dish.recipe.steps];
+    },
+
+    selectedIngredients(dish, persons = this.state.persons, mealId = null) {
+      return this.scaledIngredients(dish, persons, recipeIngredients(dish, this.isHomemade(dish, mealId)));
     },
 
     scaledIngredients(dish, persons = this.state.persons, ingredients = dish.ingredients) {
@@ -367,10 +405,15 @@ document.addEventListener('alpine:init', () => {
 
     requiredIngredients(mode) {
       if (mode === 'week' || mode === 'today') {
-        const batches = this.plannedBatches().map(({ dish, servings }) => ({ ...dish, servings }));
+        const batches = this.plannedBatches().map(({ dish, servings, homemade }) => ({
+          ...dish, servings, ingredients: recipeIngredients(dish, homemade),
+        }));
         return aggregate(batches, (batch) => recipeFactor(batch.recipe, batch.servings));
       }
-      return aggregate(this.menu.flatMap((s) => s.dishes), (dish) => recipeFactor(dish.recipe, this.state.persons));
+      const dishes = this.menu.flatMap((slot) => slot.dishes.map((dish) => ({
+        ...dish, ingredients: recipeIngredients(dish, this.isHomemade(dish)),
+      })));
+      return aggregate(dishes, (dish) => recipeFactor(dish.recipe, this.state.persons));
     },
 
     shoppingIngredients(mode = this.shoppingMode, stock = this.state.stock) {

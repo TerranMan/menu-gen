@@ -3,9 +3,9 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import YAML from 'yaml';
 import { generateMenu, regenerateSlot } from '../src/generator.js';
-import { aggregate, groupShopping, recipeFactor, shoppingText, subtractStock, totalCost } from '../src/shopping.js';
+import { aggregate, groupShopping, recipeFactor, recipeIngredients, shoppingText, subtractStock, totalCost } from '../src/shopping.js';
 import { loadLegacyState, mergeChanges } from '../src/store.js';
-import { fridgeDeadline, needsFreezer } from '../src/batch-storage.js';
+import { availablePortions, fridgeDeadline, needsFreezer, sanitizeBatchRecords } from '../src/batch-storage.js';
 import {
   addToMeal, cookingBatches, distributeMenu, fillEmptyMeals,
   formatWeekSchedule, localDayId, moveMealDish, removeFromMeal, replaceMealDish, sanitizeWeek,
@@ -56,8 +56,11 @@ test('shopping combines teaspoons with grams and rounds countable items once', (
 
 test('every catalog ingredient has a department and a price when quantified', () => {
   const readYaml = (name) => YAML.parse(readFileSync(new URL(`../data/${name}.yml`, import.meta.url), 'utf8'));
+  const variants = readYaml('dough');
   const dishes = readYaml('dishes').categories.flatMap((cat) => cat.dishes);
-  const list = aggregate(dishes);
+  const recipes = dishes.flatMap((dish) => variants[dish.id]?.replaces
+    ? [dish, { ingredients: recipeIngredients({ ...dish, dough: variants[dish.id] }, true) }] : [dish]);
+  const list = aggregate(recipes);
   const { prices, departments } = readYaml('prices');
   assert.equal(totalCost(list, prices).missing, 0);
   const groups = groupShopping(list, departments);
@@ -118,6 +121,8 @@ test('saved menus and shopping checks are sanitized without dropping valid prefe
     blocks: ['oladi'],
     pins: [],
     lastMenu: [{ categoryId: 'breakfasts', dishIds: ['blini'] }],
+    homemade: {},
+    quickDinners: false,
     checked: { 'яйцо__шт': 2, 'соль__по вкусу': 0 },
     week: {},
     weekStart: null,
@@ -209,6 +214,42 @@ test('weekly suggestions pair fish with a suitable side and complete mains with 
   assert.equal(distributeMenu(manual, selection, catalog), 2);
   assert.deepEqual(manual['mon-dinner'].map(({ dishId }) => dishId), ['plov', 'arugula']);
   assert.deepEqual(manual['tue-lunch'].map(({ dishId }) => dishId), ['fish', 'bulgur']);
+});
+
+test('quick dinners respect the whole meal time and preserve existing plans', () => {
+  const catalog = { categories: [
+    { id: 'meat', dishes: [
+      { id: 'fish', tags: ['light-side'], recipe: { minutes: 20 } },
+      { id: 'slow', recipe: { minutes: 75 } },
+      { id: 'frozen', recipe: { minutes: 20, timeNote: 'без размораживания' } },
+    ] },
+    { id: 'garnishes', dishes: [
+      { id: 'salad', tags: ['light'], recipe: { minutes: 10 } },
+      { id: 'potatoes', recipe: { minutes: 15 } },
+    ] },
+  ] };
+  const week = { 'mon-dinner': [{ dishId: 'slow', from: null }] };
+  fillEmptyMeals(week, catalog, { quickDinners: true, pins: ['slow', 'frozen', 'potatoes'] }, []);
+  assert.deepEqual(week['mon-dinner'], [{ dishId: 'slow', from: null }]);
+  for (const [id, entries] of Object.entries(week)) {
+    if (id.endsWith('-dinner') && id !== 'mon-dinner') {
+      assert.deepEqual(entries.map(({ dishId }) => dishId), ['fish', 'salad']);
+    }
+  }
+});
+
+test('stored reserve combines fridge and freezer and keeps legacy storage without guessing quantities', () => {
+  const week = { 'mon-lunch': [{ dishId: 'plov', from: null }] };
+  const cookedAt = new Date(2025, 0, 6, 10).getTime();
+  const dish = { ingredients: [{ name: 'рис' }] };
+  const key = 'mon-lunch/plov';
+  const legacy = sanitizeBatchRecords({ [key]: { cookedAt, storage: 'fridge' } }, week)[key];
+  assert.equal(legacy.legacyStorage, 'fridge');
+  assert.deepEqual(legacy.reserve, { fridge: 0, freezer: 0 });
+  const record = { cookedAt, reserve: { fridge: 1, freezer: 2 } };
+  assert.deepEqual(availablePortions(record, dish, '2025-01-06', 'mon-dinner', 2, cookedAt), { fridge: 1, freezer: 1 });
+  assert.deepEqual(availablePortions(record, dish, '2025-01-06', 'tue-dinner', 2, cookedAt), { fridge: 0, freezer: 2 });
+  assert.equal(availablePortions(record, dish, '2025-01-06', 'tue-dinner', 3, cookedAt), null);
 });
 
 test('copied shopping list keeps store departments and checkmarks', () => {

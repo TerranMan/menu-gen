@@ -69,6 +69,19 @@ export function recipeFactor(recipe, persons) {
   return recipe.wholeBatch ? Math.ceil(factor) : factor;
 }
 
+export function recipeIngredients(dish, homemade) {
+  if (!homemade || !dish.dough?.replaces) return dish.ingredients;
+  const list = [...dish.ingredients.filter(({ name }) => name !== dish.dough.replaces), ...dish.dough.ingredients];
+  const ingredients = new Map();
+  for (const ingredient of list) {
+    const key = priceKey(ingredient);
+    const existing = ingredients.get(key);
+    if (existing) existing.qty += ingredient.qty;
+    else ingredients.set(key, { ...ingredient });
+  }
+  return [...ingredients.values()];
+}
+
 export function scaleQty(qty, unit, factor, { roundPieces = true } = {}) {
   if (unit === 'по вкусу') return qty;
   const raw = qty * factor;

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
+import { readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { preview } from 'vite';
 
@@ -62,6 +63,16 @@ async function reopenMenu(page) {
   await page.locator('.app[aria-busy="false"]').waitFor();
   await page.reload();
   await page.getByRole('heading', { name: '🍽️ Меню на неделю' }).waitFor();
+}
+
+async function weekAction(page, name) {
+  await page.getByLabel('Управление неделей', { exact: true }).click();
+  await page.getByRole('button', { name, exact: true }).click();
+}
+
+async function dishAction(meal, dish, name) {
+  await meal.locator('.dish-options summary').filter({ visible: true }).and(meal.getByLabel(`Действия · ${dish}`)).click();
+  await meal.getByRole('button', { name, exact: true }).click();
 }
 
 function breakfasts(page) {
@@ -249,7 +260,7 @@ test('a weekly recipe can be served twice and copied with grouped shopping and t
   await reopenMenu(page);
   assert.equal(await lunch.getByText('На всю готовку · 4 порции', { exact: true }).isVisible(), true);
   assert.equal(await beef.isChecked(), true);
-  await lunch.getByRole('button', { name: 'Убрать Борщ из приёма' }).click();
+  await dishAction(lunch, 'Борщ', 'Убрать Борщ из приёма');
   await page.getByRole('button', { name: 'Вторник' }).click();
   assert.equal(await lunch.getByText('На всю готовку · 2 порции', { exact: true }).isVisible(), true);
 });
@@ -272,7 +283,7 @@ test('autofill preserves a manual meal and history copies the saved week with a 
   await page.locator('#shopping input[type=checkbox]').first().check();
   await page.waitForFunction(async () => Object.keys((await window.readStoredMenu()).weekChecked).length === 1);
 
-  await page.getByRole('button', { name: 'Новая неделя' }).click();
+  await weekAction(page, 'Новая неделя');
   const next = page.getByRole('dialog', { name: 'Новая неделя' });
   await next.getByRole('textbox', { name: 'Название сохраняемого плана' }).fill('План с борщом');
   await next.getByRole('button', { name: 'Начать с пустого плана' }).click();
@@ -281,7 +292,7 @@ test('autofill preserves a manual meal and history copies the saved week with a 
   assert.deepEqual((await stored()).weekChecked, {});
 
   await reopenMenu(page);
-  await page.getByRole('button', { name: 'История недель' }).click();
+  await weekAction(page, 'История недель');
   const history = page.getByRole('dialog', { name: 'История недель' });
   await history.getByText('План с борщом', { exact: true }).click();
   assert.ok(await history.getByText('Борщ', { exact: true }).count() >= 2);
@@ -289,13 +300,13 @@ test('autofill preserves a manual meal and history copies the saved week with a 
   await history.waitFor({ state: 'hidden' });
   assert.deepEqual((await stored()).week, week);
   const mondayLunch = page.getByRole('region', { name: 'Обед', exact: true });
-  await mondayLunch.getByRole('button', { name: 'Убрать Борщ из приёма' }).click();
+  await dishAction(mondayLunch, 'Борщ', 'Убрать Борщ из приёма');
   await page.waitForFunction(async () => (await window.readStoredMenu()).week['tue-lunch'][0].from === null);
   const changed = await stored();
   assert.deepEqual(changed.week['tue-lunch'], cooked);
   assert.deepEqual(changed.weekHistory[0].week, week);
 
-  await page.getByRole('button', { name: 'Новая неделя' }).click();
+  await weekAction(page, 'Новая неделя');
   await next.getByRole('button', { name: 'Скопировать текущий план' }).click();
   await next.waitFor({ state: 'hidden' });
   assert.deepEqual((await stored()).week, changed.week);
@@ -372,7 +383,7 @@ test('sharing a week sends the same schedule and pantry-adjusted shopping text s
     });
     Object.defineProperty(navigator, 'canShare', { value: () => true });
   });
-  await page.getByRole('button', { name: 'Поделиться неделей' }).click();
+  await weekAction(page, 'Поделиться неделей');
   const share = page.getByRole('dialog', { name: 'Поделиться неделей' });
   const preview = await share.getByRole('textbox', { name: 'Расписание и список покупок' }).inputValue();
   assert.match(preview, /Вторник\nОбед — Борщ \(повторная подача · Пн · обед\)/);
@@ -474,13 +485,13 @@ test('a rice repeat needs freezer intent and a dated plan stops showing up the f
   await lunch.getByRole('button', { name: 'Отметить готовку' }).click();
   const batch = page.getByRole('dialog', { name: 'Готовка и хранение' });
   await batch.getByLabel('Когда приготовили').fill('2026-11-23T12:00');
-  await batch.getByLabel('Куда убрали остатки').selectOption('fridge');
+  await batch.getByRole('group', { name: 'Свободные порции' }).getByRole('spinbutton', { name: 'Холодильник' }).fill('2');
   await batch.getByRole('button', { name: 'Сохранить отметку' }).click();
   await batch.getByRole('alert').filter({ hasText: 'Подтвердите' }).waitFor();
   await batch.getByRole('checkbox').check();
   await batch.getByRole('button', { name: 'Сохранить отметку' }).click();
   await batch.waitFor({ state: 'hidden' });
-  assert.equal((await storedState(page)).batchRecords['mon-lunch/plov'].storage, 'fridge');
+  assert.equal((await storedState(page)).batchRecords['mon-lunch/plov'].reserve.fridge, 2);
   await page.getByRole('button', { name: 'Воскресенье' }).click();
   assert.equal(await lunch.getByRole('combobox', { name: 'Блюдо для повторной подачи' }).count(), 0);
   await page.getByRole('button', { name: 'Понедельник' }).click();
@@ -513,13 +524,13 @@ test('moving and replacing a batch updates linked servings and preserves unrelat
   const check = page.getByRole('checkbox', { name: /^гречка —/ });
   await check.check();
   const lunch = page.getByRole('region', { name: 'Обед', exact: true });
-  await lunch.getByRole('button', { name: 'Перенести' }).click();
+  await dishAction(lunch, 'Борщ', 'Перенести');
   const move = page.getByRole('dialog', { name: 'Перенести блюдо' });
   await move.getByLabel('Новый день и приём').selectOption('wed-lunch');
   await move.getByRole('button', { name: 'Перенести', exact: true }).click();
   await move.waitFor({ state: 'hidden' });
   assert.equal((await storedState(page)).week['thu-lunch'][0].from, 'wed-lunch');
-  await lunch.getByRole('button', { name: 'Заменить' }).click();
+  await dishAction(lunch, 'Борщ', 'Заменить');
   await page.getByRole('searchbox').fill('щи');
   await page.getByRole('listitem').filter({ has: page.getByRole('button', { name: /^Щи/ }) })
     .getByRole('button', { name: 'Выбрать', exact: true }).click();
@@ -533,6 +544,8 @@ test('shopping prices show rubles per kilogram, persist zero and reset to the es
     version: 1, view: 'week', week: { 'mon-lunch': [{ dishId: 'borshch', from: null }] },
   });
   const price = page.getByRole('spinbutton', { name: 'Цена за 1 кг · мясо говядина' });
+  assert.equal(await price.isVisible(), false);
+  await page.getByRole('button', { name: 'Редактировать цены' }).click();
   const row = page.locator('#shopping li').filter({ has: price });
   const original = await price.inputValue();
   assert.ok(Number(original) > 100);
@@ -545,6 +558,7 @@ test('shopping prices show rubles per kilogram, persist zero and reset to the es
   await row.getByText('= 0 ₽', { exact: true }).waitFor();
   await page.waitForFunction(async () => (await window.readStoredMenu()).prices['мясо говядина__г'] === 0);
   await reopenMenu(page);
+  await page.getByRole('button', { name: 'Редактировать цены' }).click();
   assert.equal(await price.inputValue(), '0');
   await row.getByRole('button', { name: 'Сбросить цену · мясо говядина' }).click();
   await page.waitForFunction(async () => !Object.hasOwn((await window.readStoredMenu()).prices, 'мясо говядина__г'));
@@ -597,6 +611,7 @@ test('new arugula dishes have separate pictures and reach the produce shopping l
   await page.getByRole('link', { name: 'Покупки', exact: true }).click();
   const produce = page.locator('.shopping-group').filter({ hasText: 'Овощи, фрукты и зелень' });
   await produce.getByRole('checkbox', { name: 'руккола — 65 г', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Редактировать цены' }).click();
   assert.equal(await produce.getByRole('spinbutton', { name: 'Цена за 1 кг · руккола' }).inputValue(), '1700');
 });
 
@@ -632,4 +647,94 @@ test('the kitchen measures are available in both recipe views on a narrow screen
   await breakfasts(page).getByRole('button', { name: /^Блины/ }).click();
   await opener.click();
   await volumes.getByRole('cell', { name: '250 мл', exact: true }).waitFor();
+});
+
+test('a homemade weekly batch and its repeat update shopping independently of another batch', async (t) => {
+  const { page } = await openMenu(t, {
+    version: 2, view: 'week',
+    week: {
+      'mon-lunch': [{ dishId: 'pelmeni', from: null }],
+      'tue-lunch': [{ dishId: 'pelmeni', from: 'mon-lunch' }],
+      'thu-lunch': [{ dishId: 'pelmeni', from: null }],
+    },
+  });
+  await page.getByRole('checkbox', { name: /^пельмени — 1\s?500 г$/ }).waitFor();
+  const lunch = page.getByRole('region', { name: 'Обед', exact: true });
+  await lunch.getByRole('button', { name: 'Пельмени', exact: true }).click();
+  const recipe = page.getByRole('dialog', { name: 'Пельмени' });
+  await recipe.getByRole('checkbox', { name: 'Готовить дома' }).check();
+  await recipe.getByText('мясо говядина — 300 г', { exact: true }).waitFor();
+  await recipe.getByText(/около 75 мин/).waitFor();
+  assert.equal(await recipe.getByText(/варите по инструкции на упаковке/).count(), 0);
+  await recipe.getByRole('button', { name: 'Закрыть рецепт' }).click();
+  await page.getByRole('checkbox', { name: 'пельмени — 500 г', exact: true }).waitFor();
+  await page.getByRole('checkbox', { name: 'мясо говядина — 300 г', exact: true }).waitFor();
+  await reopenMenu(page);
+  await page.getByRole('button', { name: 'Вторник' }).click();
+  await lunch.getByText(/повторная подача.*домашний вариант/i).waitFor();
+  await lunch.getByRole('button', { name: 'Пельмени', exact: true }).click();
+  assert.equal(await recipe.getByRole('checkbox', { name: 'Готовить дома' }).isChecked(), true);
+});
+
+test('portions from the same batch can use different storage and reserves are deducted', async (t) => {
+  const { page } = await openMenu(t, {
+    version: 2, view: 'week', weekStart: '2026-11-23',
+    week: {
+      'mon-lunch': [{ dishId: 'borshch', from: null }],
+      'mon-dinner': [{ dishId: 'borshch', from: 'mon-lunch' }],
+      'fri-dinner': [{ dishId: 'borshch', from: 'mon-lunch', storage: 'freezer' }],
+    },
+  });
+  await page.clock.setFixedTime(new Date('2026-11-23T13:00:00Z'));
+  const lunch = page.getByRole('region', { name: 'Обед', exact: true });
+  await lunch.getByRole('button', { name: 'Отметить готовку' }).click();
+  const batch = page.getByRole('dialog', { name: 'Готовка и хранение' });
+  await batch.getByLabel('Когда приготовили').fill('2026-11-23T12:00');
+  await batch.getByRole('group', { name: 'Пн · ужин' }).getByRole('spinbutton', { name: 'Холодильник' }).fill('2');
+  await batch.getByRole('group', { name: 'Пт · ужин' }).getByRole('spinbutton', { name: 'Морозилка' }).fill('2');
+  const reserve = batch.getByRole('group', { name: 'Свободные порции' });
+  await reserve.getByRole('spinbutton', { name: 'Холодильник' }).fill('1');
+  await reserve.getByRole('spinbutton', { name: 'Морозилка' }).fill('3');
+  await batch.getByRole('checkbox').check();
+  await batch.getByRole('button', { name: 'Сохранить отметку' }).click();
+  await batch.waitFor({ state: 'hidden' });
+  await page.getByRole('region', { name: 'Ужин', exact: true }).getByText(/Холодильник — 2 порции/).waitFor();
+  await page.getByRole('button', { name: 'Пятница', exact: true }).click();
+  await page.getByRole('region', { name: 'Ужин', exact: true }).getByText(/Морозилка — 2 порции/).waitFor();
+  await page.getByRole('button', { name: 'Вторник', exact: true }).click();
+  await lunch.getByRole('combobox', { name: 'Блюдо для повторной подачи' }).selectOption('mon-lunch/borshch');
+  await lunch.getByRole('button', { name: 'Добавить подачу' }).click();
+  await lunch.getByText(/Холодильник — 1 порция.*Морозилка — 1 порция/).waitFor();
+  await page.locator('.app[aria-busy="false"]').waitFor();
+  assert.deepEqual((await storedState(page)).batchRecords['mon-lunch/borshch'].reserve, { fridge: 0, freezer: 2 });
+  assert.equal(await page.getByRole('checkbox', { name: 'мясо говядина — 400 г', exact: true }).isVisible(), true);
+});
+
+test('the mobile weekly menu fills only empty dinners within the optional time limit', async (t) => {
+  const { page } = await openMenu(t, {
+    version: 2, view: 'week',
+    week: { 'mon-dinner': [{ dishId: 'utka', from: null }] },
+  });
+  await page.setViewportSize({ width: 320, height: 720 });
+  await page.getByLabel('Управление неделей', { exact: true }).click();
+  await page.getByRole('checkbox', { name: 'Ужины до 30 минут', exact: true }).check();
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Заполнить пустые приёмы' }).click();
+  await page.getByText(/Расписание готово/).waitFor();
+  assert.equal(await page.getByRole('button', { name: 'Заполнить пустые приёмы' }).isVisible(), false);
+  const state = await storedState(page);
+  const data = JSON.parse(await readFile(new URL('../data/dishes.json', import.meta.url), 'utf8'));
+  const recipes = new Map(data.categories.flatMap(({ dishes }) => dishes.map(({ id, recipe }) => [id, recipe])));
+  assert.equal(state.quickDinners, true);
+  assert.deepEqual(state.week['mon-dinner'], [{ dishId: 'utka', from: null }]);
+  const dinners = Object.entries(state.week).filter(([id]) => id.endsWith('-dinner') && id !== 'mon-dinner');
+  assert.equal(dinners.length, 6);
+  for (const [, dishes] of dinners) {
+    assert.ok(dishes.reduce((sum, { dishId }) => sum + recipes.get(dishId).minutes, 0) <= 30);
+  }
+  const duck = page.getByRole('region', { name: 'Ужин', exact: true });
+  assert.equal(await duck.getByRole('button', { name: 'Перенести', exact: true }).isVisible(), false);
+  await duck.getByLabel('Действия · Утка', { exact: true }).click();
+  await duck.getByRole('button', { name: 'Перенести', exact: true }).waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 320);
 });

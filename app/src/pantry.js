@@ -1,7 +1,9 @@
-import { aggregate, formatLine, groupShopping, priceKey, stockQuantity } from './shopping.js';
+import { aggregate, formatLine, groupShopping, priceKey, recipeIngredients, stockQuantity } from './shopping.js';
 
 export function pantry(data, departments) {
-  const ingredients = aggregate(data.categories.flatMap((category) => category.dishes))
+  const recipes = data.categories.flatMap(({ dishes }) => dishes.flatMap((dish) =>
+    dish.dough?.replaces ? [dish, { ingredients: recipeIngredients(dish, true) }] : [dish]));
+  const ingredients = aggregate(recipes)
     .filter((ingredient) => ingredient.unit !== 'по вкусу')
     .map(({ name, unit }) => ({ name, unit, key: priceKey({ name, unit }) }));
   const byKey = new Map(ingredients.map((ingredient) => [ingredient.key, ingredient]));

@@ -1,10 +1,13 @@
 import {
-  addToMeal, cookingBatches, dateAfter, DAYS, distributeMenu, earlierBatches,
+  addToMeal, cookingBatches, dateAfter, DAYS, dishAndServings, distributeMenu, earlierBatches,
   fillEmptyMeals, formatWeekSchedule, isWeekStart, localDateKey, localDayId, localWeekStart,
   mealDayIndex, MEALS, moveMealDish, parseLocalDate, removeFromMeal, replaceMealDish, sanitizeWeek,
 } from './week.js';
 import { shoppingText } from './shopping.js';
-import { batchKey, fridgeDeadline, fridgeHours, needsFreezer, sanitizeBatchRecords, servingDayEnd, servingDayStart } from './batch-storage.js';
+import {
+  availablePortions, batchKey, fridgeDeadline, fridgeHours, needsFreezer,
+  sanitizeBatchRecords, servingDayEnd, servingDayStart, storageCounts,
+} from './batch-storage.js';
 
 const historyDate = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short' });
 const todayDate = new Intl.DateTimeFormat('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -45,7 +48,8 @@ export function planner() {
     moveMessage: '',
     batchTarget: null,
     batchDateTime: '',
-    batchStorage: 'unknown',
+    batchServings: [],
+    batchReserve: { mealId: 'reserve', label: 'Свободные порции', fridge: 0, freezer: 0 },
     batchConfirmed: false,
     batchMessage: '',
     shareText: '',
@@ -61,11 +65,18 @@ export function planner() {
       if (this.shoppingMode !== view) {
         this.copyMessage = '';
         this.copyText = '';
+        this.editingPrices = false;
       }
       this.shoppingMode = view;
       if (this.state.view === view) return;
       this.state.view = view;
       this.saveState();
+    },
+
+    closeOptions(button) {
+      const options = button.closest('details');
+      options.querySelector('summary').focus();
+      options.open = false;
     },
 
     openShopping() {
@@ -124,8 +135,11 @@ export function planner() {
             this.plannerMessage = 'Это блюдо уже есть в одном из связанных приёмов. Выберите другое.';
             return;
           }
+          if (this.isHomemade(entry.dish)) {
+            next[target].find(({ dishId }) => dishId === entry.dish.id).homemade = true;
+          }
           this.state.week = next;
-        } else if (!addToMeal(this.state.week, target, entry.dish.id)) {
+        } else if (!addToMeal(this.state.week, target, entry.dish.id, null, null, this.isHomemade(entry.dish))) {
           return;
         }
         if (await this.persistWeek()) {
@@ -192,7 +206,7 @@ export function planner() {
       return cookingBatches(this.state.week).map((batch) => ({
         ...batch,
         dish: this.dishById(batch.dishId),
-        servings: this.state.persons * batch.mealCount,
+        servings: this.batchRecord(batch.mealId, batch.dishId)?.servings ?? this.state.persons * batch.mealCount,
       }));
     },
 
@@ -202,9 +216,10 @@ export function planner() {
     },
 
     mealDishNote(mealId, entry) {
-      if (entry.from) return `Повторная подача · ${this.mealLabel(entry.from)}`;
+      const variant = this.isHomemade(entry.dish, entry.from ?? mealId) ? ' · домашний вариант' : '';
+      if (entry.from) return `Повторная подача · ${this.mealLabel(entry.from)}${variant}`;
       const servings = this.portionCount(mealId, entry.dishId);
-      return `На всю готовку · ${this.formatPortions(this.recipeYield(entry.dish, servings))}`;
+      return `На всю готовку · ${this.formatPortions(this.recipeYield(entry.dish, servings))}${variant}`;
     },
 
     batchRecord(mealId, dishId) {
@@ -224,37 +239,60 @@ export function planner() {
       }
 
       const cooked = `Приготовлено ${historyDate.format(record.cookedAt)}`;
-      if (record.storage === 'unknown') {
-        return { text: `${cooked} · хранение не указано`, warning: Boolean(entry.from) };
+      const weekStart = this.activeWeekStart();
+      if (record.cookedAt > servingDayEnd(weekStart, mealId)) {
+        return { text: `${cooked} · позже запланированной подачи`, warning: true };
       }
-      if (record.storage === 'freezer') {
-        return { text: entry.from ? 'Отмечена заморозка · разморозьте порцию в холодильнике' : `${cooked} · отмечена заморозка` };
-      }
-
+      const counts = storageCounts(record.portions[mealId]);
+      const total = counts.fridge + counts.freezer;
       const deadline = fridgeDeadline(entry.dish, record);
-      const now = this.todayTimestamp;
-      if (now >= deadline) return { text: 'Срок хранения в холодильнике истёк · приготовьте свежую порцию', warning: true };
-      if (entry.from && servingDayStart(this.activeWeekStart(), mealId) >= deadline) {
-        return { text: 'К этому дню срок хранения в холодильнике истечёт · приготовьте свежую порцию', warning: true };
+      const expired = this.todayTimestamp >= deadline;
+      if (!total) {
+        const legacy = record.legacyStorage === 'fridge' ? 'холодильник'
+          : record.legacyStorage === 'freezer' ? 'морозилка' : '';
+        if (legacy) {
+          const oldFridgeExpired = record.legacyStorage === 'fridge'
+            && Math.max(this.todayTimestamp, servingDayStart(weekStart, mealId)) >= fridgeDeadline(entry.dish, record);
+          return { text: oldFridgeExpired
+            ? 'По прежней отметке срок хранения в холодильнике истёк · приготовьте свежие порции'
+            : `${cooked} · прежняя отметка: ${legacy}. Укажите число порций.`, warning: true };
+        }
+        if (entry.from) return { text: `${cooked} · хранение этой подачи не указано`, warning: true };
+        const reserve = (expired ? 0 : record.reserve.fridge) + record.reserve.freezer;
+        const expiredReserve = expired && record.reserve.fridge > 0;
+        const remaining = reserve ? ` · свободно ${this.formatPortions(reserve)} по отметкам` : '';
+        return {
+          text: `${cooked}${remaining}${expiredReserve ? ' · срок свободных порций в холодильнике истёк' : ''}`,
+          warning: expiredReserve,
+        };
       }
-      if (entry.from && servingDayEnd(this.activeWeekStart(), mealId) >= deadline) {
-        return { text: `Холодильник до ${historyDate.format(deadline)} · проверьте время подачи`, warning: true };
+      const tooLate = servingDayStart(weekStart, mealId) >= deadline;
+      const checkTime = servingDayEnd(weekStart, mealId) >= deadline;
+      const text = [];
+      if (counts.fridge) {
+        const status = expired ? 'срок истёк, приготовьте свежие'
+          : tooLate ? 'срок истечёт к подаче, приготовьте свежие'
+          : `до ${historyDate.format(deadline)}${checkTime ? ', проверьте время подачи' : ''}`;
+        text.push(`Холодильник — ${this.formatPortions(counts.fridge)}, ${status}`);
       }
-      return { text: `${cooked} · холодильник до ${historyDate.format(deadline)}` };
+      if (counts.freezer) text.push(`Морозилка — ${this.formatPortions(counts.freezer)}, разморозьте в холодильнике`);
+      if (entry.from && total < this.state.persons) {
+        text.push(`Хранение ещё ${this.state.persons - total} порц. не указано`);
+      }
+      return { text: text.join(' · '), warning: Boolean((counts.fridge && checkTime) || (counts.fridge && expired) || (entry.from && total < this.state.persons)) };
     },
 
     reusableBatches(mealId) {
       return earlierBatches(this.state.week, mealId).flatMap(({ mealId: source, dishId }) => {
         const dish = this.dishById(dishId);
         const record = this.batchRecord(source, dishId);
-        const deadline = record?.storage === 'fridge' ? fridgeDeadline(dish, record) : Infinity;
-        if (deadline <= this.todayTimestamp || deadline <= servingDayEnd(this.activeWeekStart(), mealId)) return [];
+        const portions = record && availablePortions(record, dish, this.activeWeekStart(), mealId, this.state.persons, this.todayTimestamp);
+        if (record && !portions) return [];
         const freezer = needsFreezer(dish, source, mealId);
-        if (freezer && record?.storage === 'unknown') return [];
         return [{
           key: batchKey(source, dishId),
           freezer: freezer && !record,
-          frozen: record?.storage === 'freezer',
+          portions,
           label: `${dish.name} · ${this.mealLabel(source)}`,
         }];
       });
@@ -264,14 +302,21 @@ export function planner() {
       const option = this.reusableBatches(mealId).find(({ key }) => key === value);
       if (!option || (option.freezer && !freeze)) return false;
       const [from, dishId] = value.split('/');
-      const storage = freeze || option.frozen ? 'freezer' : null;
+      const storage = freeze ? 'freezer' : null;
       if (!addToMeal(this.state.week, mealId, dishId, from, storage)) return false;
+      if (option.portions) {
+        const record = this.batchRecord(from, dishId);
+        record.portions[mealId] = option.portions;
+        record.reserve.fridge -= option.portions.fridge;
+        record.reserve.freezer -= option.portions.freezer;
+      }
       return this.persistWeek();
     },
 
     prepareSeparately(mealId, dishId) {
       const entry = this.state.week[mealId]?.find((item) => item.dishId === dishId);
       if (!entry?.from) return;
+      if (this.isHomemade(this.dishById(dishId), entry.from)) entry.homemade = true;
       entry.from = null;
       delete entry.storage;
       this.persistWeek();
@@ -314,23 +359,31 @@ export function planner() {
       const dish = this.dishById(dishId);
       const record = this.batchRecord(from ?? mealId, dishId);
       const source = from ?? destination;
-      const repeats = MEALS.filter(({ id }) => next[id]?.some((entry) => entry.dishId === dishId && entry.from === source));
-      const shifted = from ? repeats.filter(({ id }) => id === destination) : repeats;
-      for (const { id } of shifted) {
-        const entry = next[id].find((item) => item.dishId === dishId && item.from === source);
-        if (record?.storage === 'fridge' && servingDayEnd(weekStart, id) >= fridgeDeadline(dish, record)) {
+      const offset = MEALS.findIndex(({ id }) => id === destination) - MEALS.findIndex(({ id }) => id === mealId);
+      const remapped = {};
+      if (record) {
+        for (const [id, portion] of Object.entries(record.portions)) {
+          const index = MEALS.findIndex((meal) => meal.id === id);
+          const moved = from ? (id === mealId ? destination : id) : MEALS[index + offset]?.id;
+          if (moved) remapped[moved] = portion;
+        }
+      }
+      const servings = dishAndServings(next, source, dishId);
+      const shifted = from ? servings.filter(({ mealId: id }) => id === destination) : servings;
+      for (const { mealId: id, entry } of shifted) {
+        if (remapped[id]?.fridge && servingDayEnd(weekStart, id) >= fridgeDeadline(dish, record)) {
           this.moveMessage = 'К этой дате может истечь срок в холодильнике. Запланируйте свежую порцию.';
           return;
         }
-        if (!record && needsFreezer(dish, source, id) && entry.storage !== 'freezer') {
+        if (!record && entry.from && needsFreezer(dish, source, id) && entry.storage !== 'freezer') {
           this.moveMessage = 'Для переноса повтора на эту дату нужна заморозка. Добавьте повтор на новом месте с отметкой о заморозке.';
           return;
         }
       }
       const records = { ...this.state.batchRecords };
-      if (!from && record) {
-        delete records[batchKey(mealId, dishId)];
-        records[batchKey(destination, dishId)] = record;
+      if (record) {
+        delete records[batchKey(from ?? mealId, dishId)];
+        records[batchKey(source, dishId)] = { ...record, portions: remapped };
       }
       if (await this.persistWeek({ ...this.state, week: next, batchRecords: records })) {
         this.dayId = MEALS.find(({ id }) => id === destination).dayId;
@@ -341,13 +394,17 @@ export function planner() {
       }
     },
 
-    openBatch(mealId, dishId) {
+    openBatch(mealId, dishId, selectedMeal = mealId) {
       const dish = this.dishById(dishId);
       const record = this.batchRecord(mealId, dishId);
-      this.batchTarget = { mealId, dish, weekStart: this.state.weekStart, record };
+      this.batchServings = dishAndServings(this.state.week, mealId, dishId).map(({ mealId: id, entry }) => ({
+        mealId: id, label: this.mealLabel(id), plannedFreezer: entry.storage === 'freezer',
+        ...storageCounts(record?.portions[id]),
+      }));
+      this.batchTarget = { mealId, dish, weekStart: this.state.weekStart, record, selectedMeal };
       this.batchDateTime = dateTimeInput(record?.cookedAt ?? Date.now());
-      this.batchStorage = record?.storage ?? 'unknown';
-      this.batchConfirmed = Boolean(record && record.storage !== 'unknown');
+      this.batchReserve = { mealId: 'reserve', label: 'Свободные порции', ...storageCounts(record?.reserve) };
+      this.batchConfirmed = this.hasStoredPortions();
       this.batchMessage = '';
       this.$refs.batchDialog.showModal();
     },
@@ -356,11 +413,17 @@ export function planner() {
       return this.batchTarget && fridgeHours(this.batchTarget.dish) === 24 ? '1 часа' : '2 часов';
     },
 
+    hasStoredPortions() {
+      return [this.batchReserve, ...this.batchServings].some(({ fridge, freezer }) => fridge > 0 || freezer > 0);
+    },
+
     async recordBatch(clear = false) {
       const { mealId, dish, weekStart, record } = this.batchTarget;
       const key = batchKey(mealId, dish.id);
       const latest = this.state.batchRecords[key];
-      if (weekStart !== this.state.weekStart || (latest?.cookedAt !== record?.cookedAt || latest?.storage !== record?.storage)
+      const servings = dishAndServings(this.state.week, mealId, dish.id).map((item) => item.mealId);
+      if (weekStart !== this.state.weekStart || JSON.stringify(latest) !== JSON.stringify(record)
+          || JSON.stringify(servings) !== JSON.stringify(this.batchServings.map((item) => item.mealId))
           || !this.state.week[mealId]?.some((entry) => entry.dishId === dish.id && !entry.from)) {
         this.batchMessage = 'Эта запись изменилась. Откройте отметку о готовке снова.';
         return;
@@ -370,24 +433,36 @@ export function planner() {
         this.batchMessage = 'Укажите дату и время, когда блюдо уже было приготовлено.';
         return;
       }
-      if (!clear && this.batchStorage !== 'unknown' && !this.batchConfirmed) {
-        this.batchMessage = 'Подтвердите, что убрали остатки вскоре после готовки, или выберите «Хранение не указано».';
+      if (!clear && this.hasStoredPortions() && !this.batchConfirmed) {
+        this.batchMessage = 'Подтвердите, что убрали порции вскоре после готовки.';
         return;
       }
       const records = { ...this.state.batchRecords };
       if (clear) delete records[key];
-      else records[key] = { cookedAt, storage: this.batchStorage };
+      else {
+        records[key] = {
+          cookedAt,
+          servings: record?.servings ?? this.portionCount(mealId, dish.id),
+          portions: Object.fromEntries(this.batchServings.map((row) => [row.mealId, storageCounts(row)])),
+          reserve: storageCounts(this.batchReserve),
+        };
+      }
       if (await this.persistWeek({ ...this.state, batchRecords: records })) this.$refs.batchDialog.close();
       else this.batchMessage = 'Отметка не сохранилась. Проверьте текущий план и повторите действие.';
     },
 
     removeMealDish(mealId, dishId) {
-      removeFromMeal(this.state.week, mealId, dishId);
+      const record = this.batchRecord(mealId, dishId);
+      const next = removeFromMeal(this.state.week, mealId, dishId);
+      if (record && next) {
+        this.state.batchRecords[batchKey(next, dishId)] = record;
+        delete this.state.batchRecords[batchKey(mealId, dishId)];
+      }
       this.persistWeek();
     },
 
     async distributeSelection() {
-      const added = distributeMenu(this.state.week, this.menu, this.data);
+      const added = distributeMenu(this.state.week, this.menu, this.data, this.state.homemade);
       if (added && !await this.persistWeek()) return;
       this.plannerMessage = added ? `Добавлено в расписание — ${added}` : 'Расписание осталось прежним.';
     },
@@ -400,6 +475,15 @@ export function planner() {
       } else {
         this.plannerMessage = filled ? `Заполнено приёмов — ${filled}. Расписание готово.` : 'Все приёмы уже заполнены.';
       }
+    },
+
+    hasEmptyMeals() {
+      return MEALS.some(({ id }) => !this.state.week[id]?.length);
+    },
+
+    async setQuickDinners(input) {
+      this.state.quickDinners = input.checked;
+      if (!await this.saveState()) input.checked = this.state.quickDinners;
     },
 
     openNewWeek() {
@@ -529,8 +613,8 @@ export function planner() {
       return this.saveState();
     },
 
-    openRecipe(dish, servings = this.state.persons) {
-      this.recipePreview = { dish, servings };
+    openRecipe(dish, servings = this.state.persons, mealId = null) {
+      this.recipePreview = { dish, servings, mealId, weekStart: this.state.weekStart };
       this.$nextTick(() => this.$refs.recipeDialog.showModal());
     },
   };

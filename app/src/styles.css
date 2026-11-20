@@ -292,6 +292,123 @@ header.top h1 {
   align-items: flex-start;
 }
 
+.week-day-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-bottom: 8px;
+}
+
+.week-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.week-options summary {
+  white-space: nowrap;
+}
+
+.week-options-short {
+  display: none;
+}
+
+@media (max-width: 380px) {
+  .week-options-long {
+    display: none;
+  }
+
+  .week-options-short {
+    display: inline;
+  }
+}
+
+.week-day-heading .day-heading {
+  margin: 0;
+}
+
+.week-options,
+.dish-options {
+  position: relative;
+}
+
+.week-options[open],
+.dish-options[open] {
+  z-index: 2;
+}
+
+.dish-options summary {
+  display: grid;
+  place-items: center;
+  list-style: none;
+}
+
+.dish-options summary::-webkit-details-marker {
+  display: none;
+}
+
+.options-panel {
+  position: absolute;
+  inset: calc(100% + 4px) 0 auto auto;
+  display: grid;
+  gap: 6px;
+  width: min(236px, calc(100vw - 48px));
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 6px 18px rgb(44 39 34 / 15%);
+}
+
+.options-panel .btn {
+  text-align: left;
+}
+
+.options-panel .item-meta {
+  margin: 0 0 4px 6px;
+}
+
+.variant-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.portion-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 10px;
+  min-inline-size: 0;
+  margin: 8px 0;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.portion-fields-current {
+  border-color: var(--accent);
+}
+
+.portion-fields legend {
+  padding: 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.portion-fields p {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.portion-fields .field {
+  width: 100%;
+}
+
 .dish-edit-actions {
   gap: 4px 6px;
 }
@@ -847,6 +964,7 @@ header.top h1 {
   cursor: pointer;
   user-select: none;
   min-width: 0;
+  min-height: 32px;
 }
 
 .shopping-item input[type='checkbox']:checked ~ .shopping-name {

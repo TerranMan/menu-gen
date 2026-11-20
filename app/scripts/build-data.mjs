@@ -61,6 +61,10 @@ function buildDough(dish, dough) {
   if (!dish.ingredients?.some((ing) => ing.name === dough.replaces)) {
     fail(`${dish.id}: готового продукта ${dough.replaces} нет в составе блюда`);
   }
+  if (!Number.isInteger(dough.minutes) || dough.minutes < 1
+      || (dough.complete !== undefined && typeof dough.complete !== 'boolean')) {
+    fail(`${dish.id}: у домашнего варианта должны быть положительные minutes`);
+  }
   if (!hasSteps(dough.steps) || !Array.isArray(dough.ingredients) || !dough.ingredients.length) {
     fail(`${dish.id}: у домашней замены должны быть ingredients и steps`);
   }

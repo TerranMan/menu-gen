@@ -63,11 +63,12 @@ export function formatWeekSchedule(week, dishName) {
   for (const day of DAYS) {
     const lines = [];
     for (const meal of MEALS.filter((item) => item.dayId === day.id)) {
-      const dishes = (week[meal.id] ?? []).map(({ dishId, from, storage }) => {
+      const dishes = (week[meal.id] ?? []).map(({ dishId, from, storage, homemade }) => {
         const name = dishName(dishId);
         if (!name) return null;
         const source = MEALS[mealOrder.get(from)];
-        return source ? `${name} (повторная подача · ${source.label}${storage === 'freezer' ? ' · заморозить' : ''})` : name;
+        if (source) return `${name} (повторная подача · ${source.label}${storage === 'freezer' ? ' · заморозить' : ''})`;
+        return homemade ? `${name} (домашний вариант)` : name;
       }).filter(Boolean);
       if (dishes.length) lines.push(`${meal.name} — ${dishes.join(', ')}`);
     }
@@ -104,17 +105,22 @@ export function sanitizeWeek(raw, isKnownDish = () => true) {
         dishId: entry.dishId,
         from: cookedEarlier ? entry.from : null,
         ...(cookedEarlier && entry.storage === 'freezer' && { storage: 'freezer' }),
+        ...(!entry.from && entry.homemade === true && { homemade: true }),
       });
     }
   }
   return week;
 }
 
-export function addToMeal(week, mealId, dishId, from = null, storage = null) {
+export function addToMeal(week, mealId, dishId, from = null, storage = null, homemade = false) {
   if (!mealOrder.has(mealId) || week[mealId]?.some((dish) => dish.dishId === dishId)) return false;
   if (from && !(mealOrder.get(from) < mealOrder.get(mealId)
       && week[from]?.some((dish) => dish.dishId === dishId && !dish.from))) return false;
-  (week[mealId] ??= []).push({ dishId, from, ...(from && storage === 'freezer' && { storage }) });
+  (week[mealId] ??= []).push({
+    dishId, from,
+    ...(from && storage === 'freezer' && { storage }),
+    ...(!from && homemade && { homemade: true }),
+  });
   return true;
 }
 
@@ -124,7 +130,7 @@ export function removeFromMeal(week, mealId, dishId) {
   if (index === -1) return;
   const [removed] = entries.splice(index, 1);
   if (!entries.length) delete week[mealId];
-  if (removed.from) return;
+  if (removed.from) return null;
 
   // Если убрали первое приготовление, готовим к самой ранней оставшейся подаче.
   let nextCookingMeal = null;
@@ -132,12 +138,16 @@ export function removeFromMeal(week, mealId, dishId) {
     const repeat = week[id]?.find((dish) => dish.dishId === dishId && dish.from === mealId);
     if (!repeat) continue;
     repeat.from = nextCookingMeal;
-    if (!repeat.from) delete repeat.storage;
+    if (!repeat.from) {
+      delete repeat.storage;
+      if (removed.homemade) repeat.homemade = true;
+    }
     nextCookingMeal ??= id;
   }
+  return nextCookingMeal;
 }
 
-function dishAndServings(week, mealId, dishId) {
+export function dishAndServings(week, mealId, dishId) {
   const entries = [];
   for (const meal of MEALS) {
     for (const entry of week[meal.id] ?? []) {
@@ -161,7 +171,7 @@ export function moveMealDish(week, from, to, dishId) {
   }
   for (const [index, { entry }] of source.entries()) {
     const parent = index > 0 ? to : entry.from;
-    if (!addToMeal(next, targets[index], dishId, parent, entry.storage)) return null;
+    if (!addToMeal(next, targets[index], dishId, parent, entry.storage, entry.homemade)) return null;
   }
   return sanitizeWeek(next);
 }
@@ -186,11 +196,11 @@ export function replaceMealDish(week, mealId, currentDishId, nextDishId) {
 export function cookingBatches(week) {
   const batches = new Map();
   for (const { id } of MEALS) {
-    for (const { dishId, from } of week[id] ?? []) {
+    for (const { dishId, from, homemade } of week[id] ?? []) {
       const key = `${from ?? id}/${dishId}`;
       const batch = batches.get(key);
       if (batch) batch.mealCount++;
-      else batches.set(key, { mealId: id, dishId, mealCount: 1 });
+      else batches.set(key, { mealId: id, dishId, mealCount: 1, ...(homemade && { homemade }) });
     }
   }
   return [...batches.values()];
@@ -202,7 +212,7 @@ export function earlierBatches(week, mealId) {
     mealOrder.get(batch.mealId) < mealOrder.get(mealId) && !scheduled.has(batch.dishId));
 }
 
-export function distributeMenu(week, menu, data) {
+export function distributeMenu(week, menu, data, homemade = {}) {
   const categoryDishes = new Map(menu.map((slot) => [slot.categoryId, slot.dishes]));
   const categories = data?.categories ?? menu.map((slot) => ({ id: slot.categoryId, dishes: slot.dishes }));
   const catalog = new Map(categories.flatMap((category) => category.dishes.map((dish) => [
@@ -220,7 +230,7 @@ export function distributeMenu(week, menu, data) {
       ...targets.filter((meal) => empty(meal) !== preferEmpty)];
     const dishes = (categoryDishes.get(categoryId) ?? []).filter((dish) => !scheduled.has(dish.id));
     for (const [index, dish] of dishes.entries()) {
-      addToMeal(week, ordered[index % ordered.length].id, dish.id);
+      addToMeal(week, ordered[index % ordered.length].id, dish.id, null, null, Boolean(homemade[dish.id]));
       scheduled.add(dish.id);
     }
     return dishes.length;
@@ -250,7 +260,7 @@ export function distributeMenu(week, menu, data) {
           target = meal.id;
         }
       }
-      if (target && addToMeal(week, target, dish.id)) {
+      if (target && addToMeal(week, target, dish.id, null, null, Boolean(homemade[dish.id]))) {
         scheduled.add(dish.id);
         added++;
       }
@@ -279,12 +289,18 @@ export function fillEmptyMeals(week, data, state, menu) {
   const selected = new Set(menu.flatMap((slot) => slot.dishes.map((dish) => dish.id)));
   const available = new Map(data.categories.map((category) => [
     category.id,
-    category.dishes.filter((dish) => !blocked.has(dish.id)).map((dish) => ({
-      id: dish.id,
-      categoryId: category.id,
-      tags: dish.tags ?? [],
-      preference: (pinned.has(dish.id) ? 4 : 0) + (selected.has(dish.id) ? 2 : 0) + (favorites.has(dish.id) ? 1 : 0),
-    })),
+    category.dishes.filter((dish) => !blocked.has(dish.id)).map((dish) => {
+      const homemade = Boolean(dish.dough?.replaces && state.homemade?.[dish.id]);
+      const minutes = homemade ? dish.dough.minutes : dish.recipe?.minutes;
+      return {
+        id: dish.id,
+        categoryId: category.id,
+        tags: dish.tags ?? [],
+        homemade,
+        minutes: dish.recipe?.timeNote ? Infinity : (minutes ?? Infinity),
+        preference: (pinned.has(dish.id) ? 4 : 0) + (selected.has(dish.id) ? 2 : 0) + (favorites.has(dish.id) ? 1 : 0),
+      };
+    }),
   ]));
 
   function choose(candidates) {
@@ -300,25 +316,27 @@ export function fillEmptyMeals(week, data, state, menu) {
   let remaining = 0;
   for (const meal of MEALS) {
     if (week[meal.id]?.length) continue;
+    const limit = state.quickDinners && meal.type === 'dinner' ? 30 : Infinity;
     const pool = MEAL_CATEGORIES[meal.type]
-      .map((group) => group.flatMap((categoryId) => available.get(categoryId) ?? []))
+      .map((group) => group.flatMap((categoryId) => available.get(categoryId) ?? [])
+        .filter(({ minutes }) => minutes <= limit))
       .find((group) => group.length);
     const main = choose(pool);
     if (!main) {
       remaining++;
       continue;
     }
-    addToMeal(week, meal.id, main.id);
+    addToMeal(week, meal.id, main.id, null, null, main.homemade);
     countUse(main.id);
     filled++;
 
     const categoryId = sideCategory(main);
-    const sides = available.get(categoryId) ?? [];
+    const sides = (available.get(categoryId) ?? []).filter(({ minutes }) => limit === Infinity || main.minutes + minutes <= limit);
     const lightSides = sides.filter(({ tags }) => tags.includes('light'));
     const side = categoryId === 'salads' || main.tags.includes('light-side')
       ? choose(lightSides) ?? (categoryId === 'garnishes' ? choose(sides) : null)
       : choose(sides);
-    if (side && addToMeal(week, meal.id, side.id)) countUse(side.id);
+    if (side && addToMeal(week, meal.id, side.id, null, null, side.homemade)) countUse(side.id);
   }
   return { filled, remaining };
 }

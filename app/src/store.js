@@ -19,6 +19,8 @@ const empty = () => ({
   blocks: [],
   pins: [],
   lastMenu: null,
+  homemade: {},
+  quickDinners: false,
   checked: {}, // ключ списка покупок → количество на момент отметки
   week: {},
   weekStart: null,
@@ -128,6 +130,8 @@ function read(parsed) {
     blocks,
     pins: sanitizeIds(parsed.pins).filter((id) => !blocks.includes(id)),
     lastMenu: sanitizeMenu(parsed.lastMenu),
+    homemade: Object.fromEntries(Object.entries(parsed.homemade ?? {}).filter(([, value]) => value === true)),
+    quickDinners: parsed.quickDinners === true,
     checked: sanitizeChecked(parsed.checked),
     week,
     weekStart: isWeekStart(parsed.weekStart) ? parsed.weekStart : (Object.keys(week).length ? localWeekStart() : null),
@@ -185,10 +189,10 @@ export async function loadSavedState() {
 }
 
 const groups = [
-  ['persons'], ['picks', 'blocks', 'favorites', 'pins', 'lastMenu'],
+  ['persons'], ['quickDinners'], ['picks', 'blocks', 'favorites', 'pins', 'lastMenu'],
   ['week', 'weekStart', 'batchRecords', 'weekHistory'],
 ];
-const maps = ['checked', 'weekChecked', 'stock', 'prices'];
+const maps = ['checked', 'weekChecked', 'stock', 'prices', 'homemade'];
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 export const snapshot = (value) => JSON.parse(JSON.stringify(value));
 
