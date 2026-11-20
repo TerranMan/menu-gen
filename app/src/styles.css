@@ -485,6 +485,46 @@ header.top h1 {
   object-fit: cover;
 }
 
+.recipe-ingredients-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.recipe-ingredients-heading .btn {
+  min-height: 32px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+.measure-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.measure-table th,
+.measure-table td {
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+}
+
+.measure-table th:first-child {
+  text-align: left;
+}
+
+.measure-table td {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.measure-note {
+  margin: 10px 0 0;
+}
+
 .category {
   background: var(--surface);
   border: 1px solid var(--border);

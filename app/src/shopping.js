@@ -7,6 +7,9 @@
 const fmt = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
 
 const UPWARD_UNITS = new Set(['шт', 'зубчик', 'пучок']);
+const TABLESPOON_ML = 15;
+const TEASPOON_ML = 5;
+const SPOON_VOLUME = { 'ст.л.': TABLESPOON_ML, 'ч.л.': TEASPOON_ML, unit: 'мл' };
 const SPOON_UNITS = new Set(['ст.л.', 'ч.л.']);
 
 // Приблизительная масса ровной ложки. Сахар, мука, крахмал и разрыхлители:
@@ -14,10 +17,10 @@ const SPOON_UNITS = new Set(['ст.л.', 'ч.л.']);
 // Жидкости → мл (объём ложки), сыпучие и густые → грамм (плотность × объём).
 const SPOON_NORM = {
   // Жидкости
-  'масло растительное': { 'ст.л.': 15, 'ч.л.': 5, unit: 'мл' },
-  'масло оливковое':    { 'ст.л.': 15, 'ч.л.': 5, unit: 'мл' },
-  'соевый соус':        { 'ст.л.': 15, 'ч.л.': 5, unit: 'мл' },
-  'уксус':              { 'ст.л.': 15, 'ч.л.': 5, unit: 'мл' },
+  'масло растительное': SPOON_VOLUME,
+  'масло оливковое':    SPOON_VOLUME,
+  'соевый соус':        SPOON_VOLUME,
+  'уксус':              SPOON_VOLUME,
 
   // Сыпучие
   'сахар':              { 'ст.л.': 12.4, 'ч.л.': 4.1, unit: 'г' },
@@ -39,7 +42,21 @@ const SPOON_NORM = {
   'горчица':            { 'ст.л.': 25, 'ч.л.': 10, unit: 'г' },
 };
 
-const DEFAULT_SPOON = { 'ст.л.': 15, 'ч.л.': 5, unit: 'г' };
+const DEFAULT_SPOON = { ...SPOON_VOLUME, unit: 'г' };
+const CUP_ML = 250;
+
+export const KITCHEN_MEASURES = [
+  { name: 'Объём', cells: [CUP_ML, TABLESPOON_ML, TEASPOON_ML].map((value) => `${value} мл`) },
+  ...[
+    ['Вода', TABLESPOON_ML, TEASPOON_ML],
+    ['Пшеничная мука', SPOON_NORM.мука['ст.л.'], SPOON_NORM.мука['ч.л.']],
+    ['Сахар', SPOON_NORM.сахар['ст.л.'], SPOON_NORM.сахар['ч.л.']],
+  ].map(([name, tablespoon, teaspoon]) => ({
+    name,
+    cells: [Math.round(tablespoon * CUP_ML / TABLESPOON_ML), tablespoon, teaspoon]
+      .map((value) => `${fmt.format(value)} г`),
+  })),
+];
 
 function normalizeForShopping(ing) {
   if (!SPOON_UNITS.has(ing.unit)) return ing;
@@ -128,7 +145,7 @@ export function shoppingText(groups) {
   ].join('\n')).join('\n\n');
 }
 
-// Для карточки блюда: ложки с подсказкой в граммах/мл. «сахар — 1 ст.л. (15 г)».
+// Для карточки блюда: ложки с подсказкой в граммах/мл. «сахар — 1 ст.л. (12,4 г)».
 // Если unit не ложка — обычный формат как formatLine.
 export function formatCardIngredient(ing) {
   if (ing.unit === 'по вкусу') return `${ing.name} — по вкусу`;

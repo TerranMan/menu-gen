@@ -131,7 +131,11 @@
               <template x-if="isExpanded(dish.id)">
                 <div class="dish-details" :id="`recipe-${dish.id}`">
                   <p class="recipe-meta" x-text="recipeSummary(dish)"></p>
-                  <h3>Состав</h3>
+                  <div class="recipe-ingredients-heading">
+                    <h3>Состав</h3>
+                    <button type="button" class="btn" aria-haspopup="dialog"
+                      @click="$refs.measuresDialog.showModal()">Таблица мер</button>
+                  </div>
                   <ul class="ingredients-list">
                     <template x-for="ing in scaledIngredients(dish)" :key="ing.name + '__' + ing.unit">
                       <li x-text="formatIngredient(ing)"></li>
@@ -608,7 +612,11 @@
               x-data="{ imageFailed: false }" :src="imageUrl(recipePreview.dish.image)" :alt="recipePreview.dish.name"
               @error="imageFailed = true" />
             <p class="recipe-meta" x-text="recipeSummary(recipePreview.dish, recipePreview.servings)"></p>
-            <h3>Состав</h3>
+            <div class="recipe-ingredients-heading">
+              <h3>Состав</h3>
+              <button type="button" class="btn" aria-haspopup="dialog"
+                @click="$refs.measuresDialog.showModal()">Таблица мер</button>
+            </div>
             <ul class="ingredients-list">
               <template x-for="ing in scaledIngredients(recipePreview.dish, recipePreview.servings)" :key="ing.name + '__' + ing.unit">
                 <li x-text="formatIngredient(ing)"></li>
@@ -643,6 +651,36 @@
             </template>
           </div>
         </template>
+      </dialog>
+
+      <dialog class="week-dialog" x-ref="measuresDialog" aria-labelledby="measures-title">
+        <div class="view-heading">
+          <h2 id="measures-title">Таблица мер</h2>
+          <button type="button" class="icon-btn" aria-label="Закрыть таблицу мер" autofocus
+            @click="$refs.measuresDialog.close()">×</button>
+        </div>
+        <table class="measure-table" aria-labelledby="measures-title">
+          <thead>
+            <tr>
+              <th scope="col">Мера</th>
+              <th scope="col">Стакан</th>
+              <th scope="col"><abbr title="Столовая ложка">Ст. л.</abbr></th>
+              <th scope="col"><abbr title="Чайная ложка">Ч. л.</abbr></th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="row in kitchenMeasures" :key="row.name">
+              <tr>
+                <th scope="row" x-text="row.name"></th>
+                <template x-for="(cell, index) in row.cells" :key="index">
+                  <td x-text="cell"></td>
+                </template>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+        <p class="item-meta measure-note">Ложки ровные, мука без утрамбовки. Масса дана приблизительно.
+          В стакане на 200 мл примерно 100 г муки или 165 г сахара.</p>
       </dialog>
 
       <footer class="bottom">

@@ -4,7 +4,7 @@ import pricesData from '../data/prices.json';
 import { generateMenu, regenerateSlot, pickMore } from './generator.js';
 import {
   aggregate, formatLine, priceKey, lineCost, totalCost, formatMoney,
-  recipeFactor, scaleQty, formatCardIngredient, groupShopping, shoppingText, subtractStock,
+  recipeFactor, scaleQty, formatCardIngredient, groupShopping, shoppingText, subtractStock, KITCHEN_MEASURES,
 } from './shopping.js';
 import { loadLegacyState, loadSavedState, saveChanges, snapshot, toggle, MIN_PERSONS, MAX_PERSONS } from './store.js';
 import { planner } from './planner.js';
@@ -42,6 +42,7 @@ document.addEventListener('alpine:init', () => {
     copyMessage: '',
     copyText: '',
     priceDate: pricesData.updated_at?.split('-').reverse().join('.'),
+    kitchenMeasures: KITCHEN_MEASURES,
     storageMessage: '',
     savePending: 0,
     storageChanged: false,

@@ -599,3 +599,37 @@ test('new arugula dishes have separate pictures and reach the produce shopping l
   await produce.getByRole('checkbox', { name: 'руккола — 65 г', exact: true }).waitFor();
   assert.equal(await produce.getByRole('spinbutton', { name: 'Цена за 1 кг · руккола' }).inputValue(), '1700');
 });
+
+test('the kitchen measures are available in both recipe views on a narrow screen', async (t) => {
+  const { context, page } = await openMenu(t);
+  await page.setViewportSize({ width: 320, height: 720 });
+  await breakfasts(page).getByRole('button', { name: /^Блины/ }).click();
+  const opener = page.locator('#recipe-blini').getByRole('button', { name: 'Таблица мер' });
+  const measures = page.getByRole('dialog', { name: 'Таблица мер' });
+  await opener.press('Enter');
+  const table = measures.getByRole('table');
+  const volumes = table.getByRole('row').filter({ hasText: 'Объём' });
+  assert.deepEqual(await volumes.getByRole('cell').allTextContents(), ['250 мл', '15 мл', '5 мл']);
+  const sugar = table.getByRole('row').filter({ hasText: 'Сахар' });
+  assert.deepEqual(await sugar.getByRole('cell').allTextContents(), ['207 г', '12,4 г', '4,1 г']);
+  assert.equal(await measures.evaluate((dialog) => dialog.scrollWidth <= dialog.clientWidth), true);
+  await page.keyboard.press('Escape');
+  await measures.waitFor({ state: 'hidden' });
+  assert.equal(await opener.evaluate((button) => document.activeElement === button), true);
+
+  await page.getByRole('button', { name: 'Каталог', exact: true }).click();
+  await page.getByRole('searchbox').fill('блины');
+  await page.getByRole('button', { name: /^Блины/ }).click();
+  const recipe = page.getByRole('dialog', { name: 'Блины' });
+  await recipe.getByRole('button', { name: 'Таблица мер' }).click();
+  await measures.getByText('Пшеничная мука', { exact: true }).waitFor();
+  await measures.getByRole('button', { name: 'Закрыть таблицу мер' }).click();
+  assert.equal(await recipe.isVisible(), true);
+
+  await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+  await context.setOffline(true);
+  await reopenMenu(page);
+  await breakfasts(page).getByRole('button', { name: /^Блины/ }).click();
+  await opener.click();
+  await volumes.getByRole('cell', { name: '250 мл', exact: true }).waitFor();
+});
