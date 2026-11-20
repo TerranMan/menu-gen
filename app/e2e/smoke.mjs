@@ -18,19 +18,22 @@ after(async () => {
   if (server) await new Promise((resolve) => server.httpServer.close(resolve));
 });
 
-async function openMenu(t, savedState) {
+async function openMenu(t, savedState, { withoutNativeShare = false } = {}) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const pageErrors = [];
   t.after(async () => {
     await context.close();
     assert.deepEqual(pageErrors, []);
   });
-  await context.addInitScript((state) => {
+  await context.addInitScript(({ state, withoutNativeShare }) => {
     Math.random = () => 0;
+    if (withoutNativeShare) {
+      Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
+    }
     if (state && !localStorage.getItem('menu_gen_v1')) {
       localStorage.setItem('menu_gen_v1', JSON.stringify(state));
     }
-  }, savedState);
+  }, { state: savedState, withoutNativeShare });
   const page = await context.newPage();
   page.on('pageerror', (error) => pageErrors.push(error.message));
   await page.goto(url);
@@ -328,7 +331,7 @@ test('sharing a week sends the same schedule and pantry-adjusted shopping text s
       'tue-lunch': [{ dishId: 'borshch', from: 'mon-lunch' }],
     },
     stock: { 'картофель__г': 200, 'мясо говядина__г': 100 },
-  });
+  }, { withoutNativeShare: true });
   await page.evaluate(() => {
     Object.defineProperty(navigator, 'clipboard', {
       value: { writeText: async (text) => { window.copiedWeek = text; } },

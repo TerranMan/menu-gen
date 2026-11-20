@@ -202,7 +202,8 @@ export function planner() {
     },
 
     canShareWeek() {
-      return typeof navigator.share === 'function' && (!navigator.canShare || navigator.canShare({ text: this.shareText }));
+      const text = this.shareText;
+      return Boolean(text) && typeof navigator.share === 'function' && (!navigator.canShare || navigator.canShare({ text }));
     },
 
     async shareWeek() {
