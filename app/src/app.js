@@ -4,10 +4,11 @@ import pricesData from '../data/prices.json';
 import { generateMenu, regenerateSlot, pickMore } from './generator.js';
 import {
   aggregate, formatLine, priceKey, lineCost, totalCost, formatMoney,
-  recipeFactor, scaleQty, formatCardIngredient, groupShopping, shoppingText,
+  recipeFactor, scaleQty, formatCardIngredient, groupShopping, shoppingText, subtractStock,
 } from './shopping.js';
 import { load, save, toggle, MIN_PERSONS, MAX_PERSONS } from './store.js';
 import { planner } from './planner.js';
+import { pantry } from './pantry.js';
 import { sanitizeWeek } from './week.js';
 import './styles.css';
 
@@ -30,6 +31,7 @@ const EMOJI = {
 document.addEventListener('alpine:init', () => {
   Alpine.data('menuApp', () => ({
     ...planner(),
+    ...pantry(dishesData, DEPARTMENTS),
     data: dishesData,
     state: load(),
     menu: [],
@@ -47,6 +49,7 @@ document.addEventListener('alpine:init', () => {
 
     init() {
       this.view = this.state.view;
+      this.todayTimer = setInterval(() => this.refreshToday(), 60_000);
       this.state.week = sanitizeWeek(this.state.week, (id) => Boolean(this.dishById(id)));
       this.pruneShoppingChecks('week');
       if (!this.state.lastMenu) {
@@ -55,6 +58,10 @@ document.addEventListener('alpine:init', () => {
       }
       this.menu = this.hydrate(this.state.lastMenu);
       this.persistMenu();
+    },
+
+    destroy() {
+      clearInterval(this.todayTimer);
     },
 
     emojiFor(catId) {
@@ -271,22 +278,26 @@ document.addEventListener('alpine:init', () => {
       return { ...DEFAULT_PRICES, ...this.state.prices };
     },
 
-    shoppingIngredients(mode = this.state.view) {
-      if (mode === 'week') {
+    requiredIngredients(mode) {
+      if (mode === 'week' || mode === 'today') {
         const batches = this.plannedBatches().map(({ dish, servings }) => ({ ...dish, servings }));
         return aggregate(batches, (batch) => recipeFactor(batch.recipe, batch.servings));
       }
       return aggregate(this.menu.flatMap((s) => s.dishes), (dish) => recipeFactor(dish.recipe, this.state.persons));
     },
 
-    shoppingChecks(mode = this.state.view) {
-      return mode === 'week' ? this.state.weekChecked : this.state.checked;
+    shoppingIngredients(mode = this.state.view, stock = this.state.stock) {
+      return subtractStock(this.requiredIngredients(mode), stock);
     },
 
-    shoppingList() {
+    shoppingChecks(mode = this.state.view) {
+      return mode === 'menu' ? this.state.checked : this.state.weekChecked;
+    },
+
+    shoppingList(mode = this.state.view) {
       const prices = this.effectivePrices();
-      const checks = this.shoppingChecks();
-      return this.shoppingIngredients().map((ing) => {
+      const checks = this.shoppingChecks(mode);
+      return this.shoppingIngredients(mode).map((ing) => {
         const key = priceKey(ing);
         const userValue = this.state.prices[key];
         const defaultValue = DEFAULT_PRICES[key];
@@ -294,6 +305,7 @@ document.addEventListener('alpine:init', () => {
           ...ing,
           key,
           text: formatLine(ing),
+          stockText: ing.inStock > 0 ? formatLine({ name: 'Дома', qty: ing.inStock, unit: ing.unit }) : '',
           checked: checks[key] === ing.qty,
           cost: lineCost(ing, prices),
           isDefault: typeof userValue !== 'number' && typeof defaultValue === 'number',
@@ -301,8 +313,8 @@ document.addEventListener('alpine:init', () => {
       });
     },
 
-    shoppingGroups() {
-      return groupShopping(this.shoppingList(), DEPARTMENTS);
+    shoppingGroups(mode = this.state.view) {
+      return groupShopping(this.shoppingList(mode), DEPARTMENTS);
     },
 
     async copyShopping() {
@@ -334,12 +346,13 @@ document.addEventListener('alpine:init', () => {
       save(this.state);
     },
 
+    validShoppingChecks(mode, stock = this.state.stock) {
+      const quantities = new Map(this.shoppingIngredients(mode, stock).map((ing) => [priceKey(ing), ing.qty]));
+      return Object.fromEntries(Object.entries(this.shoppingChecks(mode)).filter(([key, qty]) => quantities.get(key) === qty));
+    },
+
     pruneShoppingChecks(mode) {
-      const checks = this.shoppingChecks(mode);
-      const quantities = new Map(this.shoppingIngredients(mode).map((ing) => [priceKey(ing), ing.qty]));
-      for (const [key, qty] of Object.entries(checks)) {
-        if (quantities.get(key) !== qty) delete checks[key];
-      }
+      this.state[mode === 'menu' ? 'checked' : 'weekChecked'] = this.validShoppingChecks(mode);
     },
 
     priceFor(key) {

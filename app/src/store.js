@@ -2,6 +2,7 @@
 // Один ключ, один JSON. Любая дрянь в parsed → дефолты.
 
 import { sanitizeWeek } from './week.js';
+import { stockQuantity } from './shopping.js';
 
 const KEY = 'menu_gen_v1';
 const DEFAULT_PERSONS = 2;
@@ -20,6 +21,7 @@ const empty = () => ({
   week: {},
   weekChecked: {},
   weekHistory: [],
+  stock: {},
   view: 'menu',
   prices: {}, // ключ "name__unit" → число (₽ за 1 единицу)
 });
@@ -76,6 +78,18 @@ function sanitizeChecked(checked) {
   return Object.fromEntries(Object.entries(checked).filter(([, qty]) => Number.isFinite(qty) && qty >= 0));
 }
 
+function sanitizeStock(stock) {
+  if (!stock || typeof stock !== 'object' || Array.isArray(stock)) return {};
+  const entries = [];
+  for (const [key, value] of Object.entries(stock)) {
+    const split = key.lastIndexOf('__');
+    if (split < 1) continue;
+    const amount = stockQuantity(value, key.slice(split + 2));
+    if (amount > 0) entries.push([key, amount]);
+  }
+  return Object.fromEntries(entries);
+}
+
 function sanitizeWeekHistory(history) {
   if (!Array.isArray(history)) return [];
   const entries = new Map();
@@ -108,7 +122,8 @@ export function load() {
       week: sanitizeWeek(parsed.week),
       weekChecked: sanitizeChecked(parsed.weekChecked),
       weekHistory: sanitizeWeekHistory(parsed.weekHistory),
-      view: parsed.view === 'week' ? 'week' : 'menu',
+      stock: sanitizeStock(parsed.stock),
+      view: parsed.view === 'week' || parsed.view === 'today' ? parsed.view : 'menu',
       prices: sanitizePrices(parsed.prices),
     };
   } catch {

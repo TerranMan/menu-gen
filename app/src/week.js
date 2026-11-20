@@ -23,6 +23,28 @@ export const MEALS = DAYS.flatMap((day) => MEAL_TYPES.map((type) => ({
 })));
 const mealOrder = new Map(MEALS.map((meal, index) => [meal.id, index]));
 
+export function localDayId(date) {
+  return DAYS[(date.getDay() + 6) % 7].id;
+}
+
+export function formatWeekSchedule(week, dishName) {
+  const sections = [];
+  for (const day of DAYS) {
+    const lines = [];
+    for (const meal of MEALS.filter((item) => item.dayId === day.id)) {
+      const dishes = (week[meal.id] ?? []).map(({ dishId, from }) => {
+        const name = dishName(dishId);
+        if (!name) return null;
+        const source = MEALS[mealOrder.get(from)];
+        return source ? `${name} (из готовой партии · ${source.label})` : name;
+      }).filter(Boolean);
+      if (dishes.length) lines.push(`${meal.name} — ${dishes.join(', ')}`);
+    }
+    if (lines.length) sections.push([day.name, ...lines].join('\n'));
+  }
+  return sections.join('\n\n');
+}
+
 const MEAL_CATEGORIES = {
   breakfast: [['breakfasts'], ['bakery', 'fruits_vegetables']],
   lunch: [['soups', 'dishes', 'meat'], ['salads', 'garnishes']],

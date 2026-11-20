@@ -1,10 +1,12 @@
 import {
   addToMeal, cookingBatches, DAYS, distributeMenu, earlierBatches,
-  fillEmptyMeals, MEALS, removeFromMeal, sanitizeWeek,
+  fillEmptyMeals, formatWeekSchedule, localDayId, MEALS, removeFromMeal, sanitizeWeek,
 } from './week.js';
+import { shoppingText } from './shopping.js';
 import { save } from './store.js';
 
 const historyDate = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short' });
+const todayDate = new Intl.DateTimeFormat('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
 
 function searchable(text) {
   return text.toLocaleLowerCase('ru').replaceAll('ё', 'е');
@@ -15,6 +17,8 @@ export function planner() {
     view: 'menu',
     days: DAYS,
     dayId: DAYS[0].id,
+    todayTimestamp: Date.now(),
+    todayTimer: null,
     catalogQuery: '',
     catalogCategory: '',
     catalogTarget: null,
@@ -22,11 +26,14 @@ export function planner() {
     plannerMessage: '',
     weekStorageError: '',
     archiveName: '',
+    shareText: '',
+    shareMessage: '',
 
     showView(view) {
       this.catalogTarget = null;
       this.view = view;
       if (view === 'catalog') return;
+      if (view === 'today') this.refreshToday();
       this.state.view = view;
       this.copyMessage = '';
       this.copyText = '';
@@ -75,8 +82,28 @@ export function planner() {
       return this.days.find((day) => day.id === this.dayId);
     },
 
-    currentMeals() {
-      return MEALS.filter((meal) => meal.dayId === this.dayId);
+    currentMeals(dayId = this.dayId) {
+      return MEALS.filter((meal) => meal.dayId === dayId);
+    },
+
+    refreshToday() {
+      const now = new Date();
+      if (now.toDateString() !== new Date(this.todayTimestamp).toDateString()) {
+        this.todayTimestamp = now.getTime();
+      }
+    },
+
+    todayMeals() {
+      return this.currentMeals(localDayId(new Date(this.todayTimestamp)));
+    },
+
+    todayLabel() {
+      return todayDate.format(this.todayTimestamp);
+    },
+
+    openTodayInWeek() {
+      this.dayId = localDayId(new Date(this.todayTimestamp));
+      this.showView('week');
     },
 
     mealLabel(id) {
@@ -156,6 +183,39 @@ export function planner() {
 
     hasWeekPlan() {
       return Object.keys(this.state.week).length > 0;
+    },
+
+    openWeekShare() {
+      if (!this.hasWeekPlan()) return;
+      const schedule = formatWeekSchedule(this.state.week, (id) => this.dishById(id)?.name);
+      const shopping = shoppingText(this.shoppingGroups('week'));
+      this.shareText = `Меню на неделю · ${this.state.persons} чел.\n\n${schedule}\n\nПокупки\n${shopping || 'Всё нужное есть дома.'}`;
+      this.shareMessage = '';
+      this.$refs.shareDialog.showModal();
+    },
+
+    canShareWeek() {
+      return typeof navigator.share === 'function' && (!navigator.canShare || navigator.canShare({ text: this.shareText }));
+    },
+
+    async shareWeek() {
+      this.shareMessage = '';
+      try {
+        await navigator.share({ text: this.shareText });
+      } catch (error) {
+        if (error.name !== 'AbortError') this.shareMessage = 'Системное меню недоступно. Скопируйте текст кнопкой ниже.';
+      }
+    },
+
+    async copyWeek() {
+      try {
+        await navigator.clipboard.writeText(this.shareText);
+        this.shareMessage = 'Меню и покупки скопированы.';
+      } catch {
+        this.$refs.shareField.focus();
+        this.$refs.shareField.select();
+        this.shareMessage = 'Текст выделен. Его можно скопировать вручную.';
+      }
     },
 
     historyLabel(entry) {

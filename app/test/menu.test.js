@@ -3,9 +3,12 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import YAML from 'yaml';
 import { generateMenu, regenerateSlot } from '../src/generator.js';
-import { aggregate, groupShopping, recipeFactor, shoppingText, totalCost } from '../src/shopping.js';
+import { aggregate, groupShopping, recipeFactor, shoppingText, subtractStock, totalCost } from '../src/shopping.js';
 import { load } from '../src/store.js';
-import { addToMeal, cookingBatches, distributeMenu, fillEmptyMeals, removeFromMeal, sanitizeWeek } from '../src/week.js';
+import {
+  addToMeal, cookingBatches, distributeMenu, fillEmptyMeals,
+  formatWeekSchedule, localDayId, removeFromMeal, sanitizeWeek,
+} from '../src/week.js';
 
 const category = {
   id: 'breakfasts',
@@ -101,6 +104,7 @@ test('saved menus and shopping checks are sanitized without dropping valid prefe
         blocks: ['oladi'],
         lastMenu: [null, { categoryId: 'bakery' }, { categoryId: 'breakfasts', dishIds: ['blini', 1, 'blini'] }],
         checked: { 'яйцо__шт': 2, 'соль__по вкусу': 0, invalid: -1 },
+        stock: { 'картофель__г': 120.26, 'яйцо__шт': 2.9, 'соль__по вкусу': 1, invalid: 4 },
         prices: { 'яйцо__шт': 18, 'квас__шт': 120, 'картофель__шт': 10, 'картофель__г': 0.14 },
       }),
     },
@@ -117,6 +121,7 @@ test('saved menus and shopping checks are sanitized without dropping valid prefe
     week: {},
     weekChecked: {},
     weekHistory: [],
+    stock: { 'картофель__г': 120.3, 'яйцо__шт': 2 },
     view: 'menu',
     prices: { 'яйцо__шт': 18, 'квас__мл': 0.12, 'картофель__г': 0.14 },
   });
@@ -179,4 +184,31 @@ test('copied shopping list keeps store departments and checkmarks', () => {
     { name: 'Молочное', ingredients: ['молоко'] },
   ]);
   assert.equal(shoppingText(groups), 'Овощи и зелень\n☐ укроп — 1 пучок\n\nМолочное\n✓ молоко — 300 мл');
+});
+
+test('local weekday and shared schedule preserve cooking and repeat order', () => {
+  assert.equal(localDayId(new Date(2026, 10, 22)), 'sun');
+  assert.equal(localDayId(new Date(2026, 10, 23)), 'mon');
+  const week = {
+    'tue-lunch': [{ dishId: 'borshch', from: 'mon-lunch' }],
+    'mon-lunch': [{ dishId: 'borshch', from: null }, { dishId: 'unknown', from: null }],
+  };
+  assert.equal(formatWeekSchedule(week, (id) => ({ borshch: 'Борщ' })[id]),
+    'Понедельник\nОбед — Борщ\n\nВторник\nОбед — Борщ (из готовой партии · Пн · обед)');
+});
+
+test('stock deducts only the matching units and covered products leave the shopping list', () => {
+  const ingredients = [
+    { name: 'картофель', qty: 200.3, unit: 'г' },
+    { name: 'яйцо', qty: 2, unit: 'шт' },
+    { name: 'соль', qty: 0, unit: 'по вкусу' },
+    { name: 'молоко', qty: 120, unit: 'мл' },
+  ];
+  assert.deepEqual(subtractStock(ingredients, {
+    'картофель__г': 120.2, 'яйцо__шт': 3, 'соль__по вкусу': 5, 'молоко__г': 100,
+  }), [
+    { name: 'картофель', qty: 80.1, unit: 'г', inStock: 120.2 },
+    ingredients[2],
+    { ...ingredients[3], inStock: 0 },
+  ]);
 });

@@ -10,7 +10,7 @@
     <title>Генератор меню</title>
   </head>
   <body>
-    <div class="app" x-data="menuApp" x-cloak>
+    <div class="app" x-data="menuApp" x-cloak @focus.window="refreshToday()">
       <header class="top">
         <h1>🍽️ Меню на неделю</h1>
         <div class="persons" role="group" aria-label="Количество персон">
@@ -38,6 +38,7 @@
 
       <nav class="view-nav" x-ref="viewNav" aria-label="Разделы меню">
         <button type="button" :aria-pressed="view === 'menu'" @click="showView('menu')">Подборка</button>
+        <button type="button" :aria-pressed="view === 'today'" @click="showView('today')">Сегодня</button>
         <button type="button" :aria-pressed="view === 'week'" @click="showView('week')">По дням</button>
         <button type="button" :aria-pressed="view === 'catalog'" @click="showView('catalog')">Каталог</button>
         <a href="#shopping" x-show="view !== 'catalog'" @click="$refs.shopping.open = true">Покупки</a>
@@ -148,6 +149,39 @@
       </template>
       </div>
 
+      <template x-if="view === 'today'">
+        <section class="today-view" aria-labelledby="today-heading">
+          <div class="view-heading">
+            <div>
+              <h2 id="today-heading">Сегодня</h2>
+              <span class="item-meta today-date" x-text="todayLabel()"></span>
+            </div>
+            <button class="btn" type="button" @click="openTodayInWeek()">Открыть день в плане</button>
+          </div>
+          <template x-for="meal in todayMeals()" :key="meal.id">
+            <section class="meal-block" :aria-labelledby="`today-${meal.id}`">
+              <h3 :id="`today-${meal.id}`" x-text="meal.name"></h3>
+              <p class="view-status" x-show="!mealEntries(meal.id).length">В плане пока пусто.</p>
+              <ul class="meal-dishes">
+                <template x-for="entry in mealEntries(meal.id)" :key="entry.dishId">
+                  <li>
+                    <div>
+                      <button type="button" class="text-button"
+                        @click="openRecipe(entry.dish, portionCount(entry.from ?? meal.id, entry.dishId))"
+                        x-text="entry.dish.name"></button>
+                      <span class="item-meta" x-text="mealDishNote(meal.id, entry)"></span>
+                      <span class="item-meta"
+                        x-show="entry.from || recipeYield(entry.dish, portionCount(meal.id, entry.dishId)) > state.persons"
+                        x-text="`Подать сегодня · ${formatPortions(state.persons)}`"></span>
+                    </div>
+                  </li>
+                </template>
+              </ul>
+            </section>
+          </template>
+        </section>
+      </template>
+
       <template x-if="view === 'week'">
         <section class="week-view" aria-label="План на неделю">
           <div class="view-heading">
@@ -158,6 +192,7 @@
             <button class="btn primary" type="button" @click="fillSchedule()">Заполнить пустые приёмы</button>
             <button class="btn" type="button" @click="distributeSelection()">Разложить подборку</button>
             <button class="btn" type="button" @click="openNewWeek()">Новая неделя</button>
+            <button class="btn" type="button" :disabled="!hasWeekPlan()" @click="openWeekShare()">Поделиться неделей</button>
           </div>
           <p class="view-status" aria-live="polite" x-show="plannerMessage" x-text="plannerMessage"></p>
           <div class="day-nav" role="group" aria-label="Дни недели">
@@ -256,23 +291,30 @@
               x-text="`+ ${weekTotal().missing} без цены`"></span>
           </summary>
           <div class="shopping-toolbar">
-            <span class="item-meta" x-text="state.view === 'week' ? 'По плану недели' : 'По подборке'"></span>
-            <button class="btn" type="button" :disabled="!shoppingList().length" @click="copyShopping()">Копировать список</button>
+            <span class="item-meta" x-text="state.view === 'menu' ? 'По подборке' : 'По плану недели'"></span>
+            <div class="shopping-actions">
+              <button class="btn" type="button" @click="openStock()">Запасы дома</button>
+              <button class="btn" type="button" :disabled="!shoppingList().length" @click="copyShopping()">Копировать список</button>
+            </div>
           </div>
           <p class="view-status" aria-live="polite" x-show="copyMessage" x-text="copyMessage"></p>
           <textarea class="field copy-field" aria-label="Текст списка покупок" x-show="copyText" x-ref="copyField"
             :value="copyText" readonly></textarea>
-          <p class="view-status" x-show="!shoppingList().length">Добавьте блюда, чтобы составить список.</p>
+          <p class="view-status" x-show="!shoppingList().length"
+            x-text="requiredIngredients(state.view).length ? 'По этому меню всё есть дома.' : 'Добавьте блюда, чтобы составить список.'"></p>
           <template x-for="group in shoppingGroups()" :key="group.name">
             <section class="shopping-group">
               <h3 x-text="group.name"></h3>
               <ul class="shopping">
                 <template x-for="ing in group.items" :key="ing.key">
               <li>
-                <label class="shopping-item">
-                  <input type="checkbox" :checked="ing.checked" @change="setChecked(ing, $event.target.checked)" />
-                  <span class="shopping-name" x-text="ing.text"></span>
-                </label>
+                <div>
+                  <label class="shopping-item">
+                    <input type="checkbox" :checked="ing.checked" @change="setChecked(ing, $event.target.checked)" />
+                    <span class="shopping-name" x-text="ing.text"></span>
+                  </label>
+                  <span class="item-meta stock-note" x-show="ing.stockText" x-text="ing.stockText"></span>
+                </div>
                 <div class="shopping-price" x-show="ing.unit !== 'по вкусу'">
                   <input
                     type="number"
@@ -372,6 +414,59 @@
             <button class="btn" type="button" @click="copyHistoryWeek(entry)">Скопировать в новую неделю</button>
           </details>
         </template>
+      </dialog>
+
+      <dialog class="week-dialog" x-ref="stockDialog" aria-labelledby="stock-title">
+        <div class="view-heading">
+          <h2 id="stock-title">Запасы дома</h2>
+          <button type="button" class="icon-btn" aria-label="Закрыть" autofocus @click="$refs.stockDialog.close()">×</button>
+        </div>
+        <form class="stock-form" @submit.prevent="updateStock(stockKey, stockAmount)">
+          <label>
+            Продукт
+            <select class="field" :value="stockKey" @change="selectStock($event.target.value)" required>
+              <option value="">Выберите продукт</option>
+              <template x-for="group in stockGroups" :key="group.name">
+                <optgroup :label="group.name">
+                  <template x-for="item in group.items" :key="item.key">
+                    <option :value="item.key" x-text="`${item.name} · ${item.unit}`"></option>
+                  </template>
+                </optgroup>
+              </template>
+            </select>
+          </label>
+          <label>
+            <span x-text="stockUnit() ? `Остаток · ${stockUnit()}` : 'Остаток'"></span>
+            <input class="field" type="number" inputmode="decimal" min="0"
+              :step="['г', 'мл'].includes(stockUnit()) ? '0.1' : '1'" x-model="stockAmount" :disabled="!stockKey" required />
+          </label>
+          <button class="btn primary" type="submit" :disabled="!stockKey">Сохранить остаток</button>
+        </form>
+        <p class="view-status" role="status" x-show="stockMessage" x-text="stockMessage"></p>
+        <ul class="stock-items">
+          <template x-for="item in stockedItems()" :key="item.key">
+            <li>
+              <button type="button" class="text-button" @click="selectStock(item.key)"
+                :aria-label="`Изменить остаток · ${item.name}`" x-text="item.text"></button>
+              <button type="button" class="icon-btn" :aria-label="`Убрать из запасов · ${item.name}`"
+                @click="updateStock(item.key, 0)">×</button>
+            </li>
+          </template>
+        </ul>
+      </dialog>
+
+      <dialog class="week-dialog" x-ref="shareDialog" aria-labelledby="share-title">
+        <div class="view-heading">
+          <h2 id="share-title">Поделиться неделей</h2>
+          <button type="button" class="icon-btn" aria-label="Закрыть" autofocus @click="$refs.shareDialog.close()">×</button>
+        </div>
+        <textarea class="field copy-field week-share-field" aria-label="Расписание и список покупок"
+          x-ref="shareField" :value="shareText" readonly></textarea>
+        <div class="week-actions">
+          <button type="button" class="btn primary" @click="copyWeek()">Копировать неделю</button>
+          <button type="button" class="btn" x-show="canShareWeek()" @click="shareWeek()">Отправить…</button>
+        </div>
+        <p class="view-status" role="status" x-show="shareMessage" x-text="shareMessage"></p>
       </dialog>
 
       <dialog class="recipe-dialog" x-ref="recipeDialog" aria-labelledby="preview-title" @close="recipePreview = null">

@@ -90,6 +90,23 @@ export function formatLine(ing) {
   return `${ing.name} — ${fmt.format(ing.qty)} ${ing.unit}`;
 }
 
+export function stockQuantity(qty, unit) {
+  if (!Number.isFinite(qty) || qty <= 0) return 0;
+  if (UPWARD_UNITS.has(unit)) return Math.floor(qty);
+  if (unit !== 'г' && unit !== 'мл') return 0;
+  const rounded = Math.round(qty * 10) / 10;
+  return Number.isFinite(rounded) ? rounded : 0;
+}
+
+export function subtractStock(ingredients, stock) {
+  return ingredients.flatMap((ingredient) => {
+    const inStock = stockQuantity(stock[priceKey(ingredient)], ingredient.unit);
+    if (ingredient.unit === 'по вкусу') return [ingredient];
+    const qty = scaleQty(Math.max(0, ingredient.qty - inStock), ingredient.unit, 1);
+    return qty > 0 ? [{ ...ingredient, qty, inStock }] : [];
+  });
+}
+
 export function groupShopping(list, departments) {
   const groups = departments.map(({ name }) => ({ name, items: [] }));
   const other = { name: 'Прочее', items: [] };

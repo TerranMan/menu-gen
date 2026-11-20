@@ -264,3 +264,84 @@ test('autofill preserves a manual meal and history copies the saved week with a 
   assert.deepEqual((await stored()).week, changed.week);
   assert.equal((await stored()).weekHistory.length, 2);
 });
+
+test('Today shows the current local weekday, portions to serve and the original cooking batch', async (t) => {
+  const { page } = await openMenu(t, {
+    version: 1,
+    week: {
+      'mon-lunch': [{ dishId: 'borshch', from: null }],
+      'tue-lunch': [{ dishId: 'borshch', from: 'mon-lunch' }],
+      'tue-dinner': [{ dishId: 'utka', from: null }],
+    },
+  });
+  await page.clock.setFixedTime(new Date('2026-11-24T12:00:00Z'));
+  await page.getByRole('button', { name: 'Сегодня', exact: true }).click();
+  const today = page.getByRole('region', { name: 'Сегодня', exact: true });
+  await today.getByText(/вторник, 24 ноября/i).waitFor();
+  const lunch = today.getByRole('region', { name: 'Обед', exact: true });
+  assert.equal(await lunch.getByText('Из готовой партии · Пн · обед').isVisible(), true);
+  assert.equal(await lunch.getByText('Подать сегодня · 2 порции').isVisible(), true);
+  assert.equal(await today.getByText('Готовим · 6 порций').isVisible(), true);
+  await lunch.getByRole('button', { name: 'Борщ', exact: true }).click();
+  const recipe = page.getByRole('dialog', { name: 'Борщ' });
+  await recipe.getByText(/Выход — 4 порции/).waitFor();
+  await recipe.getByRole('button', { name: 'Закрыть рецепт' }).click();
+  await page.getByRole('button', { name: 'Открыть день в плане' }).click();
+  assert.equal(await page.getByRole('button', { name: 'Вторник' }).getAttribute('aria-pressed'), 'true');
+});
+
+test('pantry reduces shopping quantities and cost, persists, and supports removing a stock entry', async (t) => {
+  const { page } = await openMenu(t, {
+    version: 1, view: 'week', week: { 'mon-lunch': [{ dishId: 'borshch', from: null }] },
+  });
+  const previous = page.getByRole('checkbox', { name: 'мясо говядина — 133,3 г', exact: true });
+  await previous.check();
+  const previousTotal = await page.locator('#shopping summary').innerText();
+  await page.getByRole('button', { name: 'Запасы дома' }).click();
+  const stock = page.getByRole('dialog', { name: 'Запасы дома' });
+  await stock.getByRole('combobox', { name: 'Продукт' }).selectOption('мясо говядина__г');
+  await stock.getByRole('spinbutton').fill('100');
+  await stock.getByRole('button', { name: 'Сохранить остаток' }).click();
+  await stock.getByText('Остаток сохранён.').waitFor();
+  await stock.getByRole('button', { name: 'Закрыть', exact: true }).click();
+  const remaining = page.getByRole('checkbox', { name: 'мясо говядина — 33,3 г', exact: true });
+  assert.equal(await remaining.isChecked(), false);
+  assert.notEqual(await page.locator('#shopping summary').innerText(), previousTotal);
+  await page.reload();
+  await remaining.waitFor();
+  await page.getByRole('button', { name: 'Запасы дома' }).click();
+  await stock.getByRole('button', { name: 'Убрать из запасов · мясо говядина' }).click();
+  await stock.getByRole('button', { name: 'Закрыть', exact: true }).click();
+  await previous.waitFor();
+});
+
+test('sharing a week sends the same schedule and pantry-adjusted shopping text shown in the preview', async (t) => {
+  const { page } = await openMenu(t, {
+    version: 1,
+    view: 'week',
+    week: {
+      'mon-lunch': [{ dishId: 'borshch', from: null }],
+      'tue-lunch': [{ dishId: 'borshch', from: 'mon-lunch' }],
+    },
+    stock: { 'картофель__г': 200, 'мясо говядина__г': 100 },
+  });
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: async (text) => { window.copiedWeek = text; } },
+    });
+    Object.defineProperty(navigator, 'share', {
+      value: async ({ text }) => { window.sharedWeek = text; },
+    });
+    Object.defineProperty(navigator, 'canShare', { value: () => true });
+  });
+  await page.getByRole('button', { name: 'Поделиться неделей' }).click();
+  const share = page.getByRole('dialog', { name: 'Поделиться неделей' });
+  const preview = await share.getByRole('textbox', { name: 'Расписание и список покупок' }).inputValue();
+  assert.match(preview, /Вторник\nОбед — Борщ \(из готовой партии · Пн · обед\)/);
+  assert.match(preview, /Покупки\n[\s\S]+мясо говядина — 166,7 г/);
+  assert.ok(!preview.includes('картофель'));
+  await share.getByRole('button', { name: 'Копировать неделю' }).click();
+  await share.getByText('Меню и покупки скопированы.').waitFor();
+  await share.getByRole('button', { name: 'Отправить…' }).click();
+  assert.deepEqual(await page.evaluate(() => [window.copiedWeek, window.sharedWeek]), [preview, preview]);
+});

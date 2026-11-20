@@ -190,6 +190,51 @@ header.top h1 {
   margin-bottom: 12px;
 }
 
+.shopping-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.stock-note {
+  margin-left: 24px;
+}
+
+.stock-form,
+.stock-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.stock-form {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  align-items: end;
+}
+
+.stock-form label {
+  min-width: 0;
+  font-size: 14px;
+}
+
+.stock-form button {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.stock-items {
+  padding: 0;
+  margin: 8px 0 0;
+  list-style: none;
+}
+
+.stock-items li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 0;
+  border-top: 1px solid var(--border);
+}
+
 .view-heading h2 {
   margin: 0;
   font-size: 19px;
@@ -214,9 +259,14 @@ header.top h1 {
   background: var(--surface);
 }
 
+.meal-block h3,
 .meal-block h4 {
   margin: 0;
   font-size: 15px;
+}
+
+.today-date::first-letter {
+  text-transform: uppercase;
 }
 
 .meal-dishes,
@@ -340,6 +390,10 @@ header.top h1 {
 .copy-field {
   width: 100%;
   min-height: 120px;
+}
+
+.week-share-field {
+  min-height: 200px;
 }
 
 .recipe-dialog,
@@ -749,6 +803,17 @@ header.top h1 {
   }
   .shopping-price {
     justify-content: flex-end;
+  }
+}
+
+@media (max-width: 380px) {
+  .view-nav {
+    gap: 2px;
+  }
+
+  .view-nav > * {
+    padding-inline: 1px;
+    font-size: 12px;
   }
 }
 
