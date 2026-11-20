@@ -1,16 +1,18 @@
 // localStorage с версионированием схемы и санитацией на чтении.
 // Один ключ, один JSON. Любая дрянь в parsed → дефолты.
 
-import { sanitizeWeek } from './week.js';
+import { isWeekStart, localWeekStart, sanitizeWeek } from './week.js';
+import { sanitizeBatchRecords } from './batch-storage.js';
 import { stockQuantity } from './shopping.js';
 
-const KEY = 'menu_gen_v1';
+const LEGACY_KEY = 'menu_gen_v1';
+export const STORAGE_KEY = 'menu_gen_v2';
 const DEFAULT_PERSONS = 2;
 const MIN_PERSONS = 1;
 const MAX_PERSONS = 12;
 
 const empty = () => ({
-  version: 1,
+  version: 2,
   persons: DEFAULT_PERSONS,
   picks: {}, // categoryId → integer ≥ 0 (override default cat.pick)
   favorites: [],
@@ -19,6 +21,8 @@ const empty = () => ({
   lastMenu: null,
   checked: {}, // ключ списка покупок → количество на момент отметки
   week: {},
+  weekStart: null,
+  batchRecords: {},
   weekChecked: {},
   weekHistory: [],
   stock: {},
@@ -42,7 +46,7 @@ function sanitizePrices(p) {
   if (!p || typeof p !== 'object' || Array.isArray(p)) return {};
   const prices = Object.fromEntries(
     Object.entries(p).filter(
-      ([k, v]) => typeof k === 'string' && typeof v === 'number' && Number.isFinite(v) && v > 0
+      ([k, v]) => typeof k === 'string' && typeof v === 'number' && Number.isFinite(v) && v >= 0
     )
   );
   for (const [oldKey, newKey, amount] of [
@@ -98,46 +102,104 @@ function sanitizeWeekHistory(history) {
     const week = sanitizeWeek(entry.week);
     if (!Object.keys(week).length) continue;
     const name = typeof entry.name === 'string' ? entry.name.trim().slice(0, 60) : '';
-    entries.set(entry.id, { id: entry.id, name, persons: sanitizePersons(entry.persons), week });
+    const weekStart = isWeekStart(entry.weekStart) ? entry.weekStart : null;
+    entries.set(entry.id, { id: entry.id, name, persons: sanitizePersons(entry.persons), week, ...(weekStart && { weekStart }) });
   }
   return [...entries.values()].sort((a, b) => b.id - a.id);
 }
 
+function parse(raw) {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function read(parsed) {
+  if (![1, 2].includes(parsed?.version)) return empty();
+  const blocks = sanitizeIds(parsed.blocks);
+  const week = sanitizeWeek(parsed.week);
+  return {
+    version: 2,
+    persons: sanitizePersons(parsed.persons),
+    picks: sanitizePicks(parsed.picks),
+    favorites: sanitizeIds(parsed.favorites).filter((id) => !blocks.includes(id)),
+    blocks,
+    pins: sanitizeIds(parsed.pins).filter((id) => !blocks.includes(id)),
+    lastMenu: sanitizeMenu(parsed.lastMenu),
+    checked: sanitizeChecked(parsed.checked),
+    week,
+    weekStart: isWeekStart(parsed.weekStart) ? parsed.weekStart : (Object.keys(week).length ? localWeekStart() : null),
+    batchRecords: sanitizeBatchRecords(parsed.batchRecords, week),
+    weekChecked: sanitizeChecked(parsed.weekChecked),
+    weekHistory: sanitizeWeekHistory(parsed.weekHistory),
+    stock: sanitizeStock(parsed.stock),
+    view: parsed.view === 'week' || parsed.view === 'today' ? parsed.view : 'menu',
+    prices: sanitizePrices(parsed.prices),
+  };
+}
+
 export function load() {
   try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return empty();
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object' || parsed.version !== 1) return empty();
-    const blocks = sanitizeIds(parsed.blocks);
-    return {
-      version: 1,
-      persons: sanitizePersons(parsed.persons),
-      picks: sanitizePicks(parsed.picks),
-      favorites: sanitizeIds(parsed.favorites).filter((id) => !blocks.includes(id)),
-      blocks,
-      pins: sanitizeIds(parsed.pins).filter((id) => !blocks.includes(id)),
-      lastMenu: sanitizeMenu(parsed.lastMenu),
-      checked: sanitizeChecked(parsed.checked),
-      week: sanitizeWeek(parsed.week),
-      weekChecked: sanitizeChecked(parsed.weekChecked),
-      weekHistory: sanitizeWeekHistory(parsed.weekHistory),
-      stock: sanitizeStock(parsed.stock),
-      view: parsed.view === 'week' || parsed.view === 'today' ? parsed.view : 'menu',
-      prices: sanitizePrices(parsed.prices),
-    };
+    return read(parse(localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_KEY)));
   } catch {
     return empty();
   }
 }
 
-export function save(state) {
+const groups = [
+  ['persons'], ['picks', 'blocks', 'favorites', 'pins', 'lastMenu'],
+  ['week', 'weekStart', 'batchRecords', 'weekHistory'],
+];
+const maps = ['checked', 'weekChecked', 'stock', 'prices'];
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+export const snapshot = (value) => JSON.parse(JSON.stringify(value));
+
+function writeChanges(base, draft) {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  const legacy = stored === null ? localStorage.getItem(LEGACY_KEY) : null;
+  const parsed = parse(stored ?? legacy);
+  const latest = read(parsed);
+  const next = { ...latest };
+  if (draft.view !== base.view) next.view = draft.view;
+  for (const group of groups) {
+    if (!group.some((key) => !same(base[key], draft[key]))) continue;
+    if (group.some((key) => !same(base[key], latest[key]) && !same(draft[key], latest[key]))) {
+      return { state: latest, error: 'conflict' };
+    }
+    for (const key of group) next[key] = draft[key];
+  }
+  for (const field of maps) {
+    next[field] = { ...latest[field] };
+    for (const key of new Set([...Object.keys(base[field]), ...Object.keys(draft[field])])) {
+      if (base[field][key] === draft[field][key]) continue;
+      if (base[field][key] !== latest[field][key] && draft[field][key] !== latest[field][key]) {
+        return { state: latest, error: 'conflict' };
+      }
+      if (Object.hasOwn(draft[field], key)) next[field][key] = draft[field][key];
+      else delete next[field][key];
+    }
+  }
+  // Старая версия PWA в открытой вкладке продолжит писать только в свой ключ.
+  if (!same(latest, next) || legacy !== null || (Object.keys(latest.week).length && !isWeekStart(parsed?.weekStart))) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      return { state: latest, error: 'unavailable' };
+    }
+  }
+  return { state: next, error: '' };
+}
+
+export async function saveChanges(base, draft) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(state));
-    return true;
-  } catch (e) {
-    console.warn('Не удалось сохранить state:', e);
-    return false;
+    const locks = globalThis.navigator?.locks;
+    return locks
+      ? await locks.request(STORAGE_KEY, () => writeChanges(base, draft))
+      : writeChanges(base, draft);
+  } catch {
+    return { state: null, error: 'unavailable' };
   }
 }
 

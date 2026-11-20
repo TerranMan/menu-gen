@@ -10,7 +10,7 @@
     <title>Генератор меню</title>
   </head>
   <body>
-    <div class="app" x-data="menuApp" x-cloak @focus.window="refreshToday()">
+    <div class="app" x-data="menuApp" x-cloak @focus.window="refreshToday()" @storage.window="syncStorage($event)">
       <header class="top">
         <h1>🍽️ Меню на неделю</h1>
         <div class="persons" role="group" aria-label="Количество персон">
@@ -45,6 +45,7 @@
       </nav>
 
       <main>
+      <p class="view-status warning" role="alert" x-show="storageMessage" x-text="storageMessage"></p>
       <div x-show="view === 'menu'">
       <template x-for="slot in menu" :key="slot.categoryId">
         <section class="category">
@@ -173,8 +174,11 @@
               <h2 id="today-heading">Сегодня</h2>
               <span class="item-meta today-date" x-text="todayLabel()"></span>
             </div>
-            <button class="btn" type="button" @click="openTodayInWeek()">Открыть день в плане</button>
+            <button class="btn" type="button" @click="openTodayInWeek()"
+              x-text="isCurrentWeek() ? 'Открыть день в плане' : 'Открыть план недели'"></button>
           </div>
+          <p class="view-status" x-show="!isCurrentWeek()"
+            x-text="`На сегодня плана нет. Открытый план — ${weekLabel()}.`"></p>
           <template x-for="meal in todayMeals()" :key="meal.id">
             <section class="meal-block" :aria-labelledby="`today-${meal.id}`">
               <h3 :id="`today-${meal.id}`" x-text="meal.name"></h3>
@@ -187,10 +191,15 @@
                         @click="openRecipe(entry.dish, portionCount(entry.from ?? meal.id, entry.dishId))"
                         x-text="entry.dish.name"></button>
                       <span class="item-meta" x-text="mealDishNote(meal.id, entry)"></span>
+                      <span class="item-meta" :class="{ warning: storageNote(meal.id, entry).warning }"
+                        x-text="storageNote(meal.id, entry).text"></span>
                       <span class="item-meta"
                         x-show="entry.from || recipeYield(entry.dish, portionCount(meal.id, entry.dishId)) > state.persons"
                         x-text="`Подать сегодня · ${formatPortions(state.persons)}`"></span>
                     </div>
+                    <button type="button" class="btn" x-show="!entry.from || batchRecord(entry.from, entry.dishId)"
+                      @click="openBatch(entry.from ?? meal.id, entry.dishId)"
+                      x-text="batchRecord(entry.from ?? meal.id, entry.dishId) ? 'Хранение' : 'Отметить готовку'"></button>
                   </li>
                 </template>
               </ul>
@@ -202,7 +211,10 @@
       <template x-if="view === 'week'">
         <section class="week-view" aria-label="План на неделю">
           <div class="view-heading">
-            <h2>План на неделю</h2>
+            <div>
+              <h2>План на неделю</h2>
+              <span class="item-meta" x-text="weekLabel()"></span>
+            </div>
             <button class="btn" type="button" @click="openHistory()">История недель</button>
           </div>
           <div class="week-actions">
@@ -214,22 +226,35 @@
           <p class="view-status" aria-live="polite" x-show="plannerMessage" x-text="plannerMessage"></p>
           <div class="day-nav" role="group" aria-label="Дни недели">
             <template x-for="day in days" :key="day.id">
-              <button type="button" :aria-label="day.name" :aria-pressed="dayId === day.id" @click="dayId = day.id"
+              <button type="button" :aria-label="day.name" :title="dayLabel(day)" :aria-pressed="dayId === day.id" @click="dayId = day.id"
                 x-text="day.short"></button>
             </template>
           </div>
-          <h3 class="day-heading" x-text="activeDay().name"></h3>
+          <h3 class="day-heading" x-text="`${activeDay().name}, ${dayLabel(activeDay())}`"></h3>
           <template x-for="meal in currentMeals()" :key="meal.id">
             <section class="meal-block" :aria-labelledby="`meal-${meal.id}`">
               <h4 :id="`meal-${meal.id}`" x-text="meal.name"></h4>
               <ul class="meal-dishes">
                 <template x-for="entry in mealEntries(meal.id)" :key="entry.dishId">
-                  <li>
+                  <li class="planned-dish">
                     <div>
                       <button type="button" class="text-button"
                         @click="openRecipe(entry.dish, portionCount(entry.from ?? meal.id, entry.dishId))"
                         x-text="entry.dish.name"></button>
                       <span class="item-meta" x-text="mealDishNote(meal.id, entry)"></span>
+                      <span class="item-meta" :class="{ warning: storageNote(meal.id, entry).warning }"
+                        x-text="storageNote(meal.id, entry).text"></span>
+                      <div class="meal-actions dish-edit-actions">
+                        <button type="button" class="btn" x-show="!entry.from"
+                          @click="openBatch(meal.id, entry.dishId)"
+                          x-text="batchRecord(meal.id, entry.dishId) ? 'Хранение' : 'Отметить готовку'"></button>
+                        <button type="button" class="btn" @click="openMove(meal.id, entry)">Перенести</button>
+                        <button type="button" class="btn" @click="openCatalog(meal.id, entry.dishId)">Заменить</button>
+                        <button type="button" class="btn" x-show="entry.from"
+                          @click="prepareSeparately(meal.id, entry.dishId)">Готовить отдельно</button>
+                        <button type="button" class="btn" x-show="canPlanFreezer(meal.id, entry)"
+                          @click="planFreezer(meal.id, entry.dishId)">Запланировать заморозку</button>
+                      </div>
                     </div>
                     <button type="button" class="icon-btn" :aria-label="`Убрать ${entry.dish.name} из приёма`"
                       @click="removeMealDish(meal.id, entry.dishId)">×</button>
@@ -238,16 +263,28 @@
               </ul>
               <div class="meal-actions">
                 <button class="btn" type="button" @click="openCatalog(meal.id)">Добавить блюдо</button>
-                <template x-if="reusableBatches(meal.id).length">
-                  <select class="field" aria-label="Из готовой партии"
-                    @change="reuseBatch(meal.id, $event.target.value); $event.target.value = ''">
-                    <option value="">Из готовой партии…</option>
-                    <template x-for="batch in reusableBatches(meal.id)" :key="batch.key">
-                      <option :value="batch.key" x-text="batch.label"></option>
-                    </template>
-                  </select>
-                </template>
               </div>
+              <template x-if="reusableBatches(meal.id).length">
+                <form class="reuse-form" x-data="{ picked: '', freeze: false }"
+                  @submit.prevent="Promise.resolve(reuseBatch(meal.id, picked, freeze)).then((saved) => { if (saved) { picked = ''; freeze = false } })">
+                  <div class="meal-actions">
+                    <select class="field" aria-label="Блюдо для повторной подачи" x-model="picked" @change="freeze = false">
+                      <option value="">Повторить блюдо…</option>
+                      <template x-for="batch in reusableBatches(meal.id)" :key="batch.key">
+                        <option :value="batch.key" x-text="batch.label"></option>
+                      </template>
+                    </select>
+                    <button class="btn" type="submit"
+                      :disabled="!reusableBatches(meal.id).some(({ key, freezer }) => key === picked && (!freezer || freeze))">
+                      Добавить подачу
+                    </button>
+                  </div>
+                  <label class="confirm-storage" x-show="reusableBatches(meal.id).find(({ key }) => key === picked)?.freezer">
+                    <input type="checkbox" x-model="freeze" />
+                    <span>Заморожу порцию после готовки</span>
+                  </label>
+                </form>
+              </template>
             </section>
           </template>
         </section>
@@ -256,11 +293,12 @@
       <template x-if="view === 'catalog'">
         <section class="catalog-view" aria-label="Каталог блюд">
           <div class="view-heading">
-            <h2 x-text="catalogTarget ? `Выбрать блюдо · ${mealLabel(catalogTarget)}` : 'Каталог блюд'"></h2>
+            <h2 x-text="catalogTarget ? `${replacement ? 'Заменить блюдо' : 'Выбрать блюдо'} · ${mealLabel(catalogTarget)}` : 'Каталог блюд'"></h2>
             <button type="button" class="btn" x-show="catalogTarget" @click="showView('week')">К расписанию</button>
           </div>
+          <p class="view-status" aria-live="polite" x-show="plannerMessage && catalogTarget" x-text="plannerMessage"></p>
           <div class="catalog-filters">
-            <input class="field" type="search" aria-label="Поиск по названию" placeholder="Поиск по названию" x-model="catalogQuery" />
+            <input class="field" type="search" aria-label="Поиск по названию" placeholder="Поиск по названию" x-ref="catalogSearch" x-model="catalogQuery" />
             <select class="field" aria-label="Категория" x-model="catalogCategory">
               <option value="">Все категории</option>
               <template x-for="category in data.categories" :key="category.id">
@@ -291,7 +329,7 @@
                 <template x-if="catalogTarget || !catalogHasDish(entry)">
                   <button type="button" class="btn" :disabled="isBlocked(entry.dish.id) || catalogHasDish(entry)"
                     @click="chooseCatalogDish(entry)"
-                    x-text="catalogHasDish(entry) ? 'Добавлено' : isBlocked(entry.dish.id) ? 'Заблокировано' : 'Добавить в меню'"></button>
+                    x-text="catalogHasDish(entry) ? 'Добавлено' : isBlocked(entry.dish.id) ? 'Заблокировано' : replacement ? 'Выбрать' : 'Добавить в меню'"></button>
                 </template>
               </li>
             </template>
@@ -301,24 +339,25 @@
 
       <div class="lists" x-show="view !== 'catalog'">
         <details id="shopping" x-ref="shopping" open>
-          <summary>
+          <summary x-ref="shoppingSummary">
             🛒 Список покупок (<span x-text="shoppingList().length"></span>) —
             <span x-text="weekTotal().text"></span>
             <span class="missing-hint" x-show="weekTotal().missing > 0"
               x-text="`+ ${weekTotal().missing} без цены`"></span>
           </summary>
           <div class="shopping-toolbar">
-            <span class="item-meta" x-text="state.view === 'menu' ? 'По подборке' : 'По плану недели'"></span>
+            <span class="item-meta" x-text="shoppingMode === 'menu' ? 'По подборке' : 'По плану недели'"></span>
             <div class="shopping-actions">
               <button class="btn" type="button" @click="openStock()">Запасы дома</button>
               <button class="btn" type="button" :disabled="!shoppingList().length" @click="copyShopping()">Копировать список</button>
             </div>
           </div>
+          <p class="item-meta" x-show="priceDate" x-text="`Базовые цены — ориентир по Москве на ${priceDate}.`"></p>
           <p class="view-status" aria-live="polite" x-show="copyMessage" x-text="copyMessage"></p>
           <textarea class="field copy-field" aria-label="Текст списка покупок" x-show="copyText" x-ref="copyField"
             :value="copyText" readonly></textarea>
           <p class="view-status" x-show="!shoppingList().length"
-            x-text="requiredIngredients(state.view).length ? 'По этому меню всё есть дома.' : 'Добавьте блюда, чтобы составить список.'"></p>
+            x-text="requiredIngredients(shoppingMode).length ? 'По этому меню всё есть дома.' : 'Добавьте блюда, чтобы составить список.'"></p>
           <template x-for="group in shoppingGroups()" :key="group.name">
             <section class="shopping-group">
               <h3 x-text="group.name"></h3>
@@ -327,7 +366,7 @@
               <li>
                 <div>
                   <label class="shopping-item">
-                    <input type="checkbox" :checked="ing.checked" @change="setChecked(ing, $event.target.checked)" />
+                    <input type="checkbox" :checked="ing.checked" @change="setChecked(ing, $event.target)" />
                     <span class="shopping-name" x-text="ing.text"></span>
                   </label>
                   <span class="item-meta stock-note" x-show="ing.stockText" x-text="ing.stockText"></span>
@@ -338,12 +377,14 @@
                     inputmode="decimal"
                     min="0"
                     step="any"
-                    :aria-label="`Цена за 1 ${ing.unit} · ${ing.name}`"
+                    :aria-label="`Цена за 1 ${priceUnit(ing.unit)} · ${ing.name}`"
                     :class="{ 'is-default': ing.isDefault }"
-                    :placeholder="`₽/${ing.unit}`"
-                    :value="priceFor(ing.key)"
-                    @input.debounce.400ms="setPrice(ing.key, $event.target.value)"
+                    :value="priceFor(ing)"
+                    @change="setPrice(ing, $event.target)"
                   />
+                  <span class="item-meta price-unit" x-text="`₽/${priceUnit(ing.unit)}`"></span>
+                  <button type="button" class="icon-btn" x-show="Object.hasOwn(state.prices, ing.key)"
+                    title="Сбросить цену" :aria-label="`Сбросить цену · ${ing.name}`" @click="updatePrice(ing, null)">↺</button>
                   <span class="shopping-cost" x-text="ing.cost != null ? `= ${ing.cost} ₽` : ''"></span>
                 </div>
               </li>
@@ -389,11 +430,72 @@
       </div>
       </main>
 
+      <dialog class="week-dialog" x-ref="moveDialog" aria-labelledby="move-title">
+        <div class="view-heading">
+          <h2 id="move-title">Перенести блюдо</h2>
+          <button type="button" class="icon-btn" aria-label="Закрыть" @click="$refs.moveDialog.close()">×</button>
+        </div>
+        <p x-text="moveTarget && dishById(moveTarget.dishId)?.name"></p>
+        <p class="item-meta" x-show="moveTarget && !moveTarget.from">Связанные подачи сдвинутся вместе с блюдом.</p>
+        <form @submit.prevent="moveDish()">
+          <label class="archive-name">
+            Новый день и приём
+            <select class="field" x-model="moveDestination" autofocus required>
+              <option value="">Выберите приём…</option>
+              <template x-for="meal in meals" :key="meal.id">
+                <option :value="meal.id" :disabled="meal.id === moveTarget?.mealId" x-text="datedMealLabel(meal)"></option>
+              </template>
+            </select>
+          </label>
+          <div class="week-actions">
+            <button type="submit" class="btn primary" :disabled="!moveDestination || savePending > 0">Перенести</button>
+          </div>
+          <p class="view-status warning" role="alert" x-show="moveMessage" x-text="moveMessage"></p>
+        </form>
+      </dialog>
+
+      <dialog class="week-dialog" x-ref="batchDialog" aria-labelledby="batch-title">
+        <div class="view-heading">
+          <h2 id="batch-title">Готовка и хранение</h2>
+          <button type="button" class="icon-btn" aria-label="Закрыть" @click="$refs.batchDialog.close()">×</button>
+        </div>
+        <p x-text="batchTarget?.dish.name"></p>
+        <form @submit.prevent="recordBatch()">
+          <label class="archive-name">
+            Когда приготовили
+            <input class="field" type="datetime-local" x-model="batchDateTime" autofocus required />
+          </label>
+          <label class="archive-name">
+            Куда убрали остатки
+            <select class="field" x-model="batchStorage" @change="batchConfirmed = false">
+              <option value="unknown">Хранение не указано</option>
+              <option value="fridge">В холодильник (до +4 °C)</option>
+              <option value="freezer">В морозилку (−18 °C или ниже)</option>
+            </select>
+          </label>
+          <label class="confirm-storage" x-show="batchStorage !== 'unknown'">
+            <input type="checkbox" x-model="batchConfirmed" />
+            <span x-text="`Сразу охладили и убрали в течение ${coolingHours()} после готовки`"></span>
+          </label>
+          <p class="item-meta" x-show="batchTarget && coolingHours() === '1 часа'">Разогревайте порцию риса только один раз.</p>
+          <div class="week-actions">
+            <button type="submit" class="btn primary" :disabled="savePending > 0">Сохранить отметку</button>
+            <button type="button" class="btn" x-show="batchTarget?.record" :disabled="savePending > 0"
+              @click="recordBatch(true)">Убрать отметку</button>
+          </div>
+          <p class="view-status warning" role="alert" x-show="batchMessage" x-text="batchMessage"></p>
+        </form>
+      </dialog>
+
       <dialog class="week-dialog" x-ref="newWeekDialog" aria-labelledby="new-week-title">
         <div class="view-heading">
           <h2 id="new-week-title">Новая неделя</h2>
           <button type="button" class="icon-btn" aria-label="Закрыть" autofocus @click="$refs.newWeekDialog.close()">×</button>
         </div>
+        <label class="archive-name">
+          Дата начала (понедельник)
+          <input class="field" type="date" x-model="nextWeekStart" />
+        </label>
         <div x-show="hasWeekPlan()">
           <p>Текущий план сохранится в истории.</p>
           <label class="archive-name">
@@ -402,8 +504,8 @@
           </label>
         </div>
         <div class="week-actions">
-          <button type="button" class="btn primary" @click="startNewWeek(false)">Начать с пустого плана</button>
-          <button type="button" class="btn" x-show="hasWeekPlan()" @click="startNewWeek(true)">Скопировать текущий план</button>
+          <button type="button" class="btn primary" :disabled="savePending > 0" @click="startNewWeek(false)">Начать с пустого плана</button>
+          <button type="button" class="btn" x-show="hasWeekPlan()" :disabled="savePending > 0" @click="startNewWeek(true)">Скопировать текущий план</button>
         </div>
         <p class="view-status" role="alert" x-show="weekStorageError" x-text="weekStorageError"></p>
       </dialog>
@@ -414,6 +516,10 @@
           <button type="button" class="icon-btn" aria-label="Закрыть" autofocus @click="$refs.historyDialog.close()">×</button>
         </div>
         <p class="view-status" x-show="!state.weekHistory.length">Сохранённые планы появятся здесь после начала новой недели.</p>
+        <label class="archive-name" x-show="state.weekHistory.length">
+          Дата начала копии (понедельник)
+          <input class="field" type="date" x-model="nextWeekStart" />
+        </label>
         <p class="view-status" role="alert" x-show="weekStorageError" x-text="weekStorageError"></p>
         <template x-for="entry in state.weekHistory" :key="entry.id">
           <details class="history-week">
@@ -421,14 +527,15 @@
               <strong x-text="historyLabel(entry)"></strong>
               <span class="item-meta" x-show="entry.name" x-text="historyDate(entry)"></span>
             </summary>
-            <p class="item-meta" x-text="`Персон — ${entry.persons}`"></p>
+            <p class="item-meta" x-text="`${entry.weekStart ? weekLabel(entry.weekStart) + ' · ' : ''}Персон в истории — ${entry.persons}`"></p>
             <ul class="history-meals">
               <template x-for="line in historyLines(entry)" :key="line.id">
                 <li><span class="item-meta" x-text="line.label"></span><span x-text="line.dishes"></span></li>
               </template>
             </ul>
+            <p class="item-meta" x-text="`В новой неделе — ${state.persons} чел. Отметки о готовке начнутся заново.`"></p>
             <p class="item-meta" x-show="hasWeekPlan()">Текущий план тоже сохранится в истории.</p>
-            <button class="btn" type="button" @click="copyHistoryWeek(entry)">Скопировать в новую неделю</button>
+            <button class="btn" type="button" :disabled="savePending > 0" @click="copyHistoryWeek(entry)">Скопировать в новую неделю</button>
           </details>
         </template>
       </dialog>

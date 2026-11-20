@@ -6,10 +6,11 @@ import {
   aggregate, formatLine, priceKey, lineCost, totalCost, formatMoney,
   recipeFactor, scaleQty, formatCardIngredient, groupShopping, shoppingText, subtractStock,
 } from './shopping.js';
-import { load, save, toggle, MIN_PERSONS, MAX_PERSONS } from './store.js';
+import { load, saveChanges, snapshot, STORAGE_KEY, toggle, MIN_PERSONS, MAX_PERSONS } from './store.js';
 import { planner } from './planner.js';
 import { pantry } from './pantry.js';
 import { sanitizeWeek } from './week.js';
+import { sanitizeBatchRecords } from './batch-storage.js';
 import './styles.css';
 
 const DEFAULT_PRICES = pricesData.prices ?? {};
@@ -39,6 +40,10 @@ document.addEventListener('alpine:init', () => {
     expanded: {},
     copyMessage: '',
     copyText: '',
+    priceDate: pricesData.updated_at?.split('-').reverse().join('.'),
+    storageMessage: '',
+    savePending: 0,
+    storageChanged: false,
     minPersons: MIN_PERSONS,
     maxPersons: MAX_PERSONS,
 
@@ -48,7 +53,9 @@ document.addEventListener('alpine:init', () => {
     },
 
     init() {
-      this.view = this.state.view;
+      this.savedState = snapshot(this.state);
+      this.draftBase = this.savedState;
+      this.view = this.shoppingMode = this.state.view;
       this.todayTimer = setInterval(() => this.refreshToday(), 60_000);
       this.state.week = sanitizeWeek(this.state.week, (id) => Boolean(this.dishById(id)));
       this.pruneShoppingChecks('week');
@@ -62,6 +69,53 @@ document.addEventListener('alpine:init', () => {
 
     destroy() {
       clearInterval(this.todayTimer);
+    },
+
+    syncStorage(event) {
+      if (event.storageArea !== localStorage || (event.key !== STORAGE_KEY && event.key !== null)) return;
+      if (this.savePending) {
+        this.storageChanged = true;
+        return;
+      }
+      this.applySavedState(load());
+    },
+
+    applySavedState(state) {
+      this.savedState = snapshot(state);
+      this.draftBase = this.savedState;
+      const refreshMenu = ['lastMenu', 'pins', 'picks', 'blocks'].some(
+        (key) => JSON.stringify(this.state[key]) !== JSON.stringify(state[key])
+      );
+      this.state = state;
+      this.state.week = sanitizeWeek(state.week, (id) => Boolean(this.dishById(id)));
+      this.state.batchRecords = sanitizeBatchRecords(state.batchRecords, this.state.week);
+      if (refreshMenu) {
+        this.menu = state.lastMenu ? this.hydrate(state.lastMenu) : generateMenu(this.data, state);
+      }
+    },
+
+    saveState(next = this.state) {
+      const base = this.draftBase;
+      const draft = snapshot(next);
+      if (!this.savePending) this.storageMessage = '';
+      this.draftBase = draft;
+      this.state = next;
+      this.savePending++;
+      this.saveQueue = Promise.resolve(this.saveQueue).then(async () => {
+        const { state, error } = await saveChanges(base, draft);
+        if (state) this.savedState = snapshot(state);
+        if (error) {
+          this.storageMessage = error === 'conflict'
+            ? 'Эти данные уже изменились в другой вкладке. Показана сохранённая версия. Повторите действие.'
+            : 'Изменение не сохранилось. Проверьте доступ к хранилищу браузера и повторите действие.';
+        }
+        if (--this.savePending === 0) {
+          this.applySavedState(this.storageChanged ? load() : snapshot(this.savedState));
+          this.storageChanged = false;
+        }
+        return !error;
+      });
+      return this.saveQueue;
     },
 
     emojiFor(catId) {
@@ -118,7 +172,7 @@ document.addEventListener('alpine:init', () => {
       this.state.persons = clamped;
       this.pruneShoppingChecks('menu');
       this.pruneShoppingChecks('week');
-      save(this.state);
+      this.saveState();
     },
 
     availableCount(catId) {
@@ -150,7 +204,7 @@ document.addEventListener('alpine:init', () => {
 
     togglePin(id) {
       toggle(this.state.pins, id);
-      save(this.state);
+      this.saveState();
     },
 
     resizeSlot(slot, count) {
@@ -235,7 +289,7 @@ document.addEventListener('alpine:init', () => {
       // если блюдо одновременно было в blocks — убираем оттуда
       const bi = this.state.blocks.indexOf(id);
       if (bi !== -1) this.state.blocks.splice(bi, 1);
-      save(this.state);
+      this.saveState();
     },
 
     toggleBlock(id) {
@@ -286,15 +340,15 @@ document.addEventListener('alpine:init', () => {
       return aggregate(this.menu.flatMap((s) => s.dishes), (dish) => recipeFactor(dish.recipe, this.state.persons));
     },
 
-    shoppingIngredients(mode = this.state.view, stock = this.state.stock) {
+    shoppingIngredients(mode = this.shoppingMode, stock = this.state.stock) {
       return subtractStock(this.requiredIngredients(mode), stock);
     },
 
-    shoppingChecks(mode = this.state.view) {
+    shoppingChecks(mode = this.shoppingMode) {
       return mode === 'menu' ? this.state.checked : this.state.weekChecked;
     },
 
-    shoppingList(mode = this.state.view) {
+    shoppingList(mode = this.shoppingMode) {
       const prices = this.effectivePrices();
       const checks = this.shoppingChecks(mode);
       return this.shoppingIngredients(mode).map((ing) => {
@@ -313,7 +367,7 @@ document.addEventListener('alpine:init', () => {
       });
     },
 
-    shoppingGroups(mode = this.state.view) {
+    shoppingGroups(mode = this.shoppingMode) {
       return groupShopping(this.shoppingList(mode), DEPARTMENTS);
     },
 
@@ -339,11 +393,11 @@ document.addEventListener('alpine:init', () => {
       return { text: formatMoney(sum), missing };
     },
 
-    setChecked(ingredient, checked) {
+    async setChecked(ingredient, input) {
       const checks = this.shoppingChecks();
-      if (checked) checks[ingredient.key] = ingredient.qty;
+      if (input.checked) checks[ingredient.key] = ingredient.qty;
       else delete checks[ingredient.key];
-      save(this.state);
+      if (!await this.saveState()) input.checked = this.shoppingChecks()[ingredient.key] === ingredient.qty;
     },
 
     validShoppingChecks(mode, stock = this.state.stock) {
@@ -355,24 +409,31 @@ document.addEventListener('alpine:init', () => {
       this.state[mode === 'menu' ? 'checked' : 'weekChecked'] = this.validShoppingChecks(mode);
     },
 
-    priceFor(key) {
-      const v = this.state.prices[key];
-      if (typeof v === 'number') return v;
-      const d = DEFAULT_PRICES[key];
-      return typeof d === 'number' ? d : '';
+    priceUnit(unit) {
+      return { г: 'кг', мл: 'л' }[unit] ?? unit;
     },
 
-    setPrice(key, value) {
-      const n = Number(value);
-      if (!Number.isFinite(n) || n <= 0) {
-        delete this.state.prices[key];
-      } else if (n === DEFAULT_PRICES[key]) {
-        // совпадает с дефолтом — не засоряем localStorage
-        delete this.state.prices[key];
-      } else {
-        this.state.prices[key] = n;
-      }
-      save(this.state);
+    priceFactor(unit) {
+      return this.priceUnit(unit) === unit ? 1 : 1000;
+    },
+
+    priceFor({ key, unit }) {
+      const price = this.state.prices[key] ?? DEFAULT_PRICES[key];
+      return typeof price === 'number' ? Number((price * this.priceFactor(unit)).toPrecision(15)) : '';
+    },
+
+    async setPrice(ingredient, input) {
+      const value = input.valueAsNumber;
+      const valid = !input.validity.badInput && (input.value === '' || (Number.isFinite(value) && value >= 0));
+      const saved = valid && await this.updatePrice(ingredient, input.value === '' ? null : value);
+      if (!saved || input.value === '') input.value = this.priceFor(ingredient);
+    },
+
+    updatePrice({ key, unit }, value) {
+      const price = value === null ? null : value / this.priceFactor(unit);
+      if (price === null || price === DEFAULT_PRICES[key]) delete this.state.prices[key];
+      else this.state.prices[key] = price;
+      return this.saveState();
     },
 
     persistMenu() {
@@ -381,7 +442,7 @@ document.addEventListener('alpine:init', () => {
         dishIds: s.dishes.map((d) => d.id),
       }));
       this.pruneShoppingChecks('menu');
-      save(this.state);
+      return this.saveState();
     },
 
     hydrate(saved) {

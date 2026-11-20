@@ -4,10 +4,11 @@ import test from 'node:test';
 import YAML from 'yaml';
 import { generateMenu, regenerateSlot } from '../src/generator.js';
 import { aggregate, groupShopping, recipeFactor, shoppingText, subtractStock, totalCost } from '../src/shopping.js';
-import { load } from '../src/store.js';
+import { load, saveChanges, snapshot } from '../src/store.js';
+import { fridgeDeadline, needsFreezer } from '../src/batch-storage.js';
 import {
   addToMeal, cookingBatches, distributeMenu, fillEmptyMeals,
-  formatWeekSchedule, localDayId, removeFromMeal, sanitizeWeek,
+  formatWeekSchedule, localDayId, moveMealDish, removeFromMeal, replaceMealDish, sanitizeWeek,
 } from '../src/week.js';
 
 const category = {
@@ -110,7 +111,7 @@ test('saved menus and shopping checks are sanitized without dropping valid prefe
     },
   });
   assert.deepEqual(load(), {
-    version: 1,
+    version: 2,
     persons: 3,
     picks: {},
     favorites: ['sirniki'],
@@ -119,6 +120,8 @@ test('saved menus and shopping checks are sanitized without dropping valid prefe
     lastMenu: [{ categoryId: 'breakfasts', dishIds: ['blini'] }],
     checked: { 'яйцо__шт': 2, 'соль__по вкусу': 0 },
     week: {},
+    weekStart: null,
+    batchRecords: {},
     weekChecked: {},
     weekHistory: [],
     stock: { 'картофель__г': 120.3, 'яйцо__шт': 2 },
@@ -194,7 +197,64 @@ test('local weekday and shared schedule preserve cooking and repeat order', () =
     'mon-lunch': [{ dishId: 'borshch', from: null }, { dishId: 'unknown', from: null }],
   };
   assert.equal(formatWeekSchedule(week, (id) => ({ borshch: 'Борщ' })[id]),
-    'Понедельник\nОбед — Борщ\n\nВторник\nОбед — Борщ (из готовой партии · Пн · обед)');
+    'Понедельник\nОбед — Борщ\n\nВторник\nОбед — Борщ (повторная подача · Пн · обед)');
+});
+
+test('stale writes merge unrelated edits and reject competing changes to the same plan', async (t) => {
+  let raw = null;
+  const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    value: { getItem: () => raw, setItem: (_key, value) => { raw = value; } },
+  });
+  t.after(() => {
+    if (descriptor) Object.defineProperty(globalThis, 'localStorage', descriptor);
+    else delete globalThis.localStorage;
+  });
+  const base = load();
+  const week = { 'mon-lunch': [{ dishId: 'borshch', from: null }] };
+  assert.equal((await saveChanges(base, { ...base, week, weekStart: '2026-11-23' })).error, '');
+  const merged = await saveChanges(base, { ...base, persons: 4, prices: { 'рис__г': 0 } });
+  assert.equal(merged.error, '');
+  assert.deepEqual(merged.state.week, week);
+  assert.equal(load().prices['рис__г'], 0);
+  const competing = await saveChanges(base, { ...base, week: { 'tue-lunch': week['mon-lunch'] } });
+  assert.equal(competing.error, 'conflict');
+  assert.equal(competing.state.persons, 4);
+  assert.deepEqual(competing.state.week, week);
+  const retained = snapshot(load());
+  t.mock.method(localStorage, 'setItem', () => { throw new Error('quota'); });
+  assert.equal((await saveChanges(retained, { ...retained, persons: 5 })).error, 'unavailable');
+  assert.deepEqual(load(), retained);
+});
+
+test('a group move preserves links and freezer intent while isolated replacement detaches the repeat', () => {
+  const week = {
+    'mon-lunch': [{ dishId: 'plov', from: null }],
+    'tue-dinner': [{ dishId: 'plov', from: 'mon-lunch', storage: 'freezer' }],
+    'wed-lunch': [{ dishId: 'soup', from: null }],
+  };
+  assert.equal(moveMealDish(week, 'mon-lunch', 'sun-lunch', 'plov'), null);
+  assert.equal(moveMealDish(week, 'tue-dinner', 'mon-breakfast', 'plov'), null);
+  const moved = moveMealDish(week, 'mon-lunch', 'tue-lunch', 'plov');
+  assert.deepEqual(moved['wed-dinner'], [{ dishId: 'plov', from: 'tue-lunch', storage: 'freezer' }]);
+  assert.deepEqual(moved['wed-lunch'], week['wed-lunch']);
+  assert.equal(cookingBatches(moved).find(({ dishId }) => dishId === 'plov').mealCount, 2);
+  const replacedGroup = replaceMealDish(moved, 'tue-lunch', 'plov', 'duck');
+  assert.deepEqual(replacedGroup['wed-dinner'], [{ dishId: 'duck', from: 'tue-lunch', storage: 'freezer' }]);
+  const separate = replaceMealDish(moved, 'wed-dinner', 'plov', 'duck');
+  assert.deepEqual(separate['wed-dinner'], [{ dishId: 'duck', from: null }]);
+});
+
+test('rice uses the shorter planning window and deadline', () => {
+  const rice = { ingredients: [{ name: 'рис' }] };
+  const soup = { ingredients: [{ name: 'картофель' }] };
+  assert.equal(needsFreezer(rice, 'mon-lunch', 'mon-dinner'), false);
+  assert.equal(needsFreezer(rice, 'mon-lunch', 'tue-breakfast'), true);
+  assert.equal(needsFreezer(soup, 'mon-lunch', 'tue-dinner'), false);
+  assert.equal(needsFreezer(soup, 'mon-lunch', 'wed-breakfast'), true);
+  assert.equal(fridgeDeadline(rice, { cookedAt: 1 }), 86_400_001);
+  assert.equal(fridgeDeadline(soup, { cookedAt: 1 }), 172_800_001);
 });
 
 test('stock deducts only the matching units and covered products leave the shopping list', () => {

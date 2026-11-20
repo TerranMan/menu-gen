@@ -58,10 +58,6 @@ export default defineConfig({
   server: {
     port: 5173,
     open: false,
-    fs: {
-      // Разрешить читать данные из app/data/ при dev (вне корня)
-      allow: ['..', '.'],
-    },
   },
   resolve: {
     alias: {

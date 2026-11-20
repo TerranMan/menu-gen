@@ -27,16 +27,47 @@ export function localDayId(date) {
   return DAYS[(date.getDay() + 6) % 7].id;
 }
 
+export function localDateKey(date) {
+  const year = String(date.getFullYear()).padStart(4, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function parseLocalDate(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T12:00:00`);
+  return !Number.isNaN(date.getTime()) && localDateKey(date) === value ? date : null;
+}
+
+export function dateAfter(value, days) {
+  const date = parseLocalDate(value);
+  date.setDate(date.getDate() + days);
+  return localDateKey(date);
+}
+
+export function localWeekStart(date = new Date()) {
+  return dateAfter(localDateKey(date), -((date.getDay() + 6) % 7));
+}
+
+export function isWeekStart(value) {
+  return parseLocalDate(value)?.getDay() === 1 && Boolean(parseLocalDate(dateAfter(value, 7)));
+}
+
+export function mealDayIndex(mealId) {
+  return Math.floor(mealOrder.get(mealId) / MEAL_TYPES.length);
+}
+
 export function formatWeekSchedule(week, dishName) {
   const sections = [];
   for (const day of DAYS) {
     const lines = [];
     for (const meal of MEALS.filter((item) => item.dayId === day.id)) {
-      const dishes = (week[meal.id] ?? []).map(({ dishId, from }) => {
+      const dishes = (week[meal.id] ?? []).map(({ dishId, from, storage }) => {
         const name = dishName(dishId);
         if (!name) return null;
         const source = MEALS[mealOrder.get(from)];
-        return source ? `${name} (из готовой партии · ${source.label})` : name;
+        return source ? `${name} (повторная подача · ${source.label}${storage === 'freezer' ? ' · заморозить' : ''})` : name;
       }).filter(Boolean);
       if (dishes.length) lines.push(`${meal.name} — ${dishes.join(', ')}`);
     }
@@ -62,17 +93,21 @@ export function sanitizeWeek(raw, isKnownDish = () => true) {
       seen.add(entry.dishId);
       const cookedEarlier = mealOrder.get(entry.from) < mealOrder.get(id)
         && week[entry.from]?.some((dish) => dish.dishId === entry.dishId && !dish.from);
-      (week[id] ??= []).push({ dishId: entry.dishId, from: cookedEarlier ? entry.from : null });
+      (week[id] ??= []).push({
+        dishId: entry.dishId,
+        from: cookedEarlier ? entry.from : null,
+        ...(cookedEarlier && entry.storage === 'freezer' && { storage: 'freezer' }),
+      });
     }
   }
   return week;
 }
 
-export function addToMeal(week, mealId, dishId, from = null) {
+export function addToMeal(week, mealId, dishId, from = null, storage = null) {
   if (!mealOrder.has(mealId) || week[mealId]?.some((dish) => dish.dishId === dishId)) return false;
   if (from && !(mealOrder.get(from) < mealOrder.get(mealId)
       && week[from]?.some((dish) => dish.dishId === dishId && !dish.from))) return false;
-  (week[mealId] ??= []).push({ dishId, from });
+  (week[mealId] ??= []).push({ dishId, from, ...(from && storage === 'freezer' && { storage }) });
   return true;
 }
 
@@ -90,8 +125,55 @@ export function removeFromMeal(week, mealId, dishId) {
     const repeat = week[id]?.find((dish) => dish.dishId === dishId && dish.from === mealId);
     if (!repeat) continue;
     repeat.from = nextCookingMeal;
+    if (!repeat.from) delete repeat.storage;
     nextCookingMeal ??= id;
   }
+}
+
+function dishAndServings(week, mealId, dishId) {
+  const entries = [];
+  for (const meal of MEALS) {
+    for (const entry of week[meal.id] ?? []) {
+      if (entry.dishId === dishId && (meal.id === mealId || entry.from === mealId)) {
+        entries.push({ mealId: meal.id, entry });
+      }
+    }
+  }
+  return entries[0]?.mealId === mealId ? entries : [];
+}
+
+export function moveMealDish(week, from, to, dishId) {
+  const source = dishAndServings(week, from, dishId);
+  const offset = mealOrder.get(to) - mealOrder.get(from);
+  if (!source.length || !Number.isInteger(offset) || !offset) return null;
+  const targets = source.map(({ mealId }) => MEALS[mealOrder.get(mealId) + offset]?.id);
+  if (targets.some((id) => !id)) return null;
+  const next = sanitizeWeek(week);
+  for (const { mealId } of source) {
+    next[mealId] = next[mealId].filter((entry) => entry.dishId !== dishId);
+  }
+  for (const [index, { entry }] of source.entries()) {
+    const parent = index > 0 ? to : entry.from;
+    if (!addToMeal(next, targets[index], dishId, parent, entry.storage)) return null;
+  }
+  return sanitizeWeek(next);
+}
+
+export function replaceMealDish(week, mealId, currentDishId, nextDishId) {
+  if (currentDishId === nextDishId) return null;
+  const source = dishAndServings(week, mealId, currentDishId);
+  if (!source.length || source.some(({ mealId: id }) => week[id].some(({ dishId }) => dishId === nextDishId))) return null;
+  const next = sanitizeWeek(week);
+  for (const [index, { mealId: id, entry }] of source.entries()) {
+    const row = next[id];
+    const position = row.findIndex(({ dishId }) => dishId === currentDishId);
+    row[position] = {
+      dishId: nextDishId,
+      from: index > 0 ? mealId : null,
+      ...(index > 0 && entry.storage === 'freezer' && { storage: 'freezer' }),
+    };
+  }
+  return next;
 }
 
 export function cookingBatches(week) {

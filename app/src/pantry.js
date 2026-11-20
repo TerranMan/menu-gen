@@ -1,5 +1,4 @@
 import { aggregate, formatLine, groupShopping, priceKey, stockQuantity } from './shopping.js';
-import { save } from './store.js';
 
 export function pantry(data, departments) {
   const ingredients = aggregate(data.categories.flatMap((category) => category.dishes))
@@ -35,7 +34,7 @@ export function pantry(data, departments) {
       return byKey.get(this.stockKey)?.unit ?? '';
     },
 
-    updateStock(key, amount) {
+    async updateStock(key, amount) {
       const ingredient = byKey.get(key);
       if (!ingredient) return;
       const qty = stockQuantity(Number(amount), ingredient.unit);
@@ -48,11 +47,10 @@ export function pantry(data, departments) {
         checked: this.validShoppingChecks('menu', stock),
         weekChecked: this.validShoppingChecks('week', stock),
       };
-      if (!save(next)) {
+      if (!await this.saveState(next)) {
         this.stockMessage = 'Сохранить остаток не удалось. Попробуйте ещё раз.';
         return;
       }
-      this.state = next;
       if (key === this.stockKey) this.stockAmount = qty || '';
       this.stockMessage = qty > 0 ? 'Остаток сохранён.' : 'Позиция убрана из запасов.';
     },
