@@ -10,7 +10,8 @@
     <title>Генератор меню</title>
   </head>
   <body>
-    <div class="app" x-data="menuApp" x-cloak @focus.window="refreshToday()" @storage.window="syncStorage($event)">
+    <div class="app" x-data="menuApp" x-cloak x-show="ready" :aria-busy="String(savePending > 0)"
+      @focus.window="refreshToday(); syncStorage()">
       <header class="top">
         <h1>🍽️ Меню на неделю</h1>
         <div class="persons" role="group" aria-label="Количество персон">
@@ -136,17 +137,20 @@
                       <li x-text="formatIngredient(ing)"></li>
                     </template>
                   </ul>
+                  <template x-if="dish.dough && !dish.dough.replaces">
+                    <p class="recipe-meta" x-text="doughHeading(dish.dough)"></p>
+                  </template>
                   <h3>Как приготовить</h3>
                   <ol class="recipe-steps">
                     <template x-for="(step, index) in dish.recipe.steps" :key="index">
                       <li x-text="step"></li>
                     </template>
                   </ol>
-                  <template x-if="dish.dough">
+                  <template x-if="dish.dough?.replaces">
                     <details class="dough-details">
-                      <summary x-text="`Тесто · ${dish.dough.type}`"></summary>
-                      <p class="recipe-meta" x-show="dish.dough.replaces"
-                        x-text="`Домашний вариант. В покупках указан готовый продукт — ${dish.dough.replaces}.`"></p>
+                      <summary x-text="doughHeading(dish.dough)"></summary>
+                      <p class="recipe-meta"
+                        x-text="`Домашний вариант займёт больше времени. В покупках указан готовый продукт — ${dish.dough.replaces}.`"></p>
                       <ul class="ingredients-list">
                         <template x-for="ing in scaledIngredients(dish, state.persons, dish.dough.ingredients)" :key="ing.name + '__' + ing.unit">
                           <li x-text="formatIngredient(ing)"></li>
@@ -319,7 +323,7 @@
                   </template>
                   <span>
                     <strong x-text="entry.dish.name"></strong>
-                    <span class="item-meta" x-text="`${entry.categoryName} · ${entry.dish.recipe.minutes} мин`"></span>
+                    <span class="item-meta" x-text="`${entry.categoryName} · ${recipeTime(entry.dish)}`"></span>
                   </span>
                 </button>
                 <template x-if="!catalogTarget && catalogHasDish(entry)">
@@ -610,17 +614,20 @@
                 <li x-text="formatIngredient(ing)"></li>
               </template>
             </ul>
+            <template x-if="recipePreview.dish.dough && !recipePreview.dish.dough.replaces">
+              <p class="recipe-meta" x-text="doughHeading(recipePreview.dish.dough)"></p>
+            </template>
             <h3>Как приготовить</h3>
             <ol class="recipe-steps">
               <template x-for="(step, index) in recipePreview.dish.recipe.steps" :key="index">
                 <li x-text="step"></li>
               </template>
             </ol>
-            <template x-if="recipePreview.dish.dough">
+            <template x-if="recipePreview.dish.dough?.replaces">
               <details class="dough-details">
-                <summary x-text="`Тесто · ${recipePreview.dish.dough.type}`"></summary>
-                <p class="recipe-meta" x-show="recipePreview.dish.dough.replaces"
-                  x-text="`Домашний вариант. В покупках указан готовый продукт — ${recipePreview.dish.dough.replaces}.`"></p>
+                <summary x-text="doughHeading(recipePreview.dish.dough)"></summary>
+                <p class="recipe-meta"
+                  x-text="`Домашний вариант займёт больше времени. В покупках указан готовый продукт — ${recipePreview.dish.dough.replaces}.`"></p>
                 <ul class="ingredients-list">
                   <template x-for="ing in scaledIngredients(recipePreview.dish, recipePreview.servings, recipePreview.dish.dough.ingredients)"
                     :key="ing.name + '__' + ing.unit">

@@ -387,9 +387,9 @@ export function planner() {
     },
 
     async distributeSelection() {
-      const added = distributeMenu(this.state.week, this.menu);
+      const added = distributeMenu(this.state.week, this.menu, this.data);
       if (added && !await this.persistWeek()) return;
-      this.plannerMessage = added ? `Добавлено в расписание — ${added}` : 'Все блюда из подборки уже в расписании.';
+      this.plannerMessage = added ? `Добавлено в расписание — ${added}` : 'Расписание осталось прежним.';
     },
 
     async fillSchedule() {

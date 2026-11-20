@@ -1,12 +1,12 @@
-// localStorage с версионированием схемы и санитацией на чтении.
-// Один ключ, один JSON. Любая дрянь в parsed → дефолты.
+// Меню сохраняется транзакционно, а старые записи localStorage импортируются один раз.
 
 import { isWeekStart, localWeekStart, sanitizeWeek } from './week.js';
 import { sanitizeBatchRecords } from './batch-storage.js';
 import { stockQuantity } from './shopping.js';
 
-const LEGACY_KEY = 'menu_gen_v1';
-export const STORAGE_KEY = 'menu_gen_v2';
+const DATABASE = 'menu-gen';
+const STORE = 'menu';
+const RECORD = 'current';
 const DEFAULT_PERSONS = 2;
 const MIN_PERSONS = 1;
 const MAX_PERSONS = 12;
@@ -140,11 +140,47 @@ function read(parsed) {
   };
 }
 
-export function load() {
+export function loadLegacyState() {
   try {
-    return read(parse(localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_KEY)));
+    return read(parse(localStorage.getItem('menu_gen_v2') ?? localStorage.getItem('menu_gen_v1')));
   } catch {
     return empty();
+  }
+}
+
+let connection;
+
+function openDatabase() {
+  connection ??= new Promise((resolve, reject) => {
+    const request = indexedDB.open(DATABASE, 1);
+    request.onupgradeneeded = () => request.result.createObjectStore(STORE);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const database = request.result;
+      database.onclose = () => { connection = undefined; };
+      database.onversionchange = () => {
+        database.close();
+        connection = undefined;
+      };
+      resolve(database);
+    };
+  }).catch((error) => {
+    connection = undefined;
+    throw error;
+  });
+  return connection;
+}
+
+export async function loadSavedState() {
+  try {
+    const database = await openDatabase();
+    return await new Promise((resolve, reject) => {
+      const request = database.transaction(STORE).objectStore(STORE).get(RECORD);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result ? read(request.result) : null);
+    });
+  } catch {
+    return null;
   }
 }
 
@@ -156,11 +192,7 @@ const maps = ['checked', 'weekChecked', 'stock', 'prices'];
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 export const snapshot = (value) => JSON.parse(JSON.stringify(value));
 
-function writeChanges(base, draft) {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  const legacy = stored === null ? localStorage.getItem(LEGACY_KEY) : null;
-  const parsed = parse(stored ?? legacy);
-  const latest = read(parsed);
+export function mergeChanges(base, draft, latest) {
   const next = { ...latest };
   if (draft.view !== base.view) next.view = draft.view;
   for (const group of groups) {
@@ -181,23 +213,33 @@ function writeChanges(base, draft) {
       else delete next[field][key];
     }
   }
-  // Старая версия PWA в открытой вкладке продолжит писать только в свой ключ.
-  if (!same(latest, next) || legacy !== null || (Object.keys(latest.week).length && !isWeekStart(parsed?.weekStart))) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      return { state: latest, error: 'unavailable' };
-    }
-  }
   return { state: next, error: '' };
 }
 
 export async function saveChanges(base, draft) {
   try {
-    const locks = globalThis.navigator?.locks;
-    return locks
-      ? await locks.request(STORAGE_KEY, () => writeChanges(base, draft))
-      : writeChanges(base, draft);
+    const database = await openDatabase();
+    return await new Promise((resolve, reject) => {
+      const transaction = database.transaction(STORE, 'readwrite');
+      transaction.onabort = () => reject(transaction.error);
+      const store = transaction.objectStore(STORE);
+      const request = store.get(RECORD);
+      let result;
+      let changed = false;
+      transaction.oncomplete = () => resolve({ ...result, changed });
+      request.onsuccess = () => {
+        try {
+          const latest = request.result ? read(request.result) : loadLegacyState();
+          result = mergeChanges(base, draft, latest);
+          if (!result.error && (!request.result || !same(latest, result.state))) {
+            store.put(result.state, RECORD);
+            changed = true;
+          }
+        } catch {
+          transaction.abort();
+        }
+      };
+    });
   } catch {
     return { state: null, error: 'unavailable' };
   }

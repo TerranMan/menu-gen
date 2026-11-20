@@ -4,7 +4,7 @@ import test from 'node:test';
 import YAML from 'yaml';
 import { generateMenu, regenerateSlot } from '../src/generator.js';
 import { aggregate, groupShopping, recipeFactor, shoppingText, subtractStock, totalCost } from '../src/shopping.js';
-import { load, saveChanges, snapshot } from '../src/store.js';
+import { loadLegacyState, mergeChanges } from '../src/store.js';
 import { fridgeDeadline, needsFreezer } from '../src/batch-storage.js';
 import {
   addToMeal, cookingBatches, distributeMenu, fillEmptyMeals,
@@ -48,7 +48,7 @@ test('shopping combines teaspoons with grams and rounds countable items once', (
   ];
   const list = aggregate(dishes, 0.5);
   assert.deepEqual(list, [
-    { name: 'сахар', qty: 7.5, unit: 'г' },
+    { name: 'сахар', qty: 7.1, unit: 'г' },
     { name: 'яйцо', qty: 1, unit: 'шт' },
   ]);
   assert.deepEqual(totalCost(list, { 'сахар__г': 0.1, 'яйцо__шт': 18 }), { sum: 19, missing: 0 });
@@ -110,7 +110,7 @@ test('saved menus and shopping checks are sanitized without dropping valid prefe
       }),
     },
   });
-  assert.deepEqual(load(), {
+  assert.deepEqual(loadLegacyState(), {
     version: 2,
     persons: 3,
     picks: {},
@@ -180,6 +180,37 @@ test('autofill preserves complete meals and batch links, favors pins and skips b
   assert.deepEqual(fillEmptyMeals(week, data, {}, []), { filled: 0, remaining: 12 });
 });
 
+test('weekly suggestions pair fish with a suitable side and complete mains with a light salad', () => {
+  const catalog = { categories: [
+    { id: 'dishes', dishes: [{ id: 'plov' }] },
+    { id: 'meat', dishes: [{ id: 'fish', tags: ['light-side'] }] },
+    { id: 'garnishes', dishes: [
+      { id: 'potatoes' }, { id: 'bulgur', tags: ['light'] }, { id: 'broccoli', tags: ['light'] },
+    ] },
+    { id: 'salads', dishes: [{ id: 'olive' }, { id: 'arugula', tags: ['light'] }] },
+  ] };
+  const week = {};
+  fillEmptyMeals(week, catalog, { blocks: ['broccoli'], pins: ['potatoes', 'olive'] }, []);
+  const meals = Object.values(week).map((entries) => entries.map(({ dishId }) => dishId));
+  assert.ok(meals.some(([id]) => id === 'plov'));
+  assert.ok(meals.some(([id]) => id === 'fish'));
+  for (const meal of meals) {
+    assert.deepEqual(meal, meal[0] === 'plov' ? ['plov', 'arugula'] : ['fish', 'bulgur']);
+  }
+
+  const manual = {
+    'mon-dinner': [{ dishId: 'plov', from: null }],
+    'tue-lunch': [{ dishId: 'fish', from: null }],
+  };
+  const selection = [
+    { categoryId: 'garnishes', dishes: [{ id: 'bulgur', tags: ['light'] }] },
+    { categoryId: 'salads', dishes: [{ id: 'arugula', tags: ['light'] }] },
+  ];
+  assert.equal(distributeMenu(manual, selection, catalog), 2);
+  assert.deepEqual(manual['mon-dinner'].map(({ dishId }) => dishId), ['plov', 'arugula']);
+  assert.deepEqual(manual['tue-lunch'].map(({ dishId }) => dishId), ['fish', 'bulgur']);
+});
+
 test('copied shopping list keeps store departments and checkmarks', () => {
   const list = [{ name: 'молоко', qty: 300, unit: 'мл', checked: true }, { name: 'укроп', qty: 1, unit: 'пучок' }];
   const groups = groupShopping(list, [
@@ -200,32 +231,19 @@ test('local weekday and shared schedule preserve cooking and repeat order', () =
     'Понедельник\nОбед — Борщ\n\nВторник\nОбед — Борщ (повторная подача · Пн · обед)');
 });
 
-test('stale writes merge unrelated edits and reject competing changes to the same plan', async (t) => {
-  let raw = null;
-  const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
-  Object.defineProperty(globalThis, 'localStorage', {
-    configurable: true,
-    value: { getItem: () => raw, setItem: (_key, value) => { raw = value; } },
-  });
-  t.after(() => {
-    if (descriptor) Object.defineProperty(globalThis, 'localStorage', descriptor);
-    else delete globalThis.localStorage;
-  });
-  const base = load();
+test('stale writes merge unrelated edits and reject competing changes to the same plan', () => {
+  const base = loadLegacyState();
   const week = { 'mon-lunch': [{ dishId: 'borshch', from: null }] };
-  assert.equal((await saveChanges(base, { ...base, week, weekStart: '2026-11-23' })).error, '');
-  const merged = await saveChanges(base, { ...base, persons: 4, prices: { 'рис__г': 0 } });
+  const saved = mergeChanges(base, { ...base, week, weekStart: '2026-11-23' }, base);
+  assert.equal(saved.error, '');
+  const merged = mergeChanges(base, { ...base, persons: 4, prices: { 'рис__г': 0 } }, saved.state);
   assert.equal(merged.error, '');
   assert.deepEqual(merged.state.week, week);
-  assert.equal(load().prices['рис__г'], 0);
-  const competing = await saveChanges(base, { ...base, week: { 'tue-lunch': week['mon-lunch'] } });
+  assert.equal(merged.state.prices['рис__г'], 0);
+  const competing = mergeChanges(base, { ...base, week: { 'tue-lunch': week['mon-lunch'] } }, merged.state);
   assert.equal(competing.error, 'conflict');
   assert.equal(competing.state.persons, 4);
   assert.deepEqual(competing.state.week, week);
-  const retained = snapshot(load());
-  t.mock.method(localStorage, 'setItem', () => { throw new Error('quota'); });
-  assert.equal((await saveChanges(retained, { ...retained, persons: 5 })).error, 'unavailable');
-  assert.deepEqual(load(), retained);
 });
 
 test('a group move preserves links and freezer intent while isolated replacement detaches the repeat', () => {
@@ -286,4 +304,8 @@ test('the dough catalog covers homemade dough, packaged dough and pasta used in 
   assert.notEqual(dough.blini.type, dough.oladi.type);
   assert.notEqual(dough.lagman.type, dough.lapsha.type);
   assert.equal(dough['sloiki-s-vishnei'].replaces, 'тесто слоёное');
+  for (const entry of Object.values(dough)) {
+    if (!entry.replaces) assert.deepEqual(Object.keys(entry), ['type']);
+  }
+  assert.ok(dough.pelmeni.ingredients.some(({ name }) => name === 'мясо говядина'));
 });

@@ -82,6 +82,13 @@ const MEAL_CATEGORIES = {
   dinner: [['dishes', 'meat'], ['soups'], ['salads', 'garnishes']],
 };
 
+const SIDE_CATEGORY = { dishes: 'salads', meat: 'garnishes' };
+
+function sideCategory(main) {
+  if (main?.tags.includes('needs-side')) return 'garnishes';
+  return SIDE_CATEGORY[main?.categoryId];
+}
+
 export function sanitizeWeek(raw, isKnownDish = () => true) {
   const week = {};
   for (const { id } of MEALS) {
@@ -195,8 +202,12 @@ export function earlierBatches(week, mealId) {
     mealOrder.get(batch.mealId) < mealOrder.get(mealId) && !scheduled.has(batch.dishId));
 }
 
-export function distributeMenu(week, menu) {
+export function distributeMenu(week, menu, data) {
   const categoryDishes = new Map(menu.map((slot) => [slot.categoryId, slot.dishes]));
+  const categories = data?.categories ?? menu.map((slot) => ({ id: slot.categoryId, dishes: slot.dishes }));
+  const catalog = new Map(categories.flatMap((category) => category.dishes.map((dish) => [
+    dish.id, { categoryId: category.id, tags: dish.tags ?? [] },
+  ])));
   const scheduled = new Set(cookingBatches(week).map((batch) => batch.dishId));
   const breakfasts = MEALS.filter((meal) => meal.type === 'breakfast');
   const lunches = MEALS.filter((meal) => meal.type === 'lunch');
@@ -215,9 +226,41 @@ export function distributeMenu(week, menu) {
     return dishes.length;
   }
 
+  function placeSides(categoryId) {
+    const dishes = (categoryDishes.get(categoryId) ?? []).filter((dish) => !scheduled.has(dish.id));
+    let added = 0;
+    for (const dish of dishes) {
+      let target = null;
+      let best = -Infinity;
+      for (const meal of [...dinners, ...lunches]) {
+        const contents = (week[meal.id] ?? []).map(({ dishId }) => catalog.get(dishId)).filter(Boolean);
+        const main = contents.find((entry) => entry.categoryId === 'dishes')
+          ?? contents.find((entry) => entry.categoryId === 'meat');
+        const preferredSide = sideCategory(main);
+        if (preferredSide === 'salads' && categoryId === 'garnishes') continue;
+        const paired = preferredSide === categoryId;
+        const prefersLight = main?.tags.includes('light-side') ?? false;
+        const light = dish.tags?.includes('light');
+        const existing = contents.filter((entry) => entry.categoryId === categoryId).length;
+        let score = (paired ? 4 : empty(meal) ? 2 : 1) - existing * 4;
+        if (paired && categoryId === 'garnishes' && prefersLight === Boolean(light)) score++;
+        if (paired && categoryId === 'salads' && light) score++;
+        if (score > best) {
+          best = score;
+          target = meal.id;
+        }
+      }
+      if (target && addToMeal(week, target, dish.id)) {
+        scheduled.add(dish.id);
+        added++;
+      }
+    }
+    return added;
+  }
+
   return place('breakfasts', breakfasts, true) + place('soups', lunches, true)
     + place('dishes', mainMeals, true) + place('meat', dinners, true)
-    + place('garnishes', dinners, false) + place('salads', mainMeals, false)
+    + placeSides('garnishes') + placeSides('salads')
     + place('bakery', breakfasts, false) + place('fruits_vegetables', breakfasts, false);
 }
 
@@ -239,6 +282,7 @@ export function fillEmptyMeals(week, data, state, menu) {
     category.dishes.filter((dish) => !blocked.has(dish.id)).map((dish) => ({
       id: dish.id,
       categoryId: category.id,
+      tags: dish.tags ?? [],
       preference: (pinned.has(dish.id) ? 4 : 0) + (selected.has(dish.id) ? 2 : 0) + (favorites.has(dish.id) ? 1 : 0),
     })),
   ]));
@@ -268,10 +312,13 @@ export function fillEmptyMeals(week, data, state, menu) {
     countUse(main.id);
     filled++;
 
-    if (main.categoryId === 'meat') {
-      const side = choose(available.get('garnishes'));
-      if (side && addToMeal(week, meal.id, side.id)) countUse(side.id);
-    }
+    const categoryId = sideCategory(main);
+    const sides = available.get(categoryId) ?? [];
+    const lightSides = sides.filter(({ tags }) => tags.includes('light'));
+    const side = categoryId === 'salads' || main.tags.includes('light-side')
+      ? choose(lightSides) ?? (categoryId === 'garnishes' ? choose(sides) : null)
+      : choose(sides);
+    if (side && addToMeal(week, meal.id, side.id)) countUse(side.id);
   }
   return { filled, remaining };
 }

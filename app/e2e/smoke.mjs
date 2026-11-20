@@ -18,31 +18,50 @@ after(async () => {
   if (server) await new Promise((resolve) => server.httpServer.close(resolve));
 });
 
-async function openMenu(t, savedState, { withoutNativeShare = false } = {}) {
+async function openMenu(t, savedState, { withoutNativeShare = false, legacyKey = 'menu_gen_v1' } = {}) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, timezoneId: 'UTC' });
   const pageErrors = [];
+  context.on('page', (page) => page.on('pageerror', (error) => pageErrors.push(error.message)));
   t.after(async () => {
     await context.close();
     assert.deepEqual(pageErrors, []);
   });
-  await context.addInitScript(({ state, withoutNativeShare }) => {
+  await context.addInitScript(({ state, withoutNativeShare, legacyKey }) => {
+    if (!['http:', 'https:'].includes(location.protocol)) return;
     Math.random = () => 0;
     if (withoutNativeShare) {
       Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
     }
-    if (state && !localStorage.getItem('menu_gen_v1')) {
-      localStorage.setItem('menu_gen_v1', JSON.stringify(state));
+    if (state && !localStorage.getItem(legacyKey)) {
+      localStorage.setItem(legacyKey, JSON.stringify(state));
     }
-  }, { state: savedState, withoutNativeShare });
+    window.readStoredMenu = () => new Promise((resolve, reject) => {
+      const request = indexedDB.open('menu-gen');
+      request.onupgradeneeded = () => request.transaction.abort();
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const database = request.result;
+        const read = database.transaction('menu').objectStore('menu').get('current');
+        read.onerror = () => reject(read.error);
+        read.onsuccess = () => resolve(read.result);
+        database.close();
+      };
+    });
+  }, { state: savedState, withoutNativeShare, legacyKey });
   const page = await context.newPage();
-  page.on('pageerror', (error) => pageErrors.push(error.message));
   await page.goto(url);
   await page.getByRole('heading', { name: '🍽️ Меню на неделю' }).waitFor();
   return { context, page };
 }
 
 function storedState(page) {
-  return page.evaluate(() => JSON.parse(localStorage.getItem('menu_gen_v2')));
+  return page.evaluate(() => window.readStoredMenu());
+}
+
+async function reopenMenu(page) {
+  await page.locator('.app[aria-busy="false"]').waitFor();
+  await page.reload();
+  await page.getByRole('heading', { name: '🍽️ Меню на неделю' }).waitFor();
 }
 
 function breakfasts(page) {
@@ -68,7 +87,7 @@ test('replacing and blocking a breakfast keeps seven unique dishes', async (t) =
   assert.equal(afterBlock.length, 7);
   assert.equal(new Set(afterBlock).size, 7);
   assert.ok(!afterBlock.includes(replaced[0]));
-  await page.reload();
+  await reopenMenu(page);
   assert.deepEqual(await names(), afterBlock);
 });
 
@@ -79,19 +98,21 @@ test('first online visit is enough to reopen and use the shopping list offline',
   await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
 
   await context.setOffline(true);
-  await page.reload();
+  await reopenMenu(page);
   assert.equal(await breakfasts(page).locator('.dish-row').count(), 7);
   assert.equal(await milk.isChecked(), true);
   await breakfasts(page).getByRole('button', { name: /^Блины/ }).click();
   const blini = page.locator('#recipe-blini');
   assert.equal(await blini.locator(':scope > .recipe-steps li').count(), 2);
-  const dough = blini.locator('.dough-details');
-  await dough.getByText('Тесто · Жидкое блинное на молоке', { exact: true }).click();
-  await dough.getByText('мука — 100 г', { exact: true }).waitFor();
+  await blini.getByText('Тесто · Жидкое блинное на молоке', { exact: true }).waitFor();
+  await blini.getByText('мука — 100 г', { exact: true }).waitFor();
+  await blini.getByText('сахар — 0,5 ст.л. (6,2 г)', { exact: true }).waitFor();
+  assert.equal(await blini.locator('.dough-details').count(), 0);
+  assert.equal(await blini.getByText('мука — 100 г', { exact: true }).count(), 1);
   await page.getByRole('button', { name: 'Больше персон' }).click();
   assert.equal(await milk.isChecked(), false);
   await milk.check();
-  await page.reload();
+  await reopenMenu(page);
   assert.equal(await milk.isChecked(), true);
   assert.equal(await page.locator('.persons-count').textContent(), '3');
   await page.getByRole('button', { name: 'Сгенерировать заново' }).click();
@@ -190,7 +211,7 @@ test('catalog finds a recipe and a pinned manual choice survives regeneration an
   const sides = page.locator('.category').filter({ has: page.getByRole('heading', { name: /^Гарниры/ }) });
   await sides.getByRole('button', { name: 'Меньше блюд' }).click();
   await page.getByRole('button', { name: 'Сгенерировать заново' }).click();
-  await page.reload();
+  await reopenMenu(page);
   assert.deepEqual(await sides.locator('.dish-name').allTextContents(), ['Гречка']);
   assert.equal(await sides.getByRole('button', { name: 'Открепить блюдо' }).getAttribute('aria-pressed'), 'true');
   assert.equal(await sides.getByRole('button', { name: 'Заменить это блюдо' }).isDisabled(), true);
@@ -219,13 +240,13 @@ test('a weekly recipe can be served twice and copied with grouped shopping and t
 
   const beef = page.getByRole('checkbox', { name: /^мясо говядина — 266,7 г$/ });
   await beef.check();
-  await page.waitForFunction(() => Object.keys(JSON.parse(localStorage.getItem('menu_gen_v2')).weekChecked).length === 1);
+  await page.waitForFunction(async () => Object.keys((await window.readStoredMenu()).weekChecked).length === 1);
   await page.getByRole('button', { name: 'Копировать список' }).click();
   await page.getByText('Список скопирован.', { exact: true }).waitFor();
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   assert.match(copied, /Мясо, птица и колбаса\r?\n✓ мясо говядина — 266,7 г/);
 
-  await page.reload();
+  await reopenMenu(page);
   assert.equal(await lunch.getByText('На всю готовку · 4 порции', { exact: true }).isVisible(), true);
   assert.equal(await beef.isChecked(), true);
   await lunch.getByRole('button', { name: 'Убрать Борщ из приёма' }).click();
@@ -249,7 +270,7 @@ test('autofill preserves a manual meal and history copies the saved week with a 
   assert.deepEqual(week['mon-lunch'], cooked);
   assert.deepEqual(week['tue-lunch'], repeated);
   await page.locator('#shopping input[type=checkbox]').first().check();
-  await page.waitForFunction(() => Object.keys(JSON.parse(localStorage.getItem('menu_gen_v2')).weekChecked).length === 1);
+  await page.waitForFunction(async () => Object.keys((await window.readStoredMenu()).weekChecked).length === 1);
 
   await page.getByRole('button', { name: 'Новая неделя' }).click();
   const next = page.getByRole('dialog', { name: 'Новая неделя' });
@@ -259,7 +280,7 @@ test('autofill preserves a manual meal and history copies the saved week with a 
   assert.deepEqual((await stored()).week, {});
   assert.deepEqual((await stored()).weekChecked, {});
 
-  await page.reload();
+  await reopenMenu(page);
   await page.getByRole('button', { name: 'История недель' }).click();
   const history = page.getByRole('dialog', { name: 'История недель' });
   await history.getByText('План с борщом', { exact: true }).click();
@@ -269,7 +290,7 @@ test('autofill preserves a manual meal and history copies the saved week with a 
   assert.deepEqual((await stored()).week, week);
   const mondayLunch = page.getByRole('region', { name: 'Обед', exact: true });
   await mondayLunch.getByRole('button', { name: 'Убрать Борщ из приёма' }).click();
-  await page.waitForFunction(() => JSON.parse(localStorage.getItem('menu_gen_v2')).week['tue-lunch'][0].from === null);
+  await page.waitForFunction(async () => (await window.readStoredMenu()).week['tue-lunch'][0].from === null);
   const changed = await stored();
   assert.deepEqual(changed.week['tue-lunch'], cooked);
   assert.deepEqual(changed.weekHistory[0].week, week);
@@ -324,7 +345,7 @@ test('pantry reduces shopping quantities and cost, persists, and supports removi
   const remaining = page.getByRole('checkbox', { name: 'мясо говядина — 33,3 г', exact: true });
   assert.equal(await remaining.isChecked(), false);
   assert.notEqual(await page.locator('#shopping summary').innerText(), previousTotal);
-  await page.reload();
+  await reopenMenu(page);
   await remaining.waitFor();
   await page.getByRole('button', { name: 'Запасы дома' }).click();
   await stock.getByRole('button', { name: 'Убрать из запасов · мясо говядина' }).click();
@@ -377,43 +398,64 @@ test('the catalog keeps the shopping link and opens the list for the previous vi
   assert.equal(await page.locator('#shopping').evaluate((element) => element.open), true);
 });
 
-test('two tabs keep independent edits even when the second one navigates before saving', async (t) => {
-  const { context, page } = await openMenu(t, { version: 1, view: 'week' });
+test('two tabs keep independent edits after importing the previous version', async (t) => {
+  const { context, page } = await openMenu(t, {
+    version: 2, view: 'week',
+    stock: { 'булгур__г': 300 },
+    prices: { 'булгур__г': 0.3 },
+  }, { legacyKey: 'menu_gen_v2' });
   const second = await context.newPage();
   await second.goto(url);
   await second.getByRole('button', { name: 'Сегодня', exact: true }).waitFor();
   await page.evaluate(() => {
-    navigator.locks.request('menu_gen_v2', () => new Promise((release) => { window.releaseMenuLock = release; }));
+    const open = indexedDB.open('menu-gen');
+    open.onsuccess = () => {
+      const database = open.result;
+      const transaction = database.transaction('menu', 'readwrite');
+      const store = transaction.objectStore('menu');
+      const keepActive = () => {
+        const read = store.get('current');
+        read.onsuccess = () => {
+          if (!window.releaseMenuWrite) keepActive();
+        };
+      };
+      keepActive();
+      database.close();
+      window.holdsMenuTransaction = true;
+    };
   });
-  await page.waitForFunction(() => Boolean(window.releaseMenuLock));
+  await page.waitForFunction(() => window.holdsMenuTransaction);
   await page.getByRole('button', { name: 'Заполнить пустые приёмы' }).click();
   await second.getByRole('button', { name: 'Сегодня', exact: true }).click();
   await second.getByRole('button', { name: 'Больше персон' }).click();
-  await page.evaluate(() => window.releaseMenuLock());
+  await page.evaluate(() => { window.releaseMenuWrite = true; });
   await page.getByText('Заполнено приёмов — 21. Расписание готово.').waitFor();
   await page.waitForFunction(() => document.querySelector('.persons-count').textContent === '3');
-  await second.waitForFunction(() => {
-    const state = JSON.parse(localStorage.getItem('menu_gen_v2'));
+  await second.waitForFunction(async () => {
+    const state = await window.readStoredMenu();
     return state && state.persons === 3 && Object.keys(state.week).length === 21;
   }, null, { timeout: 5000 });
   const state = await storedState(second);
   assert.equal(Object.keys(state.week).length, 21);
   assert.equal(state.persons, 3);
   assert.equal(await page.getByRole('button', { name: 'По дням' }).getAttribute('aria-pressed'), 'true');
-  await second.evaluate(() => localStorage.setItem('menu_gen_v1', JSON.stringify({ version: 1, persons: 12 })));
-  await page.reload();
+  await second.evaluate(() => localStorage.setItem('menu_gen_v2', JSON.stringify({ version: 2, persons: 12 })));
+  await reopenMenu(page);
   assert.equal(await page.locator('.persons-count').textContent(), '3');
-  assert.equal(Object.keys((await storedState(page)).week).length, 21);
+  const migrated = await storedState(page);
+  assert.equal(Object.keys(migrated.week).length, 21);
+  assert.equal(migrated.stock['булгур__г'], 300);
+  assert.equal(migrated.prices['булгур__г'], 0.3);
 });
 
 test('failed storage updates show an error and restore saved settings', async (t) => {
   const { page } = await openMenu(t, { version: 1, persons: 3 });
-  await page.waitForFunction(() => Boolean(JSON.parse(localStorage.getItem('menu_gen_v2'))?.lastMenu));
+  await page.waitForFunction(async () => Boolean((await window.readStoredMenu())?.lastMenu));
   await page.evaluate(() => {
-    const setItem = Storage.prototype.setItem;
-    Storage.prototype.setItem = function (key, value) {
-      if (key === 'menu_gen_v2') throw new DOMException('Storage full', 'QuotaExceededError');
-      return setItem.call(this, key, value);
+    const put = IDBObjectStore.prototype.put;
+    IDBObjectStore.prototype.put = function (value, key) {
+      if (this.name === 'menu') throw new DOMException('Storage full', 'QuotaExceededError');
+      return put.call(this, value, key);
     };
   });
   await page.getByRole('button', { name: 'Больше персон' }).click();
@@ -501,23 +543,25 @@ test('shopping prices show rubles per kilogram, persist zero and reset to the es
   await price.fill('0');
   await price.press('Tab');
   await row.getByText('= 0 ₽', { exact: true }).waitFor();
-  await page.waitForFunction(() => JSON.parse(localStorage.getItem('menu_gen_v2')).prices['мясо говядина__г'] === 0);
-  await page.reload();
+  await page.waitForFunction(async () => (await window.readStoredMenu()).prices['мясо говядина__г'] === 0);
+  await reopenMenu(page);
   assert.equal(await price.inputValue(), '0');
   await row.getByRole('button', { name: 'Сбросить цену · мясо говядина' }).click();
-  await page.waitForFunction(() => !Object.hasOwn(JSON.parse(localStorage.getItem('menu_gen_v2')).prices, 'мясо говядина__г'));
+  await page.waitForFunction(async () => !Object.hasOwn((await window.readStoredMenu()).prices, 'мясо говядина__г'));
   assert.equal(await price.inputValue(), original);
 });
 
-test('dough cards differentiate pastry types and scale the homemade dough ingredients with the recipe', async (t) => {
+test('built-in dough appears once and a homemade alternative has its own scaled ingredients', async (t) => {
   const { page } = await openMenu(t, {
     version: 1, persons: 4,
     lastMenu: [{ categoryId: 'bakery', dishIds: ['chebureki'] }],
   });
   await page.getByRole('button', { name: /^Чебуреки/ }).click();
-  const chebureki = page.locator('#recipe-chebureki .dough-details');
-  await chebureki.getByText('Тесто · Пресное на воде', { exact: true }).click();
+  const chebureki = page.locator('#recipe-chebureki');
+  await chebureki.getByText('Тесто · Пресное на воде', { exact: true }).waitFor();
   await chebureki.getByText('мука — 400 г', { exact: true }).waitFor();
+  await chebureki.getByText('вода — 260 мл', { exact: true }).waitFor();
+  assert.equal(await chebureki.locator('.dough-details').count(), 0);
   assert.equal(await chebureki.getByText(/^яйцо/).count(), 0);
 
   await page.getByRole('button', { name: 'Каталог', exact: true }).click();
@@ -527,4 +571,31 @@ test('dough cards differentiate pastry types and scale the homemade dough ingred
   await puff.getByText('Тесто · Быстрое слоёное бездрожжевое', { exact: true }).click();
   await puff.getByText('мука — 105 г', { exact: true }).waitFor();
   assert.equal(await puff.getByText(/В покупках указан готовый продукт — тесто слоёное/).isVisible(), true);
+
+  await page.getByRole('button', { name: 'Закрыть рецепт' }).click();
+  await page.getByRole('searchbox').fill('блины');
+  await page.getByRole('button', { name: /^Блины/ }).click();
+  const blini = page.getByRole('dialog', { name: 'Блины' });
+  await blini.getByText('Тесто · Жидкое блинное на молоке', { exact: true }).waitFor();
+  assert.equal(await blini.locator('.dough-details').count(), 0);
+  assert.equal(await blini.getByText('мука — 200 г', { exact: true }).count(), 1);
+});
+
+test('new arugula dishes have separate pictures and reach the produce shopping list', async (t) => {
+  const { page } = await openMenu(t);
+  await page.getByRole('button', { name: 'Каталог', exact: true }).click();
+  await page.getByRole('searchbox').fill('руккола');
+  const salads = page.locator('.catalog-dishes > li');
+  assert.equal(await salads.count(), 2);
+  const images = await salads.locator('img').evaluateAll(async (elements) => {
+    await Promise.all(elements.map((image) => image.decode()));
+    return elements.map((image) => image.currentSrc);
+  });
+  assert.equal(new Set(images).size, 2);
+  const cherry = salads.filter({ hasText: 'Руккола с черри и фетой' });
+  await cherry.getByRole('button', { name: 'Добавить в меню' }).click();
+  await page.getByRole('link', { name: 'Покупки', exact: true }).click();
+  const produce = page.locator('.shopping-group').filter({ hasText: 'Овощи, фрукты и зелень' });
+  await produce.getByRole('checkbox', { name: 'руккола — 65 г', exact: true }).waitFor();
+  assert.equal(await produce.getByRole('spinbutton', { name: 'Цена за 1 кг · руккола' }).inputValue(), '1700');
 });

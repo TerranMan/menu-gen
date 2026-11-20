@@ -6,7 +6,7 @@ import {
   aggregate, formatLine, priceKey, lineCost, totalCost, formatMoney,
   recipeFactor, scaleQty, formatCardIngredient, groupShopping, shoppingText, subtractStock,
 } from './shopping.js';
-import { load, saveChanges, snapshot, STORAGE_KEY, toggle, MIN_PERSONS, MAX_PERSONS } from './store.js';
+import { loadLegacyState, loadSavedState, saveChanges, snapshot, toggle, MIN_PERSONS, MAX_PERSONS } from './store.js';
 import { planner } from './planner.js';
 import { pantry } from './pantry.js';
 import { sanitizeWeek } from './week.js';
@@ -34,7 +34,8 @@ document.addEventListener('alpine:init', () => {
     ...planner(),
     ...pantry(dishesData, DEPARTMENTS),
     data: dishesData,
-    state: load(),
+    state: loadLegacyState(),
+    ready: false,
     menu: [],
     base: import.meta.env.BASE_URL,
     expanded: {},
@@ -44,6 +45,8 @@ document.addEventListener('alpine:init', () => {
     storageMessage: '',
     savePending: 0,
     storageChanged: false,
+    syncPending: false,
+    editRevision: 0,
     minPersons: MIN_PERSONS,
     maxPersons: MAX_PERSONS,
 
@@ -52,7 +55,16 @@ document.addEventListener('alpine:init', () => {
       return this.base + path;
     },
 
-    init() {
+    async init() {
+      if (typeof BroadcastChannel === 'function') {
+        try {
+          this.storageChannel = new BroadcastChannel('menu-gen-saved-state');
+          this.storageChannel.onmessage = () => this.syncStorage();
+        } catch {
+          // Если канал отключён, перечитаем сохранение при возвращении во вкладку.
+        }
+      }
+      this.state = await loadSavedState() ?? loadLegacyState();
       this.savedState = snapshot(this.state);
       this.draftBase = this.savedState;
       this.view = this.shoppingMode = this.state.view;
@@ -60,24 +72,33 @@ document.addEventListener('alpine:init', () => {
       this.state.week = sanitizeWeek(this.state.week, (id) => Boolean(this.dishById(id)));
       this.pruneShoppingChecks('week');
       if (!this.state.lastMenu) {
-        this.regenerateAll();
-        return;
+        await this.regenerateAll();
+      } else {
+        this.menu = this.hydrate(this.state.lastMenu);
+        await this.persistMenu();
       }
-      this.menu = this.hydrate(this.state.lastMenu);
-      this.persistMenu();
+      this.ready = true;
+      if (this.storageChanged) this.syncStorage();
     },
 
     destroy() {
       clearInterval(this.todayTimer);
+      this.storageChannel?.close();
+      this.storageChannel = null;
     },
 
-    syncStorage(event) {
-      if (event.storageArea !== localStorage || (event.key !== STORAGE_KEY && event.key !== null)) return;
-      if (this.savePending) {
-        this.storageChanged = true;
-        return;
+    async syncStorage() {
+      this.storageChanged = true;
+      if (!this.ready || this.savePending || this.syncPending) return;
+      this.syncPending = true;
+      while (this.storageChanged && !this.savePending) {
+        this.storageChanged = false;
+        const revision = this.editRevision;
+        const latest = await loadSavedState();
+        if (revision !== this.editRevision) this.storageChanged = true;
+        else if (latest) this.applySavedState(latest);
       }
-      this.applySavedState(load());
+      this.syncPending = false;
     },
 
     applySavedState(state) {
@@ -101,8 +122,10 @@ document.addEventListener('alpine:init', () => {
       this.draftBase = draft;
       this.state = next;
       this.savePending++;
+      this.editRevision++;
       this.saveQueue = Promise.resolve(this.saveQueue).then(async () => {
-        const { state, error } = await saveChanges(base, draft);
+        const { state, error, changed } = await saveChanges(base, draft);
+        if (changed) this.storageChannel?.postMessage('saved');
         if (state) this.savedState = snapshot(state);
         if (error) {
           this.storageMessage = error === 'conflict'
@@ -110,8 +133,8 @@ document.addEventListener('alpine:init', () => {
             : 'Изменение не сохранилось. Проверьте доступ к хранилищу браузера и повторите действие.';
         }
         if (--this.savePending === 0) {
-          this.applySavedState(this.storageChanged ? load() : snapshot(this.savedState));
-          this.storageChanged = false;
+          this.applySavedState(snapshot(this.savedState));
+          if (this.storageChanged) this.syncStorage();
         }
         return !error;
       });
@@ -138,7 +161,16 @@ document.addEventListener('alpine:init', () => {
     },
 
     recipeSummary(dish, persons = this.state.persons) {
-      return `Выход — ${this.formatPortions(this.recipeYield(dish, persons))} · около ${dish.recipe.minutes} мин`;
+      return `Выход — ${this.formatPortions(this.recipeYield(dish, persons))} · около ${this.recipeTime(dish)}`;
+    },
+
+    recipeTime(dish) {
+      const { minutes, timeNote } = dish.recipe;
+      return `${minutes} мин${timeNote ? ` ${timeNote}` : ''}`;
+    },
+
+    doughHeading(dough) {
+      return `${dough.title ?? 'Тесто'} · ${dough.type}`;
     },
 
     scaledIngredients(dish, persons = this.state.persons, ingredients = dish.ingredients) {
@@ -257,7 +289,7 @@ document.addEventListener('alpine:init', () => {
       this.menu = generateMenu(this.data, this.state);
       this.expanded = {};
       this.state.checked = {};
-      this.persistMenu();
+      return this.persistMenu();
     },
 
     replacementFor(slot, currentDishId) {

@@ -42,40 +42,42 @@ function validateRecipe(id, recipe) {
   if (!recipe || !Number.isInteger(recipe.portions) || recipe.portions < 1 ||
       !Number.isInteger(recipe.minutes) || recipe.minutes < 1 ||
       (recipe.wholeBatch !== undefined && typeof recipe.wholeBatch !== 'boolean') ||
+      (recipe.timeNote !== undefined && (typeof recipe.timeNote !== 'string' || !recipe.timeNote.trim())) ||
       !hasSteps(recipe.steps)) {
     fail(`${id}: рецепт должен содержать положительные portions/minutes и непустые steps`);
   }
 }
 
 function buildDough(dish, dough) {
-  if (!dough || typeof dough.type !== 'string' || !dough.type.trim() || !hasSteps(dough.steps) ||
-      !Array.isArray(dough.ingredients) || !dough.ingredients.length) {
-    fail(`${dish.id}: тесто должно содержать type, ingredients и steps`);
+  if (!dough || typeof dough.type !== 'string' || !dough.type.trim()) {
+    fail(`${dish.id}: у теста должен быть указан type`);
   }
-  const mainIngredients = dish.ingredients ?? [];
-  if (dough.replaces !== undefined && !mainIngredients.some((ing) => ing.name === dough.replaces)) {
+  if (dough.replaces === undefined) {
+    if (Object.keys(dough).some((key) => key !== 'type')) {
+      fail(`${dish.id}: состав и шаги встроенного теста указываются в основном рецепте`);
+    }
+    return dough;
+  }
+  if (!dish.ingredients?.some((ing) => ing.name === dough.replaces)) {
     fail(`${dish.id}: готового продукта ${dough.replaces} нет в составе блюда`);
   }
+  if (!hasSteps(dough.steps) || !Array.isArray(dough.ingredients) || !dough.ingredients.length) {
+    fail(`${dish.id}: у домашней замены должны быть ingredients и steps`);
+  }
+  if (dough.title !== undefined && (typeof dough.title !== 'string' || !dough.title.trim())) {
+    fail(`${dish.id}: название домашнего варианта должно быть непустой строкой`);
+  }
   const keys = new Set();
-  const ingredients = dough.ingredients.map((item) => {
-    const isReference = typeof item === 'string';
-    const main = mainIngredients.find((ing) => isReference
-      ? ing.name === item
-      : ing.name === item?.name && ing.unit === item?.unit);
-    const ing = isReference ? main : item;
+  for (const ing of dough.ingredients) {
     if (!ing || typeof ing.name !== 'string' || !ing.name.trim() || !ALLOWED_UNITS.has(ing.unit) ||
         !Number.isFinite(ing.qty) || ing.qty < 0 || (ing.qty === 0 && ing.unit !== 'по вкусу')) {
-      fail(`${dish.id}: некорректный ингредиент теста ${JSON.stringify(item)}`);
-    }
-    if (!dough.replaces && (!main || ing.qty > main.qty)) {
-      fail(`${dish.id}: количество ${ing.name} в тесте должно укладываться в состав блюда`);
+      fail(`${dish.id}: некорректный ингредиент теста ${JSON.stringify(ing)}`);
     }
     const key = `${ing.name}/${ing.unit}`;
     if (keys.has(key)) fail(`${dish.id}: дублирующийся ингредиент теста ${ing.name}`);
     keys.add(key);
-    return ing;
-  });
-  return { ...dough, ingredients };
+  }
+  return dough;
 }
 
 function buildDishes() {

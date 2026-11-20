@@ -44,7 +44,7 @@ app/
     ├── app.js             # Alpine root
     ├── generator.js       # выбор блюд с весами
     ├── shopping.js        # агрегация + scaleQty
-    ├── store.js           # localStorage с санитацией
+    ├── store.js           # транзакционное сохранение в IndexedDB
     ├── styles.css
     └── sw.js              # service worker получает список файлов при сборке
 
@@ -61,7 +61,9 @@ legacy/                    # старая PySimpleGUI версия
 В разделе «По дням» кнопка «Разложить подборку» добавляет в расписание блюда,
 которых там ещё нет. Можно также выбрать блюдо для конкретного завтрака,
 обеда или ужина. «Заполнить пустые приёмы» подбирает блюда для оставшихся
-мест с учётом блокировок и старается уменьшить повторы. Для второй подачи
+мест с учётом блокировок и старается уменьшить повторы. К рыбе в первую очередь
+подбирается простой гарнир вроде булгура или брокколи. К таким блюдам, как плов,
+подбирается лёгкий салат. Для второй подачи
 выберите блюдо в списке «Повторить блюдо…» и нажмите «Добавить подачу».
 Выход первой готовки и покупки учитывают порции для всех связанных приёмов.
 При переносе первой подачи связанные приёмы сдвигаются вместе с ней.
@@ -156,11 +158,12 @@ blini:
 
 ## Тесто
 
-В карточках с тестом отдельный раздел показывает тип, ингредиенты и замес.
-Количества меняются вместе с порциями блюда. В `dough.yml` имя ингредиента
-берёт количество из основного состава, а запись с `qty` и `unit` задаёт его
-явно. Для дома есть варианты слоёного теста, пельменного теста и пасты. У таких
-рецептов в покупках указан готовый продукт, а состав теста показан отдельно.
+Когда тесто входит в рецепт, карточка показывает его тип рядом с обычными
+шагами. В `dough.yml` для такого блюда достаточно `type`. Домашняя замена
+покупного продукта задаётся через `replaces`, отдельные ингредиенты и шаги.
+Так показаны слоёное тесто, домашние пельмени и разные виды лапши. Количества
+в обоих вариантах масштабируются с порциями. Список покупок рассчитан на
+готовый продукт.
 
 При подготовке использованы техники из [урока по слоёному тесту King Arthur Baking](https://shop.kingarthurbaking.com/content/class-pdfs/Hasty-Pastry-2.22.pdf),
 [руководства по свежей пасте](https://www.kingarthurbaking.com/learn/pasta) и
@@ -178,16 +181,44 @@ blini:
 зубчики и пучки округляются вверх один раз на общую строку. Картофель задан в
 граммах (раньше одна штука в справочнике соответствовала примерно 100 г).
 Кукуруза в початках и консервированная кукуруза учитываются отдельно.
+Пересчёт ровных ложек в граммы для муки, сахара, соды, разрыхлителя и крахмала
+основан на [таблице мер King Arthur Baking](https://www.kingarthurbaking.com/learn/ingredient-weight-chart).
 
 Температуры внутри мяса, птицы и рыбы сверены с [таблицей FoodSafety.gov](https://www.foodsafety.gov/food-safety-charts/safe-minimum-internal-temperatures).
+
+## Фото новых салатов и гарниров
+
+Картинки сгенерированы встроенным ImageGen и сохранены в `app/public/images/`.
+
+<details>
+<summary>Промпты для восьми картинок</summary>
+
+Общее начало промпта
+
+> Photorealistic editorial food photography for a home recipe card.
+
+- `rukola-s-cherri-i-fetoy.webp` — Fresh arugula salad with cherry tomato halves and small ivory feta cubes, very lightly glossy lemon dressing. The distinctive lobed arugula leaves fill much of the bowl.
+- `rukola-s-grushey-i-orekhami.webp` — Fresh arugula salad with slices of skin-on pear, visible whole and broken walnut pieces, a drizzle of lemon oil dressing. Distinctive lobed arugula leaves, no cheese or tomatoes.
+- `salat-s-redisom-i-ogurtsom.webp` — Fresh sliced red radishes and cucumber with dill, thinly dressed in sour cream. The bright red edges and green cucumber skin remain clear.
+- `salat-s-nutom.webp` — Fresh chickpea salad with tender whole beige chickpeas, diced cucumber and ripe red tomatoes, chopped parsley. A light lemon and oil dressing, no feta or lettuce.
+- `bulgur.webp` — Plain fluffy cooked bulgur, recognizable coarse cracked wheat grains, warm tan color with separated grains, in a small ceramic side bowl. No rice, no couscous beads, no mix-ins or herbs.
+- `brokkoli-v-dukhovke.webp` — Oven-roasted broccoli florets with lightly browned crisp tips, some fine garlic pieces and a small visible lemon wedge at the rim. Broccoli only, no other vegetables.
+- `tsvetnaya-kapusta-s-paprikoy.webp` — Oven-roasted cauliflower florets, white creamy stems and golden reddish paprika-coated tops with restrained roasted edges. No broccoli or red pepper pieces.
+- `kartofel-dolkami.webp` — Home oven-baked skin-on potato wedges sliced lengthwise, crisp golden browned edges and visible soft cut surfaces, a light dusting of paprika, no ketchup or other ingredients.
+
+Общее продолжение
+
+> One dish only on plain light ceramic, neutral tabletop, natural side daylight, 3/4 overhead close-up, centered food with room around the bowl for cropping into a square recipe thumbnail, realistic homemade portions and textures, square composition, no people, no text, no graphics, no watermark.
+
+</details>
 
 ## Цены
 
 `prices.yml` содержит ориентировочные цены по Москве на указанную дату.
 В списке покупок цена показывается за килограмм, литр или штуку.
-Пользователь может переопределить цену прямо
-в UI — переопределение сохраняется в localStorage. Если значение совпадает
-с дефолтом — не сохраняется (не засоряет storage).
+Свои цены можно ввести прямо в списке. Они сохраняются в браузере вместе
+с планом, запасами и отметками. Старые сохранения из localStorage
+автоматически импортируются в IndexedDB при первом запуске.
 
 ## Установка как Android PWA
 

@@ -107,7 +107,7 @@ categories:
           - name: яблоко
             qty: 4
             unit: шт
-          - name: ванилин
+          - name: ванильный сахар
             qty: 1
             unit: ч.л.
           - name: масло сливочное
@@ -162,7 +162,7 @@ categories:
           - name: разрыхлитель
             qty: 1
             unit: ч.л.
-          - name: ванилин
+          - name: ванильный сахар
             qty: 1
             unit: ч.л.
       - id: pechene-sdobnoe
@@ -185,7 +185,7 @@ categories:
           - name: разрыхлитель
             qty: 1
             unit: ч.л.
-          - name: ванилин
+          - name: ванильный сахар
             qty: 1
             unit: ч.л.
           - name: соль
@@ -217,7 +217,7 @@ categories:
           - name: изюм
             qty: 100
             unit: г
-          - name: ванилин
+          - name: ванильный сахар
             qty: 1
             unit: ч.л.
       - id: chebureki
@@ -229,7 +229,7 @@ categories:
             qty: 400
             unit: г
           - name: вода
-            qty: 200
+            qty: 260
             unit: мл
           - name: мясо говядина
             qty: 300
@@ -269,7 +269,7 @@ categories:
           - name: разрыхлитель
             qty: 1
             unit: ч.л.
-          - name: ванилин
+          - name: ванильный сахар
             qty: 1
             unit: ч.л.
       - id: tvorozhnaya-zapekanka
@@ -295,9 +295,9 @@ categories:
           - name: масло сливочное
             qty: 20
             unit: г
-          - name: ванилин
+          - name: ванильный сахар
             qty: 1
-            unit: г
+            unit: ч.л.
           - name: соль
             qty: 0
             unit: по вкусу
@@ -371,7 +371,7 @@ categories:
           - name: сахар
             qty: 3
             unit: ст.л.
-          - name: ванилин
+          - name: ванильный сахар
             qty: 1
             unit: ч.л.
           - name: масло растительное
@@ -478,6 +478,9 @@ categories:
             unit: г
           - name: молоко
             qty: 400
+            unit: мл
+          - name: вода
+            qty: 200
             unit: мл
           - name: сахар
             qty: 2
@@ -590,7 +593,7 @@ categories:
           - name: изюм
             qty: 50
             unit: г
-          - name: ванилин
+          - name: ванильный сахар
             qty: 1
             unit: ч.л.
   - id: dishes
@@ -782,7 +785,7 @@ categories:
       - id: chakhokhbili
         name: Чахохбили
         image: images/chakhokhbili.webp
-        tags: []
+        tags: [needs-side]
         ingredients:
           - name: курица филе
             qty: 600
@@ -990,7 +993,7 @@ categories:
       - id: grechka
         name: Гречка
         image: images/grechka.webp
-        tags: []
+        tags: [light]
         ingredients:
           - name: гречка
             qty: 200
@@ -1004,7 +1007,7 @@ categories:
       - id: ris
         name: Рис
         image: images/ris.webp
-        tags: []
+        tags: [light]
         ingredients:
           - name: рис
             qty: 200
@@ -1030,9 +1033,9 @@ categories:
             qty: 0
             unit: по вкусу
       - id: svezhie-ovoshchi
-        name: Свежие овощи
+        name: Огурцы, помидоры и сладкий перец с зеленью
         image: images/svezhie-ovoshchi.webp
-        tags: []
+        tags: [light]
         ingredients:
           - name: огурец
             qty: 2
@@ -1047,9 +1050,9 @@ categories:
             qty: 1
             unit: пучок
       - id: zamorozka-ovoshchnaya
-        name: Заморозка овощная
+        name: Овощная смесь на сковороде
         image: images/zamorozka-ovoshchnaya.webp
-        tags: []
+        tags: [light]
         ingredients:
           - name: смесь овощная замороженная
             qty: 400
@@ -1145,6 +1148,43 @@ categories:
           - name: перец чёрный
             qty: 0
             unit: по вкусу
+      - id: bulgur
+        name: Рассыпчатый булгур
+        image: images/bulgur.webp
+        tags: [light]
+        ingredients:
+          - { name: булгур, qty: 160, unit: г }
+          - { name: вода, qty: 350, unit: мл }
+          - { name: масло сливочное, qty: 15, unit: г }
+          - { name: соль, qty: 0, unit: по вкусу }
+      - id: brokkoli-v-dukhovke
+        name: Запечённая брокколи с чесноком и лимоном
+        image: images/brokkoli-v-dukhovke.webp
+        tags: [light]
+        ingredients:
+          - { name: брокколи, qty: 400, unit: г }
+          - { name: чеснок, qty: 2, unit: зубчик }
+          - { name: лимон, qty: 0.5, unit: шт }
+          - { name: масло оливковое, qty: 1, unit: ст.л. }
+          - { name: соль, qty: 0, unit: по вкусу }
+      - id: tsvetnaya-kapusta-s-paprikoy
+        name: Запечённая цветная капуста с паприкой
+        image: images/tsvetnaya-kapusta-s-paprikoy.webp
+        tags: [light]
+        ingredients:
+          - { name: капуста цветная, qty: 450, unit: г }
+          - { name: масло растительное, qty: 1.5, unit: ст.л. }
+          - { name: паприка сладкая молотая, qty: 2, unit: г }
+          - { name: соль, qty: 0, unit: по вкусу }
+      - id: kartofel-dolkami
+        name: Картофель дольками в духовке
+        image: images/kartofel-dolkami.webp
+        tags: []
+        ingredients:
+          - { name: картофель, qty: 550, unit: г }
+          - { name: масло растительное, qty: 1.5, unit: ст.л. }
+          - { name: паприка сладкая молотая, qty: 2, unit: г }
+          - { name: соль, qty: 0, unit: по вкусу }
   - id: meat
     name: Мясо
     pick: 1
@@ -1207,7 +1247,7 @@ categories:
       - id: riba-belaya
         name: Рыба белая
         image: images/riba-belaya.webp
-        tags: []
+        tags: [light-side]
         ingredients:
           - name: рыба белая
             qty: 500
@@ -1230,7 +1270,7 @@ categories:
       - id: riba-krasnaya
         name: Рыба красная
         image: images/riba-krasnaya.webp
-        tags: []
+        tags: [light-side]
         ingredients:
           - name: рыба красная
             qty: 400
@@ -1406,7 +1446,7 @@ categories:
       - id: krevetki
         name: Креветки
         image: images/krevetki.webp
-        tags: []
+        tags: [light-side]
         ingredients:
           - name: креветки
             qty: 400
@@ -1500,9 +1540,9 @@ categories:
     pick: 1
     dishes:
       - id: ogurtsi-pomidori
-        name: Огурцы-помидоры
+        name: Салат из огурцов и помидоров
         image: images/ogurtsi-pomidori.webp
-        tags: []
+        tags: [light]
         ingredients:
           - name: огурец
             qty: 2
@@ -1577,7 +1617,7 @@ categories:
       - id: kapustnii-salat-vitaminnii-s-morkovkoi-y
         name: Капустный салат витаминный с морковкой/яблоком
         image: images/kapustnii-salat-vitaminnii-s-morkovkoi-y.webp
-        tags: []
+        tags: [light]
         ingredients:
           - name: капуста
             qty: 400
@@ -1688,7 +1728,7 @@ categories:
             qty: 0
             unit: по вкусу
       - id: s-kartoshkoi-i-yaitsom
-        name: С картошкой и яйцом
+        name: Салат с картофелем и яйцом
         image: images/s-kartoshkoi-i-yaitsom.webp
         tags: []
         ingredients:
@@ -1771,6 +1811,48 @@ categories:
           - name: соль
             qty: 0
             unit: по вкусу
+      - id: rukola-s-cherri-i-fetoy
+        name: Руккола с черри и фетой
+        image: images/rukola-s-cherri-i-fetoy.webp
+        tags: [light]
+        ingredients:
+          - { name: руккола, qty: 65, unit: г }
+          - { name: помидоры черри, qty: 180, unit: г }
+          - { name: сыр фета, qty: 70, unit: г }
+          - { name: лимон, qty: 0.5, unit: шт }
+          - { name: масло оливковое, qty: 1, unit: ст.л. }
+      - id: rukola-s-grushey-i-orekhami
+        name: Руккола с грушей и грецким орехом
+        image: images/rukola-s-grushey-i-orekhami.webp
+        tags: [light]
+        ingredients:
+          - { name: руккола, qty: 65, unit: г }
+          - { name: груша, qty: 1, unit: шт }
+          - { name: орехи грецкие, qty: 30, unit: г }
+          - { name: лимон, qty: 0.5, unit: шт }
+          - { name: масло оливковое, qty: 1, unit: ст.л. }
+      - id: salat-s-redisom-i-ogurtsom
+        name: Салат из редиса и огурцов со сметаной
+        image: images/salat-s-redisom-i-ogurtsom.webp
+        tags: [light]
+        ingredients:
+          - { name: редис, qty: 8, unit: шт }
+          - { name: огурец, qty: 2, unit: шт }
+          - { name: укроп, qty: 0.25, unit: пучок }
+          - { name: сметана, qty: 60, unit: г }
+          - { name: соль, qty: 0, unit: по вкусу }
+      - id: salat-s-nutom
+        name: Салат с нутом, огурцом и помидорами
+        image: images/salat-s-nutom.webp
+        tags: []
+        ingredients:
+          - { name: нут консервированный, qty: 240, unit: г }
+          - { name: огурец, qty: 1, unit: шт }
+          - { name: помидор, qty: 2, unit: шт }
+          - { name: зелень, qty: 0.5, unit: пучок }
+          - { name: лимон, qty: 0.5, unit: шт }
+          - { name: масло оливковое, qty: 1, unit: ст.л. }
+          - { name: соль, qty: 0, unit: по вкусу }
   - id: soups
     name: Супы
     pick: 2
