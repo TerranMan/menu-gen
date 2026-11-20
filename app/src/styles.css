@@ -239,12 +239,17 @@ header.top h1 {
 }
 
 .meal-actions,
-.catalog-filters {
+.catalog-filters,
+.week-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   margin-top: 8px;
+}
+
+.week-actions {
+  margin-bottom: 12px;
 }
 
 .catalog-filters {
@@ -337,7 +342,8 @@ header.top h1 {
   min-height: 120px;
 }
 
-.recipe-dialog {
+.recipe-dialog,
+.week-dialog {
   width: min(540px, calc(100% - 24px));
   max-height: calc(100% - 24px);
   max-height: calc(100dvh - 24px);
@@ -348,8 +354,33 @@ header.top h1 {
   color: var(--text);
 }
 
-.recipe-dialog::backdrop {
+.recipe-dialog::backdrop,
+.week-dialog::backdrop {
   background: rgb(44 39 34 / 55%);
+}
+
+.archive-name {
+  display: grid;
+  gap: 5px;
+  font-size: 14px;
+}
+
+.history-week {
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.history-week summary {
+  cursor: pointer;
+}
+
+.history-meals {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  padding: 0;
+  margin: 8px 0;
+  list-style: none;
 }
 
 .recipe-photo {

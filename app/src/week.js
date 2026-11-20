@@ -23,6 +23,12 @@ export const MEALS = DAYS.flatMap((day) => MEAL_TYPES.map((type) => ({
 })));
 const mealOrder = new Map(MEALS.map((meal, index) => [meal.id, index]));
 
+const MEAL_CATEGORIES = {
+  breakfast: [['breakfasts'], ['bakery', 'fruits_vegetables']],
+  lunch: [['soups', 'dishes', 'meat'], ['salads', 'garnishes']],
+  dinner: [['dishes', 'meat'], ['soups'], ['salads', 'garnishes']],
+};
+
 export function sanitizeWeek(raw, isKnownDish = () => true) {
   const week = {};
   for (const { id } of MEALS) {
@@ -109,4 +115,59 @@ export function distributeMenu(week, menu) {
     + place('dishes', mainMeals, true) + place('meat', dinners, true)
     + place('garnishes', dinners, false) + place('salads', mainMeals, false)
     + place('bakery', breakfasts, false) + place('fruits_vegetables', breakfasts, false);
+}
+
+export function fillEmptyMeals(week, data, state, menu) {
+  const uses = new Map();
+  function countUse(dishId) {
+    uses.set(dishId, (uses.get(dishId) ?? 0) + 1);
+  }
+  for (const entries of Object.values(week)) {
+    for (const entry of entries) countUse(entry.dishId);
+  }
+
+  const blocked = new Set(state.blocks);
+  const pinned = new Set(state.pins);
+  const favorites = new Set(state.favorites);
+  const selected = new Set(menu.flatMap((slot) => slot.dishes.map((dish) => dish.id)));
+  const available = new Map(data.categories.map((category) => [
+    category.id,
+    category.dishes.filter((dish) => !blocked.has(dish.id)).map((dish) => ({
+      id: dish.id,
+      categoryId: category.id,
+      preference: (pinned.has(dish.id) ? 4 : 0) + (selected.has(dish.id) ? 2 : 0) + (favorites.has(dish.id) ? 1 : 0),
+    })),
+  ]));
+
+  function choose(candidates) {
+    if (!candidates?.length) return null;
+    const fewestUses = Math.min(...candidates.map(({ id }) => uses.get(id) ?? 0));
+    const leastUsed = candidates.filter(({ id }) => (uses.get(id) ?? 0) === fewestUses);
+    const preference = Math.max(...leastUsed.map((dish) => dish.preference));
+    const best = leastUsed.filter((dish) => dish.preference === preference);
+    return best[Math.floor(Math.random() * best.length)];
+  }
+
+  let filled = 0;
+  let remaining = 0;
+  for (const meal of MEALS) {
+    if (week[meal.id]?.length) continue;
+    const pool = MEAL_CATEGORIES[meal.type]
+      .map((group) => group.flatMap((categoryId) => available.get(categoryId) ?? []))
+      .find((group) => group.length);
+    const main = choose(pool);
+    if (!main) {
+      remaining++;
+      continue;
+    }
+    addToMeal(week, meal.id, main.id);
+    countUse(main.id);
+    filled++;
+
+    if (main.categoryId === 'meat') {
+      const side = choose(available.get('garnishes'));
+      if (side && addToMeal(week, meal.id, side.id)) countUse(side.id);
+    }
+  }
+  return { filled, remaining };
 }

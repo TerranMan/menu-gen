@@ -1,5 +1,10 @@
-import { addToMeal, cookingBatches, DAYS, distributeMenu, earlierBatches, MEALS, removeFromMeal } from './week.js';
+import {
+  addToMeal, cookingBatches, DAYS, distributeMenu, earlierBatches,
+  fillEmptyMeals, MEALS, removeFromMeal, sanitizeWeek,
+} from './week.js';
 import { save } from './store.js';
+
+const historyDate = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short' });
 
 function searchable(text) {
   return text.toLocaleLowerCase('ru').replaceAll('ё', 'е');
@@ -15,6 +20,8 @@ export function planner() {
     catalogTarget: null,
     recipePreview: null,
     plannerMessage: '',
+    weekStorageError: '',
+    archiveName: '',
 
     showView(view) {
       this.catalogTarget = null;
@@ -124,6 +131,85 @@ export function planner() {
       const added = distributeMenu(this.state.week, this.menu);
       this.persistWeek();
       this.plannerMessage = added ? `Добавлено в расписание — ${added}` : 'Все блюда из подборки уже в расписании.';
+    },
+
+    fillSchedule() {
+      const { filled, remaining } = fillEmptyMeals(this.state.week, this.data, this.state, this.menu);
+      if (filled) this.persistWeek();
+      if (remaining) {
+        this.plannerMessage = `Заполнено — ${filled}. Без подходящего блюда — ${remaining}.`;
+      } else {
+        this.plannerMessage = filled ? `Заполнено приёмов — ${filled}. Расписание готово.` : 'Все приёмы уже заполнены.';
+      }
+    },
+
+    openNewWeek() {
+      this.archiveName = '';
+      this.weekStorageError = '';
+      this.$refs.newWeekDialog.showModal();
+    },
+
+    openHistory() {
+      this.weekStorageError = '';
+      this.$refs.historyDialog.showModal();
+    },
+
+    hasWeekPlan() {
+      return Object.keys(this.state.week).length > 0;
+    },
+
+    historyLabel(entry) {
+      return entry.name || historyDate.format(entry.id);
+    },
+
+    historyDate(entry) {
+      return historyDate.format(entry.id);
+    },
+
+    historyLines(entry) {
+      const lines = [];
+      for (const meal of MEALS) {
+        const ids = entry.week[meal.id] ?? [];
+        const names = ids.map(({ dishId }) => this.dishById(dishId)?.name).filter(Boolean);
+        if (names.length) lines.push({ id: meal.id, label: meal.label, dishes: names.join(', ') });
+      }
+      return lines;
+    },
+
+    replaceWeek(source, name = '') {
+      const existing = this.state.weekHistory;
+      const weekHistory = this.hasWeekPlan() ? [{
+        id: Math.max(Date.now(), (existing[0]?.id ?? 0) + 1),
+        name: name.trim().slice(0, 60),
+        persons: this.state.persons,
+        week: sanitizeWeek(this.state.week),
+      }, ...existing] : existing;
+      const next = {
+        ...this.state,
+        week: sanitizeWeek(source, (id) => Boolean(this.dishById(id))),
+        weekHistory,
+        weekChecked: {},
+      };
+      if (!save(next)) {
+        this.weekStorageError = 'Сохранить неделю не удалось. Текущий план остался на месте.';
+        return false;
+      }
+      this.state = next;
+      this.dayId = DAYS[0].id;
+      this.copyText = '';
+      this.copyMessage = '';
+      this.plannerMessage = 'Новая неделя начата.';
+      return true;
+    },
+
+    startNewWeek(copyCurrent) {
+      if (this.replaceWeek(copyCurrent ? this.state.week : {}, this.archiveName)) {
+        this.$refs.newWeekDialog.close();
+      }
+    },
+
+    copyHistoryWeek(entry) {
+      if (this.replaceWeek(entry.week)) this.$refs.historyDialog.close();
     },
 
     persistWeek() {

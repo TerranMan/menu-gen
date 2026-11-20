@@ -19,6 +19,7 @@ const empty = () => ({
   checked: {}, // ключ списка покупок → количество на момент отметки
   week: {},
   weekChecked: {},
+  weekHistory: [],
   view: 'menu',
   prices: {}, // ключ "name__unit" → число (₽ за 1 единицу)
 });
@@ -75,6 +76,19 @@ function sanitizeChecked(checked) {
   return Object.fromEntries(Object.entries(checked).filter(([, qty]) => Number.isFinite(qty) && qty >= 0));
 }
 
+function sanitizeWeekHistory(history) {
+  if (!Array.isArray(history)) return [];
+  const entries = new Map();
+  for (const entry of history) {
+    if (!Number.isSafeInteger(entry?.id) || entry.id <= 0 || entry.id > 8.64e15 || entries.has(entry.id)) continue;
+    const week = sanitizeWeek(entry.week);
+    if (!Object.keys(week).length) continue;
+    const name = typeof entry.name === 'string' ? entry.name.trim().slice(0, 60) : '';
+    entries.set(entry.id, { id: entry.id, name, persons: sanitizePersons(entry.persons), week });
+  }
+  return [...entries.values()].sort((a, b) => b.id - a.id);
+}
+
 export function load() {
   try {
     const raw = localStorage.getItem(KEY);
@@ -93,6 +107,7 @@ export function load() {
       checked: sanitizeChecked(parsed.checked),
       week: sanitizeWeek(parsed.week),
       weekChecked: sanitizeChecked(parsed.weekChecked),
+      weekHistory: sanitizeWeekHistory(parsed.weekHistory),
       view: parsed.view === 'week' ? 'week' : 'menu',
       prices: sanitizePrices(parsed.prices),
     };
@@ -104,8 +119,10 @@ export function load() {
 export function save(state) {
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
+    return true;
   } catch (e) {
     console.warn('Не удалось сохранить state:', e);
+    return false;
   }
 }
 

@@ -218,3 +218,49 @@ test('a weekly recipe can be served twice and copied with grouped shopping and t
   await page.getByRole('button', { name: 'Вторник' }).click();
   assert.equal(await lunch.getByText('Готовим · 2 порции', { exact: true }).isVisible(), true);
 });
+
+test('autofill preserves a manual meal and history copies the saved week with a fresh shopping checklist', async (t) => {
+  const cooked = [{ dishId: 'borshch', from: null }];
+  const repeated = [{ dishId: 'borshch', from: 'mon-lunch' }];
+  const { page } = await openMenu(t, {
+    version: 1,
+    view: 'week',
+    week: { 'mon-lunch': cooked, 'tue-lunch': repeated },
+  });
+  const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem('menu_gen_v1')));
+  await page.getByRole('button', { name: 'Заполнить пустые приёмы' }).click();
+  await page.getByText('Заполнено приёмов — 19. Расписание готово.').waitFor();
+  const week = (await stored()).week;
+  assert.equal(Object.keys(week).length, 21);
+  assert.deepEqual(week['mon-lunch'], cooked);
+  assert.deepEqual(week['tue-lunch'], repeated);
+  await page.locator('#shopping input[type=checkbox]').first().check();
+  assert.equal(Object.keys((await stored()).weekChecked).length, 1);
+
+  await page.getByRole('button', { name: 'Новая неделя' }).click();
+  const next = page.getByRole('dialog', { name: 'Новая неделя' });
+  await next.getByRole('textbox', { name: 'Название сохраняемого плана' }).fill('План с борщом');
+  await next.getByRole('button', { name: 'Начать с пустого плана' }).click();
+  await next.waitFor({ state: 'hidden' });
+  assert.deepEqual((await stored()).week, {});
+  assert.deepEqual((await stored()).weekChecked, {});
+
+  await page.reload();
+  await page.getByRole('button', { name: 'История недель' }).click();
+  const history = page.getByRole('dialog', { name: 'История недель' });
+  await history.getByText('План с борщом', { exact: true }).click();
+  assert.ok(await history.getByText('Борщ', { exact: true }).count() >= 2);
+  await history.getByRole('button', { name: 'Скопировать в новую неделю' }).click();
+  await history.waitFor({ state: 'hidden' });
+  assert.deepEqual((await stored()).week, week);
+  const mondayLunch = page.getByRole('region', { name: 'Обед', exact: true });
+  await mondayLunch.getByRole('button', { name: 'Убрать Борщ из приёма' }).click();
+  const changed = await stored();
+  assert.deepEqual(changed.week['tue-lunch'], cooked);
+  assert.deepEqual(changed.weekHistory[0].week, week);
+
+  await page.getByRole('button', { name: 'Новая неделя' }).click();
+  await next.getByRole('button', { name: 'Скопировать текущий план' }).click();
+  assert.deepEqual((await stored()).week, changed.week);
+  assert.equal((await stored()).weekHistory.length, 2);
+});

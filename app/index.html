@@ -152,7 +152,12 @@
         <section class="week-view" aria-label="План на неделю">
           <div class="view-heading">
             <h2>План на неделю</h2>
+            <button class="btn" type="button" @click="openHistory()">История недель</button>
+          </div>
+          <div class="week-actions">
+            <button class="btn primary" type="button" @click="fillSchedule()">Заполнить пустые приёмы</button>
             <button class="btn" type="button" @click="distributeSelection()">Разложить подборку</button>
+            <button class="btn" type="button" @click="openNewWeek()">Новая неделя</button>
           </div>
           <p class="view-status" aria-live="polite" x-show="plannerMessage" x-text="plannerMessage"></p>
           <div class="day-nav" role="group" aria-label="Дни недели">
@@ -324,6 +329,50 @@
         </details>
       </div>
       </main>
+
+      <dialog class="week-dialog" x-ref="newWeekDialog" aria-labelledby="new-week-title">
+        <div class="view-heading">
+          <h2 id="new-week-title">Новая неделя</h2>
+          <button type="button" class="icon-btn" aria-label="Закрыть" autofocus @click="$refs.newWeekDialog.close()">×</button>
+        </div>
+        <div x-show="hasWeekPlan()">
+          <p>Текущий план сохранится в истории.</p>
+          <label class="archive-name">
+            Название сохраняемого плана
+            <input class="field" type="text" maxlength="60" placeholder="Можно оставить пустым" x-model="archiveName" />
+          </label>
+        </div>
+        <div class="week-actions">
+          <button type="button" class="btn primary" @click="startNewWeek(false)">Начать с пустого плана</button>
+          <button type="button" class="btn" x-show="hasWeekPlan()" @click="startNewWeek(true)">Скопировать текущий план</button>
+        </div>
+        <p class="view-status" role="alert" x-show="weekStorageError" x-text="weekStorageError"></p>
+      </dialog>
+
+      <dialog class="week-dialog" x-ref="historyDialog" aria-labelledby="history-title">
+        <div class="view-heading">
+          <h2 id="history-title">История недель</h2>
+          <button type="button" class="icon-btn" aria-label="Закрыть" autofocus @click="$refs.historyDialog.close()">×</button>
+        </div>
+        <p class="view-status" x-show="!state.weekHistory.length">Сохранённые планы появятся здесь после начала новой недели.</p>
+        <p class="view-status" role="alert" x-show="weekStorageError" x-text="weekStorageError"></p>
+        <template x-for="entry in state.weekHistory" :key="entry.id">
+          <details class="history-week">
+            <summary>
+              <strong x-text="historyLabel(entry)"></strong>
+              <span class="item-meta" x-show="entry.name" x-text="historyDate(entry)"></span>
+            </summary>
+            <p class="item-meta" x-text="`Персон — ${entry.persons}`"></p>
+            <ul class="history-meals">
+              <template x-for="line in historyLines(entry)" :key="line.id">
+                <li><span class="item-meta" x-text="line.label"></span><span x-text="line.dishes"></span></li>
+              </template>
+            </ul>
+            <p class="item-meta" x-show="hasWeekPlan()">Текущий план тоже сохранится в истории.</p>
+            <button class="btn" type="button" @click="copyHistoryWeek(entry)">Скопировать в новую неделю</button>
+          </details>
+        </template>
+      </dialog>
 
       <dialog class="recipe-dialog" x-ref="recipeDialog" aria-labelledby="preview-title" @close="recipePreview = null">
         <template x-if="recipePreview">

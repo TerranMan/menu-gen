@@ -5,7 +5,7 @@ import YAML from 'yaml';
 import { generateMenu, regenerateSlot } from '../src/generator.js';
 import { aggregate, groupShopping, recipeFactor, shoppingText, totalCost } from '../src/shopping.js';
 import { load } from '../src/store.js';
-import { addToMeal, cookingBatches, distributeMenu, removeFromMeal, sanitizeWeek } from '../src/week.js';
+import { addToMeal, cookingBatches, distributeMenu, fillEmptyMeals, removeFromMeal, sanitizeWeek } from '../src/week.js';
 
 const category = {
   id: 'breakfasts',
@@ -116,6 +116,7 @@ test('saved menus and shopping checks are sanitized without dropping valid prefe
     checked: { 'яйцо__шт': 2, 'соль__по вкусу': 0 },
     week: {},
     weekChecked: {},
+    weekHistory: [],
     view: 'menu',
     prices: { 'яйцо__шт': 18, 'квас__мл': 0.12, 'картофель__г': 0.14 },
   });
@@ -154,6 +155,21 @@ test('restoring and distributing the weekly plan preserves valid entries', () =>
   assert.equal(distributeMenu(week, [{ categoryId: 'breakfasts', dishes: category.dishes }]), 3);
   assert.equal(distributeMenu(week, [{ categoryId: 'breakfasts', dishes: category.dishes }]), 0);
   assert.deepEqual(cookingBatches(week).map((batch) => batch.mealCount), [2, 1, 1, 1]);
+});
+
+test('autofill preserves complete meals and batch links, favors pins and skips blocked dishes', () => {
+  const week = {
+    'mon-breakfast': [{ dishId: 'blini', from: null }],
+    'mon-lunch': [{ dishId: 'borshch', from: null }],
+    'tue-lunch': [{ dishId: 'borshch', from: 'mon-lunch' }],
+  };
+  const previous = structuredClone(week);
+  const result = fillEmptyMeals(week, data, { pins: ['sirniki', 'oladi'], blocks: ['oladi'] }, []);
+  assert.deepEqual(result, { filled: 6, remaining: 12 });
+  assert.deepEqual(week['tue-breakfast'], [{ dishId: 'sirniki', from: null }]);
+  for (const [id, entries] of Object.entries(previous)) assert.deepEqual(week[id], entries);
+  assert.ok(!Object.values(week).flat().some((entry) => entry.dishId === 'oladi'));
+  assert.deepEqual(fillEmptyMeals(week, data, {}, []), { filled: 0, remaining: 12 });
 });
 
 test('copied shopping list keeps store departments and checkmarks', () => {
