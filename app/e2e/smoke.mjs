@@ -127,7 +127,7 @@ test('old saved menus recover malformed entries and show category shortages', as
 });
 
 test('cottage cheese casserole and pea porridge are separate cards with recipes and images', async (t) => {
-  const { page } = await openMenu(t, {
+  const { context, page } = await openMenu(t, {
     version: 1,
     lastMenu: [
       { categoryId: 'bakery', dishIds: ['tvorozhnaya-zapekanka'] },
@@ -148,4 +148,8 @@ test('cottage cheese casserole and pea porridge are separate cards with recipes 
     await page.waitForFunction((name) => Array.from(document.images)
       .some((image) => image.alt === name && image.naturalWidth > 0), dish.name);
   }
+  await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+  const photoTab = await context.newPage();
+  const response = await photoTab.goto(`${url}images/grechka.webp`);
+  assert.match(response.headers()['content-type'], /^image\/webp/);
 });

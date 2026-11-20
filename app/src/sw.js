@@ -1,6 +1,7 @@
 // CACHE_VERSION и PRECACHE_FILES добавляет Vite из production-сборки.
 const scope = self.registration.scope;
 const shellUrl = new URL('./', scope).href;
+const shellPath = new URL(shellUrl).pathname;
 const precacheUrls = new Set(PRECACHE_FILES.map((file) => new URL(file, scope).href));
 const cachePrefix = `menu-gen:${scope}:`;
 const cacheName = cachePrefix + CACHE_VERSION;
@@ -26,8 +27,10 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET' || !request.url.startsWith(scope)) return;
 
-  if (request.mode === 'navigate' || precacheUrls.has(request.url)) {
-    const url = request.mode === 'navigate' ? shellUrl : request.url;
+  const path = new URL(request.url).pathname;
+  const menuNavigation = request.mode === 'navigate' && (path === shellPath || path === `${shellPath}index.html`);
+  if (menuNavigation || precacheUrls.has(request.url)) {
+    const url = menuNavigation ? shellUrl : request.url;
     event.respondWith((async () => {
       const cache = await caches.open(cacheName);
       return (await cache.match(url)) ?? fetch(request);
