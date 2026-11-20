@@ -41,9 +41,15 @@ jobs:
         working-directory: app
         run: npm run build
 
-      - name: Install Chromium
+      - name: Prepare browser tests
         working-directory: app
-        run: npx playwright install --with-deps chromium
+        timeout-minutes: 5
+        run: |
+          if chrome=$(command -v google-chrome); then
+            printf 'CHROMIUM_EXECUTABLE_PATH=%s\n' "$chrome" >> "$GITHUB_ENV"
+          else
+            npx playwright install --with-deps chromium
+          fi
 
       - name: Run browser tests
         working-directory: app
