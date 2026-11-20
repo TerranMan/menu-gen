@@ -16,7 +16,8 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Playwright 1.60 supports Ubuntu 24.04.
+    runs-on: ubuntu-24.04
     env:
       DEPLOY_TARGET: pages
     steps:
