@@ -345,3 +345,16 @@ test('sharing a week sends the same schedule and pantry-adjusted shopping text s
   await share.getByRole('button', { name: 'Отправить…' }).click();
   assert.deepEqual(await page.evaluate(() => [window.copiedWeek, window.sharedWeek]), [preview, preview]);
 });
+
+test('the catalog keeps the shopping link and opens the list for the previous view', async (t) => {
+  const { page } = await openMenu(t, {
+    version: 1, view: 'week',
+    week: { 'mon-lunch': [{ dishId: 'borshch', from: null }] },
+  });
+  await page.getByRole('button', { name: 'Каталог', exact: true }).click();
+  await page.getByRole('searchbox').fill('блины');
+  await page.getByRole('link', { name: 'Покупки', exact: true }).click();
+  await page.getByText('По плану недели', { exact: true }).waitFor();
+  assert.equal(await page.getByRole('checkbox', { name: 'мясо говядина — 133,3 г', exact: true }).isVisible(), true);
+  assert.equal(await page.locator('#shopping').evaluate((element) => element.open), true);
+});

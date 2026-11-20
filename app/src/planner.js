@@ -40,6 +40,13 @@ export function planner() {
       save(this.state);
     },
 
+    openShopping() {
+      const shopping = this.$refs.shopping;
+      if (this.view === 'catalog') this.showView(this.state.view);
+      shopping.open = true;
+      this.$nextTick(() => shopping.scrollIntoView({ block: 'start' }));
+    },
+
     openCatalog(mealId) {
       const nav = this.$refs.viewNav;
       this.showView('catalog');

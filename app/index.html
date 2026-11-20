@@ -41,7 +41,7 @@
         <button type="button" :aria-pressed="view === 'today'" @click="showView('today')">Сегодня</button>
         <button type="button" :aria-pressed="view === 'week'" @click="showView('week')">По дням</button>
         <button type="button" :aria-pressed="view === 'catalog'" @click="showView('catalog')">Каталог</button>
-        <a href="#shopping" x-show="view !== 'catalog'" @click="$refs.shopping.open = true">Покупки</a>
+        <a href="#shopping" @click.prevent="openShopping()">Покупки</a>
       </nav>
 
       <main>
