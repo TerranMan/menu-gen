@@ -31,11 +31,20 @@
           >+</button>
           <span class="persons-label">персон</span>
         </div>
-        <div class="toolbar">
+        <div class="toolbar" x-show="view === 'menu'">
           <button class="btn primary" @click="regenerateAll()">Сгенерировать заново</button>
         </div>
       </header>
 
+      <nav class="view-nav" x-ref="viewNav" aria-label="Разделы меню">
+        <button type="button" :aria-pressed="view === 'menu'" @click="showView('menu')">Подборка</button>
+        <button type="button" :aria-pressed="view === 'week'" @click="showView('week')">По дням</button>
+        <button type="button" :aria-pressed="view === 'catalog'" @click="showView('catalog')">Каталог</button>
+        <a href="#shopping" x-show="view !== 'catalog'" @click="$refs.shopping.open = true">Покупки</a>
+      </nav>
+
+      <main>
+      <div x-show="view === 'menu'">
       <template x-for="slot in menu" :key="slot.categoryId">
         <section class="category">
           <h2>
@@ -44,7 +53,7 @@
               <button
                 type="button"
                 class="btn-step btn-step-sm"
-                :disabled="effectivePick(slot.categoryId) <= 0"
+                :disabled="effectivePick(slot.categoryId) <= pinnedCount(slot.categoryId)"
                 @click="decPick(slot.categoryId)"
                 aria-label="Меньше блюд"
               >−</button>
@@ -85,6 +94,15 @@
                 </button>
                 <div class="dish-actions">
                   <button
+                    type="button"
+                    class="icon-btn pin-btn"
+                    :class="{ active: isPinned(dish.id) }"
+                    :aria-pressed="isPinned(dish.id)"
+                    :aria-label="isPinned(dish.id) ? 'Открепить блюдо' : 'Закрепить блюдо'"
+                    :title="isPinned(dish.id) ? 'Открепить блюдо' : 'Закрепить блюдо'"
+                    @click="togglePin(dish.id)"
+                  >📌</button>
+                  <button
                     class="icon-btn"
                     :class="{ active: isFavorite(dish.id) }"
                     :title="isFavorite(dish.id) ? 'Убрать из избранного' : 'В избранное'"
@@ -96,7 +114,7 @@
                     class="icon-btn"
                     title="Заменить это блюдо"
                     aria-label="Заменить это блюдо"
-                    :disabled="slot.dishes.length >= availableCount(slot.categoryId)"
+                    :disabled="isPinned(dish.id) || slot.dishes.length >= availableCount(slot.categoryId)"
                     @click="regenerateOne(slot.categoryId, dish.id)"
                   >↻</button>
                   <button
@@ -128,28 +146,135 @@
           </template>
         </section>
       </template>
+      </div>
 
-      <div class="lists">
-        <details open>
+      <template x-if="view === 'week'">
+        <section class="week-view" aria-label="План на неделю">
+          <div class="view-heading">
+            <h2>План на неделю</h2>
+            <button class="btn" type="button" @click="distributeSelection()">Разложить подборку</button>
+          </div>
+          <p class="view-status" aria-live="polite" x-show="plannerMessage" x-text="plannerMessage"></p>
+          <div class="day-nav" role="group" aria-label="Дни недели">
+            <template x-for="day in days" :key="day.id">
+              <button type="button" :aria-label="day.name" :aria-pressed="dayId === day.id" @click="dayId = day.id"
+                x-text="day.short"></button>
+            </template>
+          </div>
+          <h3 class="day-heading" x-text="activeDay().name"></h3>
+          <template x-for="meal in currentMeals()" :key="meal.id">
+            <section class="meal-block" :aria-labelledby="`meal-${meal.id}`">
+              <h4 :id="`meal-${meal.id}`" x-text="meal.name"></h4>
+              <ul class="meal-dishes">
+                <template x-for="entry in mealEntries(meal.id)" :key="entry.dishId">
+                  <li>
+                    <div>
+                      <button type="button" class="text-button"
+                        @click="openRecipe(entry.dish, portionCount(entry.from ?? meal.id, entry.dishId))"
+                        x-text="entry.dish.name"></button>
+                      <span class="item-meta" x-text="mealDishNote(meal.id, entry)"></span>
+                    </div>
+                    <button type="button" class="icon-btn" :aria-label="`Убрать ${entry.dish.name} из приёма`"
+                      @click="removeMealDish(meal.id, entry.dishId)">×</button>
+                  </li>
+                </template>
+              </ul>
+              <div class="meal-actions">
+                <button class="btn" type="button" @click="openCatalog(meal.id)">Добавить блюдо</button>
+                <template x-if="reusableBatches(meal.id).length">
+                  <select class="field" aria-label="Из готовой партии"
+                    @change="reuseBatch(meal.id, $event.target.value); $event.target.value = ''">
+                    <option value="">Из готовой партии…</option>
+                    <template x-for="batch in reusableBatches(meal.id)" :key="batch.key">
+                      <option :value="batch.key" x-text="batch.label"></option>
+                    </template>
+                  </select>
+                </template>
+              </div>
+            </section>
+          </template>
+        </section>
+      </template>
+
+      <template x-if="view === 'catalog'">
+        <section class="catalog-view" aria-label="Каталог блюд">
+          <div class="view-heading">
+            <h2 x-text="catalogTarget ? `Выбрать блюдо · ${mealLabel(catalogTarget)}` : 'Каталог блюд'"></h2>
+            <button type="button" class="btn" x-show="catalogTarget" @click="showView('week')">К расписанию</button>
+          </div>
+          <div class="catalog-filters">
+            <input class="field" type="search" aria-label="Поиск по названию" placeholder="Поиск по названию" x-model="catalogQuery" />
+            <select class="field" aria-label="Категория" x-model="catalogCategory">
+              <option value="">Все категории</option>
+              <template x-for="category in data.categories" :key="category.id">
+                <option :value="category.id" x-text="category.name"></option>
+              </template>
+            </select>
+          </div>
+          <p class="view-status" x-show="!catalogEntries().length">По этим условиям блюд нет.</p>
+          <ul class="catalog-dishes">
+            <template x-for="entry in catalogEntries()" :key="entry.dish.id">
+              <li x-data="{ imageFailed: false }">
+                <button class="catalog-preview" type="button" @click="openRecipe(entry.dish)">
+                  <template x-if="entry.dish.image && !imageFailed">
+                    <img class="dish-img" :src="imageUrl(entry.dish.image)" alt="" loading="lazy" @error="imageFailed = true" />
+                  </template>
+                  <template x-if="!entry.dish.image || imageFailed">
+                    <span class="dish-emoji-big" aria-hidden="true" x-text="dishEmoji(entry.dish, entry.categoryId)"></span>
+                  </template>
+                  <span>
+                    <strong x-text="entry.dish.name"></strong>
+                    <span class="item-meta" x-text="`${entry.categoryName} · ${entry.dish.recipe.minutes} мин`"></span>
+                  </span>
+                </button>
+                <template x-if="!catalogTarget && catalogHasDish(entry)">
+                  <button type="button" class="btn" :aria-pressed="isPinned(entry.dish.id)"
+                    @click="togglePin(entry.dish.id)" x-text="isPinned(entry.dish.id) ? 'Открепить' : 'Закрепить'"></button>
+                </template>
+                <template x-if="catalogTarget || !catalogHasDish(entry)">
+                  <button type="button" class="btn" :disabled="isBlocked(entry.dish.id) || catalogHasDish(entry)"
+                    @click="chooseCatalogDish(entry)"
+                    x-text="catalogHasDish(entry) ? 'Добавлено' : isBlocked(entry.dish.id) ? 'Заблокировано' : 'Добавить в меню'"></button>
+                </template>
+              </li>
+            </template>
+          </ul>
+        </section>
+      </template>
+
+      <div class="lists" x-show="view !== 'catalog'">
+        <details id="shopping" x-ref="shopping" open>
           <summary>
             🛒 Список покупок (<span x-text="shoppingList().length"></span>) —
             <span x-text="weekTotal().text"></span>
             <span class="missing-hint" x-show="weekTotal().missing > 0"
               x-text="`+ ${weekTotal().missing} без цены`"></span>
           </summary>
-          <ul class="shopping">
-            <template x-for="ing in shoppingList()" :key="ing.key">
+          <div class="shopping-toolbar">
+            <span class="item-meta" x-text="state.view === 'week' ? 'По плану недели' : 'По подборке'"></span>
+            <button class="btn" type="button" :disabled="!shoppingList().length" @click="copyShopping()">Копировать список</button>
+          </div>
+          <p class="view-status" aria-live="polite" x-show="copyMessage" x-text="copyMessage"></p>
+          <textarea class="field copy-field" aria-label="Текст списка покупок" x-show="copyText" x-ref="copyField"
+            :value="copyText" readonly></textarea>
+          <p class="view-status" x-show="!shoppingList().length">Добавьте блюда, чтобы составить список.</p>
+          <template x-for="group in shoppingGroups()" :key="group.name">
+            <section class="shopping-group">
+              <h3 x-text="group.name"></h3>
+              <ul class="shopping">
+                <template x-for="ing in group.items" :key="ing.key">
               <li>
                 <label class="shopping-item">
                   <input type="checkbox" :checked="ing.checked" @change="setChecked(ing, $event.target.checked)" />
                   <span class="shopping-name" x-text="ing.text"></span>
                 </label>
-                <div class="shopping-price">
+                <div class="shopping-price" x-show="ing.unit !== 'по вкусу'">
                   <input
                     type="number"
                     inputmode="decimal"
                     min="0"
-                    step="0.5"
+                    step="any"
+                    :aria-label="`Цена за 1 ${ing.unit} · ${ing.name}`"
                     :class="{ 'is-default': ing.isDefault }"
                     :placeholder="`₽/${ing.unit}`"
                     :value="priceFor(ing.key)"
@@ -158,8 +283,10 @@
                   <span class="shopping-cost" x-text="ing.cost != null ? `= ${ing.cost} ₽` : ''"></span>
                 </div>
               </li>
-            </template>
-          </ul>
+                </template>
+              </ul>
+            </section>
+          </template>
         </details>
 
         <details>
@@ -196,6 +323,34 @@
           </ul>
         </details>
       </div>
+      </main>
+
+      <dialog class="recipe-dialog" x-ref="recipeDialog" aria-labelledby="preview-title" @close="recipePreview = null">
+        <template x-if="recipePreview">
+          <div>
+            <div class="view-heading">
+              <h2 id="preview-title" x-text="recipePreview.dish.name"></h2>
+              <button type="button" class="icon-btn" aria-label="Закрыть рецепт" autofocus @click="$refs.recipeDialog.close()">×</button>
+            </div>
+            <img class="recipe-photo" x-show="recipePreview.dish.image && !imageFailed"
+              x-data="{ imageFailed: false }" :src="imageUrl(recipePreview.dish.image)" :alt="recipePreview.dish.name"
+              @error="imageFailed = true" />
+            <p class="recipe-meta" x-text="recipeSummary(recipePreview.dish, recipePreview.servings)"></p>
+            <h3>Состав</h3>
+            <ul class="ingredients-list">
+              <template x-for="ing in scaledIngredients(recipePreview.dish, recipePreview.servings)" :key="ing.name + '__' + ing.unit">
+                <li x-text="formatIngredient(ing)"></li>
+              </template>
+            </ul>
+            <h3>Как приготовить</h3>
+            <ol class="recipe-steps">
+              <template x-for="(step, index) in recipePreview.dish.recipe.steps" :key="index">
+                <li x-text="step"></li>
+              </template>
+            </ol>
+          </div>
+        </template>
+      </dialog>
 
       <footer class="bottom">
         <span x-text="`${data.categories.reduce((s, c) => s + c.dishes.length, 0)} блюд в базе`"></span>

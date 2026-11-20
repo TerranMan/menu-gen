@@ -1,6 +1,8 @@
 // localStorage с версионированием схемы и санитацией на чтении.
 // Один ключ, один JSON. Любая дрянь в parsed → дефолты.
 
+import { sanitizeWeek } from './week.js';
+
 const KEY = 'menu_gen_v1';
 const DEFAULT_PERSONS = 2;
 const MIN_PERSONS = 1;
@@ -12,8 +14,12 @@ const empty = () => ({
   picks: {}, // categoryId → integer ≥ 0 (override default cat.pick)
   favorites: [],
   blocks: [],
+  pins: [],
   lastMenu: null,
   checked: {}, // ключ списка покупок → количество на момент отметки
+  week: {},
+  weekChecked: {},
+  view: 'menu',
   prices: {}, // ключ "name__unit" → число (₽ за 1 единицу)
 });
 
@@ -82,8 +88,12 @@ export function load() {
       picks: sanitizePicks(parsed.picks),
       favorites: sanitizeIds(parsed.favorites).filter((id) => !blocks.includes(id)),
       blocks,
+      pins: sanitizeIds(parsed.pins).filter((id) => !blocks.includes(id)),
       lastMenu: sanitizeMenu(parsed.lastMenu),
       checked: sanitizeChecked(parsed.checked),
+      week: sanitizeWeek(parsed.week),
+      weekChecked: sanitizeChecked(parsed.weekChecked),
+      view: parsed.view === 'week' ? 'week' : 'menu',
       prices: sanitizePrices(parsed.prices),
     };
   } catch {

@@ -90,6 +90,26 @@ export function formatLine(ing) {
   return `${ing.name} — ${fmt.format(ing.qty)} ${ing.unit}`;
 }
 
+export function groupShopping(list, departments) {
+  const groups = departments.map(({ name }) => ({ name, items: [] }));
+  const other = { name: 'Прочее', items: [] };
+  const byIngredient = new Map();
+  for (const [index, { ingredients }] of departments.entries()) {
+    for (const ingredient of ingredients) byIngredient.set(ingredient, groups[index]);
+  }
+  for (const ingredient of list) {
+    (byIngredient.get(ingredient.name) ?? other).items.push(ingredient);
+  }
+  return [...groups, other].filter((group) => group.items.length);
+}
+
+export function shoppingText(groups) {
+  return groups.map(({ name, items }) => [
+    name,
+    ...items.map((item) => `${item.checked ? '✓' : '☐'} ${item.text ?? formatLine(item)}`),
+  ].join('\n')).join('\n\n');
+}
+
 // Для карточки блюда: ложки с подсказкой в граммах/мл. «сахар — 1 ст.л. (15 г)».
 // Если unit не ложка — обычный формат как formatLine.
 export function formatCardIngredient(ing) {

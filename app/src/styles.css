@@ -131,6 +131,236 @@ header.top h1 {
   flex-wrap: wrap;
 }
 
+.view-nav,
+.day-nav {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.view-nav > *,
+.day-nav button {
+  flex: 1;
+  padding: 9px 4px;
+  min-width: 0;
+  border: 0;
+  border-radius: 8px;
+  color: var(--text);
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.view-nav [aria-pressed='true'],
+.day-nav [aria-pressed='true'] {
+  background: var(--accent-soft);
+  color: #952b21;
+  font-weight: 650;
+}
+
+.btn:disabled {
+  cursor: default;
+  color: var(--muted);
+  border-color: var(--border);
+}
+
+.pin-btn:not(.active) {
+  filter: grayscale(1);
+  opacity: 0.65;
+}
+
+.pin-btn.active {
+  background: var(--accent-soft);
+}
+
+.view-heading,
+.shopping-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.view-heading h2 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.view-status {
+  margin: 6px 0 12px;
+  font-size: 14px;
+  color: #6b6057;
+}
+
+.day-heading {
+  margin: 12px 0 8px;
+  font-size: 16px;
+}
+
+.meal-block {
+  margin: 0 0 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.meal-block h4 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.meal-dishes,
+.catalog-dishes {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.meal-dishes li,
+.catalog-dishes li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.meal-dishes li {
+  padding: 5px 0;
+}
+
+.meal-actions,
+.catalog-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.catalog-filters {
+  margin-bottom: 12px;
+}
+
+.catalog-filters input {
+  flex: 1 1 190px;
+}
+
+.field {
+  max-width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.catalog-dishes {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2px 12px;
+}
+
+.catalog-dishes li {
+  padding: 8px 0;
+}
+
+.catalog-dishes li + li {
+  border-top: 1px solid var(--border);
+}
+
+.catalog-preview,
+.text-button {
+  border: 0;
+  background: none;
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+
+.text-button:hover,
+.catalog-preview:hover strong {
+  color: var(--accent);
+}
+
+.catalog-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.catalog-preview .dish-img,
+.catalog-preview .dish-emoji-big {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.catalog-dishes .btn {
+  flex-shrink: 0;
+}
+
+.item-meta {
+  display: block;
+  font-size: 12px;
+  color: #6b6057;
+}
+
+.shopping-toolbar {
+  margin: 8px 0;
+}
+
+.shopping-group h3,
+.recipe-dialog h3 {
+  margin: 8px 0 4px;
+  font-size: 14px;
+}
+
+.copy-field {
+  width: 100%;
+  min-height: 120px;
+}
+
+.recipe-dialog {
+  width: min(540px, calc(100% - 24px));
+  max-height: calc(100% - 24px);
+  max-height: calc(100dvh - 24px);
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.recipe-dialog::backdrop {
+  background: rgb(44 39 34 / 55%);
+}
+
+.recipe-photo {
+  display: block;
+  width: min(180px, 100%);
+  height: 130px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
 .category {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -517,5 +747,15 @@ footer.bottom {
   }
   .dish-details {
     margin-left: 0;
+  }
+  .dish-actions {
+    gap: 2px;
+  }
+  .dish-actions .icon-btn {
+    padding-inline: 4px;
+  }
+  .catalog-dishes .btn {
+    padding-inline: 7px;
+    font-size: 13px;
   }
 }

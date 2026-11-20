@@ -2,11 +2,17 @@ import Alpine from 'alpinejs';
 import dishesData from '../data/dishes.json';
 import pricesData from '../data/prices.json';
 import { generateMenu, regenerateSlot, pickMore } from './generator.js';
-import { aggregate, formatLine, priceKey, lineCost, totalCost, formatMoney, recipeFactor, scaleQty, formatCardIngredient } from './shopping.js';
+import {
+  aggregate, formatLine, priceKey, lineCost, totalCost, formatMoney,
+  recipeFactor, scaleQty, formatCardIngredient, groupShopping, shoppingText,
+} from './shopping.js';
 import { load, save, toggle, MIN_PERSONS, MAX_PERSONS } from './store.js';
+import { planner } from './planner.js';
+import { sanitizeWeek } from './week.js';
 import './styles.css';
 
 const DEFAULT_PRICES = pricesData.prices ?? {};
+const DEPARTMENTS = pricesData.departments ?? [];
 const portionRules = new Intl.PluralRules('ru');
 const portionWords = { one: 'порция', few: 'порции', many: 'порций' };
 
@@ -23,11 +29,14 @@ const EMOJI = {
 
 document.addEventListener('alpine:init', () => {
   Alpine.data('menuApp', () => ({
+    ...planner(),
     data: dishesData,
     state: load(),
     menu: [],
     base: import.meta.env.BASE_URL,
     expanded: {},
+    copyMessage: '',
+    copyText: '',
     minPersons: MIN_PERSONS,
     maxPersons: MAX_PERSONS,
 
@@ -37,6 +46,9 @@ document.addEventListener('alpine:init', () => {
     },
 
     init() {
+      this.view = this.state.view;
+      this.state.week = sanitizeWeek(this.state.week, (id) => Boolean(this.dishById(id)));
+      this.pruneShoppingChecks('week');
       if (!this.state.lastMenu) {
         this.regenerateAll();
         return;
@@ -53,16 +65,23 @@ document.addEventListener('alpine:init', () => {
       return dish.emoji || EMOJI[catId] || '🍽️';
     },
 
-    recipeSummary(dish) {
-      const { recipe } = dish;
-      const portions = recipe.wholeBatch
-        ? recipe.portions * recipeFactor(recipe, this.state.persons)
-        : this.state.persons;
-      return `Выход — ${portions} ${portionWords[portionRules.select(portions)]} · около ${recipe.minutes} мин`;
+    formatPortions(portions) {
+      return `${portions} ${portionWords[portionRules.select(portions)]}`;
     },
 
-    scaledIngredients(dish) {
-      const factor = recipeFactor(dish.recipe, this.state.persons);
+    recipeYield(dish, persons = this.state.persons) {
+      const { recipe } = dish;
+      return recipe.wholeBatch
+        ? recipe.portions * recipeFactor(recipe, persons)
+        : persons;
+    },
+
+    recipeSummary(dish, persons = this.state.persons) {
+      return `Выход — ${this.formatPortions(this.recipeYield(dish, persons))} · около ${dish.recipe.minutes} мин`;
+    },
+
+    scaledIngredients(dish, persons = this.state.persons) {
+      const factor = recipeFactor(dish.recipe, persons);
       return (dish.ingredients ?? []).map((ing) => ({
         ...ing,
         qty: scaleQty(ing.qty, ing.unit, factor, { roundPieces: false }),
@@ -90,7 +109,8 @@ document.addEventListener('alpine:init', () => {
       const clamped = Math.min(MAX_PERSONS, Math.max(MIN_PERSONS, n | 0));
       if (clamped === this.state.persons) return;
       this.state.persons = clamped;
-      this.pruneShoppingChecks();
+      this.pruneShoppingChecks('menu');
+      this.pruneShoppingChecks('week');
       save(this.state);
     },
 
@@ -108,28 +128,57 @@ document.addEventListener('alpine:init', () => {
       const cat = this.data.categories.find((category) => category.id === catId);
       if (!cat) return 0;
       const v = this.state.picks[catId];
-      return Number.isInteger(v) ? Math.min(v, cat.dishes.length) : cat.pick;
+      const requested = Number.isInteger(v) ? Math.min(v, cat.dishes.length) : cat.pick;
+      return Math.max(requested, this.pinnedCount(catId));
+    },
+
+    isPinned(id) {
+      return this.state.pins.includes(id);
+    },
+
+    pinnedCount(catId) {
+      const cat = this.data.categories.find((category) => category.id === catId);
+      return cat?.dishes.filter((dish) => this.isPinned(dish.id)).length ?? 0;
+    },
+
+    togglePin(id) {
+      toggle(this.state.pins, id);
+      save(this.state);
     },
 
     resizeSlot(slot, count) {
-      if (slot.dishes.length > count) {
-        const removed = slot.dishes.splice(count);
-        for (const dish of removed) delete this.expanded[dish.id];
+      for (let i = slot.dishes.length - 1; i >= 0 && slot.dishes.length > count; i--) {
+        const dish = slot.dishes[i];
+        if (this.isPinned(dish.id)) continue;
+        slot.dishes.splice(i, 1);
+        delete this.expanded[dish.id];
       }
       const selectedIds = slot.dishes.map((dish) => dish.id);
       const added = pickMore(this.data, this.state, slot.categoryId, selectedIds, count - selectedIds.length);
       slot.dishes.push(...added);
     },
 
-    setPick(catId, count) {
-      const slot = this.menu.find((s) => s.categoryId === catId);
-      if (!slot || count < 0 || count === this.effectivePick(catId)) return;
-
+    rememberPick(catId, count) {
       if (count === this.defaultPickFor(catId)) {
         delete this.state.picks[catId];
       } else {
         this.state.picks[catId] = count;
       }
+    },
+
+    addToSelection(catId, dish) {
+      const slot = this.menu.find((s) => s.categoryId === catId);
+      if (!slot || slot.dishes.some((item) => item.id === dish.id)) return;
+      slot.dishes.push(dish);
+      this.rememberPick(catId, Math.max(slot.dishes.length, this.effectivePick(catId)));
+      this.persistMenu();
+    },
+
+    setPick(catId, count) {
+      const slot = this.menu.find((s) => s.categoryId === catId);
+      if (!slot || count < this.pinnedCount(catId) || count === this.effectivePick(catId)) return;
+
+      this.rememberPick(catId, count);
       this.resizeSlot(slot, count);
       this.persistMenu();
     },
@@ -156,6 +205,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     regenerateOne(catId, currentDishId) {
+      if (this.isPinned(currentDishId)) return;
       const slot = this.menu.find((s) => s.categoryId === catId);
       const idx = slot?.dishes.findIndex((d) => d.id === currentDishId) ?? -1;
       if (idx === -1) return;
@@ -183,6 +233,7 @@ document.addEventListener('alpine:init', () => {
 
     toggleBlock(id) {
       toggle(this.state.blocks, id);
+      this.state.pins = this.state.pins.filter((pinnedId) => pinnedId !== id);
       const fi = this.state.favorites.indexOf(id);
       if (fi !== -1) this.state.favorites.splice(fi, 1);
       const cat = this.data.categories.find((category) => category.dishes.some((dish) => dish.id === id));
@@ -220,12 +271,21 @@ document.addEventListener('alpine:init', () => {
       return { ...DEFAULT_PRICES, ...this.state.prices };
     },
 
-    shoppingIngredients() {
+    shoppingIngredients(mode = this.state.view) {
+      if (mode === 'week') {
+        const batches = this.plannedBatches().map(({ dish, servings }) => ({ ...dish, servings }));
+        return aggregate(batches, (batch) => recipeFactor(batch.recipe, batch.servings));
+      }
       return aggregate(this.menu.flatMap((s) => s.dishes), (dish) => recipeFactor(dish.recipe, this.state.persons));
+    },
+
+    shoppingChecks(mode = this.state.view) {
+      return mode === 'week' ? this.state.weekChecked : this.state.checked;
     },
 
     shoppingList() {
       const prices = this.effectivePrices();
+      const checks = this.shoppingChecks();
       return this.shoppingIngredients().map((ing) => {
         const key = priceKey(ing);
         const userValue = this.state.prices[key];
@@ -234,11 +294,32 @@ document.addEventListener('alpine:init', () => {
           ...ing,
           key,
           text: formatLine(ing),
-          checked: this.state.checked[key] === ing.qty,
+          checked: checks[key] === ing.qty,
           cost: lineCost(ing, prices),
           isDefault: typeof userValue !== 'number' && typeof defaultValue === 'number',
         };
       });
+    },
+
+    shoppingGroups() {
+      return groupShopping(this.shoppingList(), DEPARTMENTS);
+    },
+
+    async copyShopping() {
+      const text = shoppingText(this.shoppingGroups());
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        this.copyMessage = 'Список скопирован.';
+        this.copyText = '';
+      } catch {
+        this.copyMessage = 'Выделенный список можно скопировать вручную.';
+        this.copyText = text;
+        this.$nextTick(() => {
+          this.$refs.copyField.focus();
+          this.$refs.copyField.select();
+        });
+      }
     },
 
     weekTotal() {
@@ -247,15 +328,17 @@ document.addEventListener('alpine:init', () => {
     },
 
     setChecked(ingredient, checked) {
-      if (checked) this.state.checked[ingredient.key] = ingredient.qty;
-      else delete this.state.checked[ingredient.key];
+      const checks = this.shoppingChecks();
+      if (checked) checks[ingredient.key] = ingredient.qty;
+      else delete checks[ingredient.key];
       save(this.state);
     },
 
-    pruneShoppingChecks() {
-      const quantities = new Map(this.shoppingIngredients().map((ing) => [priceKey(ing), ing.qty]));
-      for (const [key, qty] of Object.entries(this.state.checked)) {
-        if (quantities.get(key) !== qty) delete this.state.checked[key];
+    pruneShoppingChecks(mode) {
+      const checks = this.shoppingChecks(mode);
+      const quantities = new Map(this.shoppingIngredients(mode).map((ing) => [priceKey(ing), ing.qty]));
+      for (const [key, qty] of Object.entries(checks)) {
+        if (quantities.get(key) !== qty) delete checks[key];
       }
     },
 
@@ -284,15 +367,15 @@ document.addEventListener('alpine:init', () => {
         categoryId: s.categoryId,
         dishIds: s.dishes.map((d) => d.id),
       }));
-      this.pruneShoppingChecks();
+      this.pruneShoppingChecks('menu');
       save(this.state);
     },
 
     hydrate(saved) {
       const savedByCategory = new Map(saved.map((slot) => [slot.categoryId, slot.dishIds]));
       return this.data.categories.map((cat) => {
-        const dishIds = savedByCategory.get(cat.id) ?? [];
-        const dishes = dishIds
+        const dishIds = new Set([...(savedByCategory.get(cat.id) ?? []), ...this.state.pins]);
+        const dishes = [...dishIds]
           .filter((id) => !this.isBlocked(id))
           .map((id) => cat.dishes.find((dish) => dish.id === id))
           .filter(Boolean);

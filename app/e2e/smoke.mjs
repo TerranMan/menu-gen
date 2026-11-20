@@ -20,7 +20,11 @@ after(async () => {
 
 async function openMenu(t, savedState) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
-  t.after(() => context.close());
+  const pageErrors = [];
+  t.after(async () => {
+    await context.close();
+    assert.deepEqual(pageErrors, []);
+  });
   await context.addInitScript((state) => {
     Math.random = () => 0;
     if (state && !localStorage.getItem('menu_gen_v1')) {
@@ -28,6 +32,7 @@ async function openMenu(t, savedState) {
     }
   }, savedState);
   const page = await context.newPage();
+  page.on('pageerror', (error) => pageErrors.push(error.message));
   await page.goto(url);
   await page.getByRole('heading', { name: '🍽️ Меню на неделю' }).waitFor();
   return { context, page };
@@ -152,4 +157,64 @@ test('cottage cheese casserole and pea porridge are separate cards with recipes 
   const photoTab = await context.newPage();
   const response = await photoTab.goto(`${url}images/grechka.webp`);
   assert.match(response.headers()['content-type'], /^image\/webp/);
+});
+
+test('catalog finds a recipe and a pinned manual choice survives regeneration and reload', async (t) => {
+  const { page } = await openMenu(t);
+  await page.getByRole('button', { name: 'Каталог', exact: true }).click();
+  await page.getByRole('searchbox').fill('ГРЕЧ');
+  const filter = page.getByRole('combobox', { name: 'Категория' });
+  await filter.selectOption('soups');
+  await page.getByText('По этим условиям блюд нет.').waitFor();
+  await filter.selectOption('garnishes');
+  await page.getByRole('button', { name: /^Гречка/ }).click();
+  const recipe = page.getByRole('dialog', { name: 'Гречка' });
+  await recipe.waitFor();
+  assert.equal(await recipe.locator('.recipe-steps li').count(), 2);
+  await recipe.getByRole('button', { name: 'Закрыть рецепт' }).click();
+  await page.getByRole('button', { name: 'Добавить в меню' }).click();
+  await page.getByRole('button', { name: 'Закрепить', exact: true }).click();
+  await page.getByRole('button', { name: 'Подборка', exact: true }).click();
+
+  const sides = page.locator('.category').filter({ has: page.getByRole('heading', { name: /^Гарниры/ }) });
+  await sides.getByRole('button', { name: 'Меньше блюд' }).click();
+  await page.getByRole('button', { name: 'Сгенерировать заново' }).click();
+  await page.reload();
+  assert.deepEqual(await sides.locator('.dish-name').allTextContents(), ['Гречка']);
+  assert.equal(await sides.getByRole('button', { name: 'Открепить блюдо' }).getAttribute('aria-pressed'), 'true');
+  assert.equal(await sides.getByRole('button', { name: 'Заменить это блюдо' }).isDisabled(), true);
+});
+
+test('a weekly recipe can be served twice and copied with grouped shopping and the shared yield', async (t) => {
+  const { context, page } = await openMenu(t);
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.getByRole('button', { name: 'По дням' }).click();
+  const lunch = page.getByRole('region', { name: 'Обед', exact: true });
+  await lunch.getByRole('button', { name: 'Добавить блюдо' }).click();
+  await page.getByRole('searchbox').fill('борщ');
+  await page.getByRole('button', { name: 'Добавить в меню' }).click();
+  await lunch.getByText('Готовим · 2 порции', { exact: true }).waitFor();
+
+  await page.getByRole('button', { name: 'Вторник' }).click();
+  await lunch.getByRole('combobox', { name: 'Из готовой партии' }).selectOption('mon-lunch/borshch');
+  assert.equal(await lunch.getByText('Из готовой партии · Пн · обед', { exact: true }).isVisible(), true);
+  await lunch.getByRole('button', { name: 'Борщ', exact: true }).click();
+  const recipe = page.getByRole('dialog', { name: 'Борщ' });
+  assert.match(await recipe.locator('.recipe-meta').textContent(), /4 порции/);
+  await recipe.getByRole('img', { name: 'Борщ' }).evaluate((image) => image.decode());
+  await recipe.getByRole('button', { name: 'Закрыть рецепт' }).click();
+
+  const beef = page.getByRole('checkbox', { name: /^мясо говядина — 266,7 г$/ });
+  await beef.check();
+  await page.getByRole('button', { name: 'Копировать список' }).click();
+  await page.getByText('Список скопирован.', { exact: true }).waitFor();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  assert.match(copied, /Мясо, птица и колбаса\r?\n✓ мясо говядина — 266,7 г/);
+
+  await page.reload();
+  assert.equal(await lunch.getByText('Готовим · 4 порции', { exact: true }).isVisible(), true);
+  assert.equal(await beef.isChecked(), true);
+  await lunch.getByRole('button', { name: 'Убрать Борщ из приёма' }).click();
+  await page.getByRole('button', { name: 'Вторник' }).click();
+  assert.equal(await lunch.getByText('Готовим · 2 порции', { exact: true }).isVisible(), true);
 });

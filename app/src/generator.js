@@ -34,14 +34,17 @@ function buildPool(category, { favorites, blocks }, excludeIds = []) {
 }
 
 export function generateMenu(data, state) {
+  const pins = new Set(state.pins);
+  const blocks = new Set(state.blocks);
   return data.categories.map((cat) => {
     const override = state.picks?.[cat.id];
     const effective = Number.isInteger(override) ? override : cat.pick;
-    const pool = buildPool(cat, state);
+    const kept = cat.dishes.filter((dish) => pins.has(dish.id) && !blocks.has(dish.id));
+    const pool = buildPool(cat, state, kept.map((dish) => dish.id));
     return {
       categoryId: cat.id,
       categoryName: cat.name,
-      dishes: weightedSample(pool, effective),
+      dishes: [...kept, ...weightedSample(pool, effective - kept.length)],
     };
   });
 }
