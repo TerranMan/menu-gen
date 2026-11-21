@@ -3,6 +3,7 @@ import { after, before, test } from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { preview } from 'vite';
+import { encodeBackup } from '../src/store.js';
 
 let server;
 let browser;
@@ -78,6 +79,115 @@ async function dishAction(meal, dish, name) {
 function breakfasts(page) {
   return page.locator('.category').filter({ has: page.getByRole('heading', { name: /^Завтраки/ }) });
 }
+
+async function openBackup(page) {
+  await page.locator('footer').getByRole('button', { name: 'Резервная копия' }).click();
+  return page.getByRole('dialog', { name: 'Резервная копия' });
+}
+
+test('backup exports and restores across browsers offline, with preview, cancel and undo', async (t) => {
+  const { context: sourceContext, page: source } = await openMenu(t, {
+    version: 2, view: 'week', persons: 4, quickDinners: true, weekStart: '2026-11-23',
+    week: { 'mon-lunch': [{ dishId: 'borshch', from: null }] },
+    batchRecords: { 'mon-lunch/borshch': { cookedAt: Date.UTC(2025, 0, 6), reserve: { fridge: 0, freezer: 2 } } },
+    weekHistory: [{ id: Date.UTC(2025, 0, 6), name: 'Зимнее меню', persons: 2,
+      week: { 'mon-breakfast': [{ dishId: 'blini', from: null }] } }],
+    stock: { 'мука__г': 800 }, prices: { 'мука__г': 0.15 }, favorites: ['blini'],
+  });
+  await source.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+  await sourceContext.setOffline(true);
+  const from = await openBackup(source);
+  const [download] = await Promise.all([
+    source.waitForEvent('download'),
+    from.getByRole('button', { name: 'Скачать копию' }).click(),
+  ]);
+  assert.match(download.suggestedFilename(), /^menu-gen-\d{4}-\d{2}-\d{2}\.json$/);
+  const buffer = await readFile(await download.path());
+  const exported = JSON.parse(buffer);
+  assert.deepEqual(exported.state, await storedState(source));
+
+  const { context, page } = await openMenu(t, { version: 2, persons: 7, stock: { 'мука__г': 100 } });
+  await page.setViewportSize({ width: 320, height: 740 });
+  await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+  await context.setOffline(true);
+  const backup = await openBackup(page);
+  const input = backup.getByLabel('Файл для восстановления');
+  const chooseFile = () => input.setInputFiles({
+    name: 'семейное-меню.json', mimeType: 'application/json', buffer,
+  });
+  const preview = backup.getByRole('region', { name: 'Предпросмотр копии' });
+
+  await chooseFile();
+  await preview.getByText('семейное-меню.json').waitFor();
+  assert.match(await preview.innerText(), /приёмов 1/);
+  assert.equal((await storedState(page)).persons, 7);
+  assert.equal(await backup.evaluate(el => el.scrollWidth <= el.clientWidth), true);
+  await preview.getByRole('button', { name: 'Отмена' }).click();
+  assert.equal(await preview.isVisible(), false);
+  assert.equal((await storedState(page)).persons, 7);
+
+  await chooseFile();
+  await preview.getByRole('button', { name: 'Заменить данные' }).click();
+  await backup.getByText(/Копия восстановлена/).waitFor();
+  await page.waitForFunction(() => document.activeElement === document.querySelector('dialog[open] [role="status"]'));
+  assert.deepEqual(await storedState(page), exported.state);
+  await backup.getByRole('button', { name: 'Закрыть резервную копию' }).click();
+  await reopenMenu(page);
+  await page.getByRole('heading', { name: 'План на неделю' }).waitFor();
+  assert.equal(await page.locator('.persons-count').textContent(), '4');
+  assert.deepEqual(await storedState(page), exported.state);
+
+  await openBackup(page);
+  await backup.getByRole('button', { name: 'Выбрать предыдущие данные' }).click();
+  await preview.getByText('Данные перед последним восстановлением').waitFor();
+  await preview.getByRole('button', { name: 'Заменить данные' }).click();
+  await backup.getByText(/Копия восстановлена/).waitFor();
+  const restored = await storedState(page);
+  assert.equal(restored.persons, 7);
+  assert.equal(restored.stock['мука__г'], 100);
+});
+
+test('invalid files, concurrent edits and a failed backup write preserve current data', async (t) => {
+  const { context, page } = await openMenu(t, { version: 2, persons: 3 });
+  const second = await context.newPage();
+  await second.goto(url);
+  await second.getByRole('heading', { name: '🍽️ Меню на неделю' }).waitFor();
+  const state = await storedState(page);
+  const backup = await openBackup(page);
+  const input = backup.getByLabel('Файл для восстановления');
+  const choose = (buffer) => input.setInputFiles({ name: 'menu.json', mimeType: 'application/json', buffer });
+  const replacement = Buffer.from(encodeBackup({ ...state, persons: 8 }));
+  await choose(Buffer.from('{'));
+  await backup.getByText(/Копия повреждена/).waitFor();
+  assert.equal(await backup.getByRole('button', { name: 'Заменить данные' }).isVisible(), false);
+  assert.equal((await storedState(page)).persons, 3);
+
+  await choose(replacement);
+  const confirm = backup.getByRole('button', { name: 'Заменить данные' });
+  await confirm.waitFor();
+  await second.getByRole('button', { name: 'Больше персон' }).click();
+  await second.locator('.app[aria-busy="false"]').waitFor();
+  assert.equal((await storedState(second)).persons, 4);
+  await confirm.click();
+  await backup.getByText(/Данные изменились в другой вкладке/).waitFor();
+  assert.equal((await storedState(page)).persons, 4);
+
+  await choose(replacement);
+  await page.evaluate(() => {
+    const put = IDBObjectStore.prototype.put;
+    IDBObjectStore.prototype.put = function (value, key) {
+      if (this.name === 'menu' && key === 'current') throw new DOMException('Storage full', 'QuotaExceededError');
+      return put.call(this, value, key);
+    };
+  });
+  await confirm.click();
+  await backup.getByText(/Не удалось восстановить копию/).waitFor();
+  assert.equal((await storedState(page)).persons, 4);
+  await backup.getByRole('button', { name: 'Закрыть резервную копию' }).click();
+  await openBackup(page);
+  await backup.getByRole('button', { name: 'Скачать копию' }).waitFor();
+  assert.equal(await backup.getByRole('button', { name: 'Выбрать предыдущие данные' }).isVisible(), false);
+});
 
 test('replacing and blocking a breakfast keeps seven unique dishes', async (t) => {
   const { page } = await openMenu(t);

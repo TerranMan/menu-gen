@@ -1048,9 +1048,39 @@ header.top h1 {
 
 footer.bottom {
   margin-top: 30px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 14px;
   color: var(--muted);
   font-size: 12px;
+}
+
+footer.bottom .text-button {
+  min-height: 32px;
+  text-decoration: underline;
+}
+
+.backup-preview {
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+
+.backup-preview dl {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 5px 8px;
+  margin-block: 8px;
+  font-size: 14px;
+}
+
+.backup-preview dd {
+  margin: 0;
+  text-align: right;
 }
 
 @media (max-width: 600px) {

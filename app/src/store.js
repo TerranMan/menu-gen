@@ -7,6 +7,8 @@ import { stockQuantity } from './shopping.js';
 const DATABASE = 'menu-gen';
 const STORE = 'menu';
 const RECORD = 'current';
+const PREVIOUS_RECORD = 'before-restore';
+const BACKUP_FORMAT = 'menu-gen-backup';
 const DEFAULT_PERSONS = 2;
 const MIN_PERSONS = 1;
 const MAX_PERSONS = 12;
@@ -176,12 +178,17 @@ function openDatabase() {
 }
 
 export async function loadSavedState() {
+  const state = await loadRecord(RECORD);
+  return state ? read(state) : null;
+}
+
+async function loadRecord(key) {
   try {
     const database = await openDatabase();
     return await new Promise((resolve, reject) => {
-      const request = database.transaction(STORE).objectStore(STORE).get(RECORD);
+      const request = database.transaction(STORE).objectStore(STORE).get(key);
       request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result ? read(request.result) : null);
+      request.onsuccess = () => resolve(request.result ?? null);
     });
   } catch {
     return null;
@@ -195,6 +202,31 @@ const groups = [
 const maps = ['checked', 'weekChecked', 'stock', 'prices', 'homemade'];
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 export const snapshot = (value) => JSON.parse(JSON.stringify(value));
+
+export function encodeBackup(state) {
+  return JSON.stringify({
+    format: BACKUP_FORMAT,
+    version: 1,
+    savedAt: new Date().toISOString(),
+    state,
+  });
+}
+
+export function decodeBackup(text) {
+  const data = parse(text);
+  const state = data?.state;
+  if (data?.format !== BACKUP_FORMAT || data.version !== 1 || state?.version !== 2
+      || typeof data.savedAt !== 'string' || !Number.isFinite(Date.parse(data.savedAt))) return null;
+  const normalized = read(state);
+  // Резервная копия содержит полный снимок. Не заменяем повреждённые поля значениями по умолчанию.
+  if (Object.entries(normalized).some(([key, value]) => !same(value, state[key]))) return null;
+  return { savedAt: data.savedAt, state: normalized };
+}
+
+export async function loadPreviousBackup() {
+  const previous = await loadRecord(PREVIOUS_RECORD);
+  return previous ? { savedAt: previous.savedAt, state: read(previous.state) } : null;
+}
 
 export function mergeChanges(base, draft, latest) {
   const next = { ...latest };
@@ -220,7 +252,7 @@ export function mergeChanges(base, draft, latest) {
   return { state: next, error: '' };
 }
 
-export async function saveChanges(base, draft) {
+async function updateStoredState(update, keepPrevious = false) {
   try {
     const database = await openDatabase();
     return await new Promise((resolve, reject) => {
@@ -234,8 +266,9 @@ export async function saveChanges(base, draft) {
       request.onsuccess = () => {
         try {
           const latest = request.result ? read(request.result) : loadLegacyState();
-          result = mergeChanges(base, draft, latest);
+          result = update(latest);
           if (!result.error && (!request.result || !same(latest, result.state))) {
+            if (keepPrevious) store.put({ savedAt: new Date().toISOString(), state: latest }, PREVIOUS_RECORD);
             store.put(result.state, RECORD);
             changed = true;
           }
@@ -247,6 +280,16 @@ export async function saveChanges(base, draft) {
   } catch {
     return { state: null, error: 'unavailable' };
   }
+}
+
+export function saveChanges(base, draft) {
+  return updateStoredState((latest) => mergeChanges(base, draft, latest));
+}
+
+export function restoreBackup(expected, replacement) {
+  return updateStoredState((latest) => same(latest, expected)
+    ? { state: read(replacement), error: '' }
+    : { state: latest, error: 'conflict' }, true);
 }
 
 export function toggle(arr, id) {

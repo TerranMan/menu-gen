@@ -243,6 +243,7 @@
                 <button class="btn" type="button" @click="closeOptions($el); openNewWeek()">Новая неделя</button>
                 <button class="btn" type="button" @click="closeOptions($el); openHistory()">История недель</button>
                 <button class="btn" type="button" :disabled="!hasWeekPlan()" @click="closeOptions($el); openWeekShare()">Поделиться неделей</button>
+                <button class="btn" type="button" @click="closeOptions($el); openBackups()">Резервная копия</button>
               </div>
             </details>
           </div>
@@ -727,8 +728,50 @@
           В стакане на 200 мл примерно 100 г муки или 165 г сахара.</p>
       </dialog>
 
+      <dialog class="week-dialog" x-ref="backupDialog" aria-labelledby="backup-title"
+        @cancel="if (backupBusy) $event.preventDefault()">
+        <div class="view-heading">
+          <h2 id="backup-title">Резервная копия</h2>
+          <button type="button" class="icon-btn" aria-label="Закрыть резервную копию" autofocus
+            :disabled="backupBusy" @click="$refs.backupDialog.close()">×</button>
+        </div>
+        <p class="item-meta">Сохраните меню, историю, запасы, цены и настройки в файле. Файл можно открыть здесь на другом устройстве.</p>
+        <div class="week-actions">
+          <button type="button" class="btn" :disabled="backupBusy || savePending > 0" @click="downloadBackup()">Скачать копию</button>
+          <button type="button" class="btn" x-show="hasPreviousBackup" :disabled="backupBusy || savePending > 0"
+            @click="previewPreviousBackup()">Выбрать предыдущие данные</button>
+        </div>
+        <label class="archive-name">
+          Файл для восстановления
+          <input class="field" type="file" accept=".json,application/json" x-ref="backupFile"
+            :disabled="backupBusy || savePending > 0" @change="selectBackupFile($event.target)" />
+        </label>
+        <template x-if="backupPreview">
+          <section class="backup-preview" aria-label="Предпросмотр копии">
+            <strong x-text="backupPreview.label"></strong>
+            <dl>
+              <dt>Время создания</dt><dd x-text="backupPreviewDate()"></dd>
+              <dt>Текущая неделя</dt><dd x-text="backupPreviewWeek()"></dd>
+              <dt>Недель в истории</dt><dd x-text="backupPreview.state.weekHistory.length"></dd>
+              <dt>Позиций в запасах</dt><dd x-text="Object.keys(backupPreview.state.stock).length"></dd>
+              <dt>Своих цен</dt><dd x-text="Object.keys(backupPreview.state.prices).length"></dd>
+            </dl>
+            <p class="item-meta">Восстановление заменит данные в этом браузере. Перед заменой приложение сохранит их здесь.</p>
+            <div class="week-actions">
+              <button type="button" class="btn primary" :disabled="backupBusy || savePending > 0"
+                @click="applyBackup()">Заменить данные</button>
+              <button type="button" class="btn" :disabled="backupBusy"
+                @click="backupPreview = null; $refs.backupFile.focus()">Отмена</button>
+            </div>
+          </section>
+        </template>
+        <p class="view-status" role="status" tabindex="-1"
+          :class="{ warning: backupError }" x-show="backupMessage" x-text="backupMessage"></p>
+      </dialog>
+
       <footer class="bottom">
         <span x-text="`${data.categories.reduce((s, c) => s + c.dishes.length, 0)} блюд в базе`"></span>
+        <button type="button" class="text-button" @click="openBackups()">Резервная копия</button>
       </footer>
     </div>
 

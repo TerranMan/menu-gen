@@ -4,7 +4,7 @@ import test from 'node:test';
 import YAML from 'yaml';
 import { generateMenu, regenerateSlot } from '../src/generator.js';
 import { aggregate, groupShopping, recipeFactor, recipeIngredients, shoppingText, subtractStock, totalCost } from '../src/shopping.js';
-import { loadLegacyState, mergeChanges } from '../src/store.js';
+import { decodeBackup, encodeBackup, loadLegacyState, mergeChanges } from '../src/store.js';
 import { availablePortions, fridgeDeadline, needsFreezer, sanitizeBatchRecords } from '../src/batch-storage.js';
 import {
   addToMeal, cookingBatches, distributeMenu, fillEmptyMeals,
@@ -18,6 +18,24 @@ const category = {
   dishes: ['blini', 'oladi', 'sirniki', 'omlet'].map((id) => ({ id })),
 };
 const data = { categories: [category] };
+
+test('a portable backup round-trips the full state and rejects partial snapshots', () => {
+  const state = {
+    ...loadLegacyState(),
+    weekStart: '2026-11-23',
+    week: { 'mon-lunch': [{ dishId: 'borshch', from: null }] },
+    stock: { 'мука__г': 800 },
+  };
+  const text = encodeBackup(state);
+  const backup = JSON.parse(text);
+  assert.deepEqual(decodeBackup(text), { savedAt: backup.savedAt, state });
+  assert.equal(decodeBackup('{'), null);
+  assert.equal(decodeBackup(JSON.stringify({ ...backup, version: 99 })), null);
+  delete backup.state.stock;
+  assert.equal(decodeBackup(JSON.stringify(backup)), null);
+  backup.state.stock = { 'мука__г': '800' };
+  assert.equal(decodeBackup(JSON.stringify(backup)), null);
+});
 
 test('menu generation respects blocks, uniqueness and a disabled category', () => {
   const state = { favorites: ['omlet'], blocks: ['omlet', 'oladi'] };

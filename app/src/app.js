@@ -9,6 +9,7 @@ import {
 import { loadLegacyState, loadSavedState, saveChanges, snapshot, toggle, MIN_PERSONS, MAX_PERSONS } from './store.js';
 import { planner } from './planner.js';
 import { pantry } from './pantry.js';
+import { backups } from './backup.js';
 import { sanitizeWeek } from './week.js';
 import { sanitizeBatchRecords } from './batch-storage.js';
 import './styles.css';
@@ -33,6 +34,7 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('menuApp', () => ({
     ...planner(),
     ...pantry(dishesData, DEPARTMENTS),
+    ...backups(),
     data: dishesData,
     state: loadLegacyState(),
     ready: false,
