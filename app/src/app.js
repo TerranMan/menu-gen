@@ -71,7 +71,8 @@ document.addEventListener('alpine:init', () => {
       this.state = await loadSavedState() ?? loadLegacyState();
       this.savedState = snapshot(this.state);
       this.draftBase = this.savedState;
-      this.view = this.shoppingMode = this.state.view;
+      this.view = this.state.view;
+      this.shoppingMode = this.state.shoppingMode;
       this.todayTimer = setInterval(() => this.refreshToday(), 60_000);
       this.state.week = sanitizeWeek(this.state.week, (id) => Boolean(this.dishById(id)));
       this.pruneShoppingChecks('week');
@@ -450,13 +451,16 @@ document.addEventListener('alpine:init', () => {
     },
 
     async copyShopping() {
+      const mode = this.shoppingMode;
       const text = shoppingText(this.shoppingGroups());
       if (!text) return;
       try {
         await navigator.clipboard.writeText(text);
+        if (this.view !== 'shopping' || this.shoppingMode !== mode) return;
         this.copyMessage = 'Список скопирован.';
         this.copyText = '';
       } catch {
+        if (this.view !== 'shopping' || this.shoppingMode !== mode) return;
         this.copyMessage = 'Выделенный список можно скопировать вручную.';
         this.copyText = text;
         this.$nextTick(() => {
@@ -466,7 +470,7 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
-    weekTotal() {
+    shoppingTotal() {
       const { sum, missing } = totalCost(this.shoppingIngredients(), this.effectivePrices());
       return { text: formatMoney(sum), missing };
     },

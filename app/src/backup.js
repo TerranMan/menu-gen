@@ -126,7 +126,7 @@ export function backups() {
           return;
         }
         this.applySavedState(state);
-        this.showView(state.view);
+        this.showView(state.view, { remember: false });
         this.dayId = this.days[0].id;
         this.expanded = {};
         this.copyMessage = '';

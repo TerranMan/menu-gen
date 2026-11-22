@@ -55,22 +55,33 @@ export function planner() {
     shareText: '',
     shareMessage: '',
 
-    showView(view) {
+    showView(view, { remember = true } = {}) {
+      const previousView = this.view;
       this.catalogTarget = null;
       this.catalogWeek = null;
       this.replacement = null;
       this.view = view;
+      if (previousView === 'shopping' && view !== 'shopping') this.clearShoppingControls();
       if (view === 'catalog') return;
       if (view === 'today') this.refreshToday();
-      if (this.shoppingMode !== view) {
-        this.copyMessage = '';
-        this.copyText = '';
-        this.editingPrices = false;
+      if (!remember) {
+        this.shoppingMode = this.state.shoppingMode;
+        return;
       }
-      this.shoppingMode = view;
-      if (this.state.view === view) return;
+      if (view !== 'shopping') this.shoppingMode = view === 'menu' ? 'menu' : 'week';
+      if (this.state.view === view && this.state.shoppingMode === this.shoppingMode) return;
       this.state.view = view;
+      this.state.shoppingMode = this.shoppingMode;
       this.saveState();
+    },
+
+    navigateTo(view) {
+      this.showView(view);
+      const heading = this.$refs.shoppingHeading;
+      this.$nextTick(() => {
+        window.scrollTo(0, 0);
+        if (view === 'shopping') heading.focus({ preventScroll: true });
+      });
     },
 
     closeOptions(button) {
@@ -79,29 +90,29 @@ export function planner() {
       options.open = false;
     },
 
-    openShopping() {
-      const shopping = this.$refs.shopping;
-      if (this.view === 'catalog') this.showView(this.shoppingMode);
-      shopping.open = true;
-      this.$nextTick(() => {
-        this.$refs.shoppingSummary.focus({ preventScroll: true });
-        shopping.scrollIntoView({ block: 'start' });
-      });
+    clearShoppingControls() {
+      this.copyMessage = '';
+      this.copyText = '';
+      this.editingPrices = false;
+    },
+
+    async setShoppingMode(mode) {
+      if (this.shoppingMode === mode) return;
+      this.shoppingMode = this.state.shoppingMode = mode;
+      this.state.view = 'shopping';
+      this.clearShoppingControls();
+      if (!await this.saveState() && this.shoppingMode === mode) this.shoppingMode = this.state.shoppingMode;
     },
 
     openCatalog(mealId, dishId = null) {
-      const nav = this.$refs.viewNav;
-      this.showView('catalog');
+      this.navigateTo('catalog');
       this.catalogTarget = mealId;
       this.catalogWeek = this.activeWeekStart();
       this.replacement = dishId;
       this.plannerMessage = '';
       this.catalogQuery = '';
       this.catalogCategory = '';
-      this.$nextTick(() => {
-        this.$refs.catalogSearch.focus({ preventScroll: true });
-        nav.scrollIntoView({ block: 'start' });
-      });
+      this.$nextTick(() => this.$refs.catalogSearch.focus({ preventScroll: true }));
     },
 
     catalogEntries() {
@@ -143,7 +154,7 @@ export function planner() {
           return;
         }
         if (await this.persistWeek()) {
-          if (this.view === 'catalog' && this.catalogTarget === target) this.showView('week');
+          if (this.view === 'catalog' && this.catalogTarget === target) this.navigateTo('week');
         }
       } else {
         this.addToSelection(entry.categoryId, entry.dish);
@@ -182,13 +193,22 @@ export function planner() {
       return this.isCurrentWeek() ? this.currentMeals(localDayId(new Date(this.todayTimestamp))) : [];
     },
 
+    hasMealsToday() {
+      return this.todayMeals().some(({ id }) => this.state.week[id]?.length);
+    },
+
     todayLabel() {
       return todayDate.format(this.todayTimestamp);
     },
 
     openTodayInWeek() {
       this.dayId = this.isCurrentWeek() ? localDayId(new Date(this.todayTimestamp)) : DAYS[0].id;
-      this.showView('week');
+      this.navigateTo('week');
+    },
+
+    openPlanning() {
+      this.openTodayInWeek();
+      this.$nextTick(() => document.getElementById('fill-schedule')?.focus({ preventScroll: true }));
     },
 
     mealLabel(id) {

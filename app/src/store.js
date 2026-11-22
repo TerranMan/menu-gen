@@ -31,6 +31,7 @@ const empty = () => ({
   weekHistory: [],
   stock: {},
   view: 'menu',
+  shoppingMode: 'menu',
   prices: {}, // ключ "name__unit" → число (₽ за 1 единицу)
 });
 
@@ -120,6 +121,11 @@ function parse(raw) {
   }
 }
 
+function storedShoppingMode(state) {
+  if (state.shoppingMode === 'week' || state.shoppingMode === 'menu') return state.shoppingMode;
+  return state.view === 'week' || state.view === 'today' ? 'week' : 'menu';
+}
+
 function read(parsed) {
   if (![1, 2].includes(parsed?.version)) return empty();
   const blocks = sanitizeIds(parsed.blocks);
@@ -141,7 +147,8 @@ function read(parsed) {
     weekChecked: sanitizeChecked(parsed.weekChecked),
     weekHistory: sanitizeWeekHistory(parsed.weekHistory),
     stock: sanitizeStock(parsed.stock),
-    view: parsed.view === 'week' || parsed.view === 'today' ? parsed.view : 'menu',
+    view: ['week', 'today', 'shopping'].includes(parsed.view) ? parsed.view : 'menu',
+    shoppingMode: storedShoppingMode(parsed),
     prices: sanitizePrices(parsed.prices),
   };
 }
@@ -214,9 +221,11 @@ export function encodeBackup(state) {
 
 export function decodeBackup(text) {
   const data = parse(text);
-  const state = data?.state;
-  if (data?.format !== BACKUP_FORMAT || data.version !== 1 || state?.version !== 2
+  const original = data?.state;
+  if (data?.format !== BACKUP_FORMAT || data.version !== 1 || original?.version !== 2
       || typeof data.savedAt !== 'string' || !Number.isFinite(Date.parse(data.savedAt))) return null;
+  const state = Object.hasOwn(original, 'shoppingMode') ? original
+    : { ...original, shoppingMode: storedShoppingMode(original) };
   const normalized = read(state);
   // Резервная копия содержит полный снимок. Не заменяем повреждённые поля значениями по умолчанию.
   if (Object.entries(normalized).some(([key, value]) => !same(value, state[key]))) return null;
@@ -231,6 +240,7 @@ export async function loadPreviousBackup() {
 export function mergeChanges(base, draft, latest) {
   const next = { ...latest };
   if (draft.view !== base.view) next.view = draft.view;
+  if (draft.shoppingMode !== base.shoppingMode) next.shoppingMode = draft.shoppingMode;
   for (const group of groups) {
     if (!group.some((key) => !same(base[key], draft[key]))) continue;
     if (group.some((key) => !same(base[key], latest[key]) && !same(draft[key], latest[key]))) {

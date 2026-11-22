@@ -37,12 +37,12 @@
         </div>
       </header>
 
-      <nav class="view-nav" x-ref="viewNav" aria-label="Разделы меню">
-        <button type="button" :aria-pressed="view === 'menu'" @click="showView('menu')">Подборка</button>
-        <button type="button" :aria-pressed="view === 'today'" @click="showView('today')">Сегодня</button>
-        <button type="button" :aria-pressed="view === 'week'" @click="showView('week')">По дням</button>
-        <button type="button" :aria-pressed="view === 'catalog'" @click="showView('catalog')">Каталог</button>
-        <a href="#shopping" @click.prevent="openShopping()">Покупки</a>
+      <nav class="view-nav" aria-label="Разделы меню">
+        <button type="button" :aria-pressed="view === 'menu'" @click="navigateTo('menu')">Подборка</button>
+        <button type="button" :aria-pressed="view === 'today'" @click="navigateTo('today')">Сегодня</button>
+        <button type="button" :aria-pressed="view === 'week'" @click="navigateTo('week')">По дням</button>
+        <button type="button" :aria-pressed="view === 'catalog'" @click="navigateTo('catalog')">Каталог</button>
+        <button type="button" :aria-pressed="view === 'shopping'" @click="navigateTo('shopping')">Покупки</button>
       </nav>
 
       <main>
@@ -79,12 +79,6 @@
           <template x-for="dish in slot.dishes" :key="dish.id">
             <div class="dish-block" x-data="{ imageFailed: false }">
               <div class="dish-row">
-                <template x-if="dish.image && !imageFailed">
-                  <img class="dish-img" :src="imageUrl(dish.image)" :alt="dish.name" loading="lazy" @error="imageFailed = true" />
-                </template>
-                <template x-if="!dish.image || imageFailed">
-                  <span class="dish-emoji-big" x-text="dishEmoji(dish, slot.categoryId)"></span>
-                </template>
                 <button
                   type="button"
                   class="dish-name-toggle"
@@ -92,40 +86,38 @@
                   :aria-controls="`recipe-${dish.id}`"
                   @click="toggleExpanded(dish.id)"
                 >
+                  <template x-if="dish.image && !imageFailed">
+                    <img class="dish-img" :src="imageUrl(dish.image)" alt="" loading="lazy" @error="imageFailed = true" />
+                  </template>
+                  <template x-if="!dish.image || imageFailed">
+                    <span class="dish-emoji-big" aria-hidden="true" x-text="dishEmoji(dish, slot.categoryId)"></span>
+                  </template>
                   <span class="dish-name" x-text="dish.name"></span>
-                  <span class="chevron" :class="{ open: isExpanded(dish.id) }">▸</span>
+                  <span class="chevron" aria-hidden="true" :class="{ open: isExpanded(dish.id) }">▸</span>
                 </button>
                 <div class="dish-actions">
                   <button
+                    class="icon-btn"
                     type="button"
-                    class="icon-btn pin-btn"
-                    :class="{ active: isPinned(dish.id) }"
-                    :aria-pressed="isPinned(dish.id)"
-                    :aria-label="isPinned(dish.id) ? 'Открепить блюдо' : 'Закрепить блюдо'"
-                    :title="isPinned(dish.id) ? 'Открепить блюдо' : 'Закрепить блюдо'"
-                    @click="togglePin(dish.id)"
-                  >📌</button>
-                  <button
-                    class="icon-btn"
-                    :class="{ active: isFavorite(dish.id) }"
-                    :title="isFavorite(dish.id) ? 'Убрать из избранного' : 'В избранное'"
-                    @click="toggleFavorite(dish.id)"
-                  >
-                    <span x-text="isFavorite(dish.id) ? '★' : '☆'"></span>
-                  </button>
-                  <button
-                    class="icon-btn"
-                    title="Заменить это блюдо"
+                    :title="isPinned(dish.id) ? 'Блюдо закреплено' : 'Заменить это блюдо'"
                     aria-label="Заменить это блюдо"
                     :disabled="isPinned(dish.id) || slot.dishes.length >= availableCount(slot.categoryId)"
                     @click="regenerateOne(slot.categoryId, dish.id)"
                   >↻</button>
-                  <button
-                    class="icon-btn"
-                    title="Не показывать"
-                    aria-label="Не показывать"
-                    @click="toggleBlock(dish.id)"
-                  >✕</button>
+                  <details class="dish-options selection-options" name="selection-options" @click.outside="$el.open = false"
+                    @keydown.escape.stop="$el.querySelector('summary').focus(); $el.open = false">
+                    <summary class="icon-btn" :class="{ active: isPinned(dish.id) || isFavorite(dish.id) }"
+                      :aria-label="`Действия · ${dish.name}`">⋯</summary>
+                    <div class="options-panel">
+                      <button class="btn" type="button" :aria-pressed="isPinned(dish.id)"
+                        @click="closeOptions($el); togglePin(dish.id)"
+                        x-text="isPinned(dish.id) ? 'Открепить блюдо' : 'Закрепить блюдо'"></button>
+                      <button class="btn" type="button" :aria-pressed="isFavorite(dish.id)"
+                        @click="closeOptions($el); toggleFavorite(dish.id)"
+                        x-text="isFavorite(dish.id) ? 'Убрать из избранного' : 'В избранное'"></button>
+                      <button class="btn" type="button" @click="closeOptions($el); toggleBlock(dish.id)">Не показывать</button>
+                    </div>
+                  </details>
                 </div>
               </div>
               <template x-if="isExpanded(dish.id)">
@@ -186,12 +178,17 @@
               <h2 id="today-heading">Сегодня</h2>
               <span class="item-meta today-date" x-text="todayLabel()"></span>
             </div>
-            <button class="btn" type="button" @click="openTodayInWeek()"
+            <button class="btn" type="button" x-show="hasMealsToday() || (!isCurrentWeek() && hasWeekPlan())"
+              @click="openTodayInWeek()"
               x-text="isCurrentWeek() ? 'Открыть день в плане' : 'Открыть план недели'"></button>
           </div>
-          <p class="view-status" x-show="!isCurrentWeek()"
+          <p class="view-status" x-show="!isCurrentWeek() && hasWeekPlan()"
             x-text="`На сегодня плана нет. Открытый план — ${weekLabel()}.`"></p>
-          <template x-for="meal in todayMeals()" :key="meal.id">
+          <div class="meal-block today-empty" x-show="!hasMealsToday() && (isCurrentWeek() || !hasWeekPlan())">
+            <p class="view-status" x-text="isCurrentWeek() ? 'На сегодня пока ничего не запланировано.' : `Открытый план — ${weekLabel()}.`"></p>
+            <button class="btn primary" type="button" @click="openPlanning()">Запланировать неделю</button>
+          </div>
+          <template x-for="meal in hasMealsToday() ? todayMeals() : []" :key="meal.id">
             <section class="meal-block" :aria-labelledby="`today-${meal.id}`">
               <h3 :id="`today-${meal.id}`" x-text="meal.name"></h3>
               <p class="view-status" x-show="!mealEntries(meal.id).length">В плане пока пусто.</p>
@@ -255,7 +252,8 @@
           </div>
           <div class="week-day-heading">
             <h3 class="day-heading" x-text="`${activeDay().name}, ${dayLabel(activeDay())}`"></h3>
-            <button class="btn" type="button" x-show="hasEmptyMeals()" @click="fillSchedule()">Заполнить пустые приёмы</button>
+            <button class="btn" type="button" id="fill-schedule" x-show="hasEmptyMeals()"
+              @click="fillSchedule()">Заполнить пустые приёмы</button>
           </div>
           <p class="view-status" aria-live="polite" x-show="plannerMessage" x-text="plannerMessage"></p>
           <template x-for="meal in currentMeals()" :key="meal.id">
@@ -327,7 +325,7 @@
         <section class="catalog-view" aria-label="Каталог блюд">
           <div class="view-heading">
             <h2 x-text="catalogTarget ? `${replacement ? 'Заменить блюдо' : 'Выбрать блюдо'} · ${mealLabel(catalogTarget)}` : 'Каталог блюд'"></h2>
-            <button type="button" class="btn" x-show="catalogTarget" @click="showView('week')">К расписанию</button>
+            <button type="button" class="btn" x-show="catalogTarget" @click="navigateTo('week')">К расписанию</button>
           </div>
           <p class="view-status" aria-live="polite" x-show="plannerMessage && catalogTarget" x-text="plannerMessage"></p>
           <div class="catalog-filters">
@@ -370,16 +368,22 @@
         </section>
       </template>
 
-      <div class="lists" x-show="view !== 'catalog'">
-        <details id="shopping" x-ref="shopping" open>
-          <summary x-ref="shoppingSummary">
-            🛒 Список покупок (<span x-text="shoppingList().length"></span>) —
-            <span x-text="weekTotal().text"></span>
-            <span class="missing-hint" x-show="weekTotal().missing > 0"
-              x-text="`+ ${weekTotal().missing} без цены`"></span>
-          </summary>
+      <section id="shopping" class="shopping-view" aria-labelledby="shopping-title" x-show="view === 'shopping'">
+          <div class="view-heading">
+            <h2 id="shopping-title" tabindex="-1" x-ref="shoppingHeading">Покупки</h2>
+            <p class="item-meta shopping-total" aria-live="polite">
+              Позиций <span x-text="shoppingList().length"></span> · <span x-text="shoppingTotal().text"></span>
+              <span class="missing-hint" x-show="shoppingTotal().missing > 0"
+                x-text="`+ ${shoppingTotal().missing} без цены`"></span>
+            </p>
+          </div>
+          <div class="shopping-source" role="group" aria-label="Источник списка покупок">
+            <button class="btn" type="button" :aria-pressed="shoppingMode === 'week'"
+              @click="setShoppingMode('week')">По плану недели</button>
+            <button class="btn" type="button" :aria-pressed="shoppingMode === 'menu'"
+              @click="setShoppingMode('menu')">По подборке</button>
+          </div>
           <div class="shopping-toolbar">
-            <span class="item-meta" x-text="shoppingMode === 'menu' ? 'По подборке' : 'По плану недели'"></span>
             <div class="shopping-actions">
               <button class="btn" type="button" @click="openStock()">Запасы дома</button>
               <button class="btn" type="button" aria-label="Копировать список"
@@ -393,6 +397,8 @@
             :value="copyText" readonly></textarea>
           <p class="view-status" x-show="!shoppingList().length"
             x-text="requiredIngredients(shoppingMode).length ? 'По этому меню всё есть дома.' : 'Добавьте блюда, чтобы составить список.'"></p>
+          <button class="btn" type="button" x-show="shoppingMode === 'week' && !hasWeekPlan()"
+            @click="openPlanning()">Запланировать неделю</button>
           <template x-for="group in shoppingGroups()" :key="group.name">
             <section class="shopping-group">
               <h3 x-text="group.name"></h3>
@@ -427,14 +433,15 @@
               </ul>
             </section>
           </template>
-        </details>
+      </section>
 
+      <div class="lists" x-show="view !== 'catalog' && view !== 'shopping'">
         <details>
           <summary>
             ★ Избранное (<span x-text="state.favorites.length"></span>)
           </summary>
           <template x-if="favoriteDishes().length === 0">
-            <p class="empty-hint">Пусто. Нажмите ☆ у блюда чтобы добавить.</p>
+            <p class="empty-hint">Чтобы сохранить блюдо, выберите «В избранное» в его меню ⋯.</p>
           </template>
           <ul>
             <template x-for="d in favoriteDishes()" :key="d.id">

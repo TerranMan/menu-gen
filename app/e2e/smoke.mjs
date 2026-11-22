@@ -80,6 +80,11 @@ function breakfasts(page) {
   return page.locator('.category').filter({ has: page.getByRole('heading', { name: /^Завтраки/ }) });
 }
 
+async function openShopping(page) {
+  await page.getByRole('button', { name: 'Покупки', exact: true }).click();
+  await page.getByRole('heading', { name: 'Покупки', exact: true }).waitFor();
+}
+
 async function openBackup(page) {
   await page.locator('footer').getByRole('button', { name: 'Резервная копия' }).click();
   return page.getByRole('dialog', { name: 'Резервная копия' });
@@ -87,7 +92,7 @@ async function openBackup(page) {
 
 test('backup exports and restores across browsers offline, with preview, cancel and undo', async (t) => {
   const { context: sourceContext, page: source } = await openMenu(t, {
-    version: 2, view: 'week', persons: 4, quickDinners: true, weekStart: '2026-11-23',
+    version: 2, view: 'week', shoppingMode: 'menu', persons: 4, quickDinners: true, weekStart: '2026-11-23',
     week: { 'mon-lunch': [{ dishId: 'borshch', from: null }] },
     batchRecords: { 'mon-lunch/borshch': { cookedAt: Date.UTC(2025, 0, 6), reserve: { fridge: 0, freezer: 2 } } },
     weekHistory: [{ id: Date.UTC(2025, 0, 6), name: 'Зимнее меню', persons: 2,
@@ -203,7 +208,8 @@ test('replacing and blocking a breakfast keeps seven unique dishes', async (t) =
   assert.ok(!replaced.includes(initial[1]));
   assert.deepEqual(replaced.filter((_, index) => index !== 1), initial.filter((_, index) => index !== 1));
 
-  await slot.getByRole('button', { name: 'Не показывать' }).first().click();
+  await slot.getByLabel(`Действия · ${replaced[0]}`, { exact: true }).click();
+  await slot.getByRole('button', { name: 'Не показывать' }).click();
   const afterBlock = await names();
   assert.equal(afterBlock.length, 7);
   assert.equal(new Set(afterBlock).size, 7);
@@ -215,13 +221,15 @@ test('replacing and blocking a breakfast keeps seven unique dishes', async (t) =
 test('first online visit is enough to reopen and use the shopping list offline', async (t) => {
   const { context, page } = await openMenu(t);
   const milk = page.getByRole('checkbox', { name: /^молоко —/ });
+  await openShopping(page);
   await milk.check();
   await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
 
   await context.setOffline(true);
   await reopenMenu(page);
-  assert.equal(await breakfasts(page).locator('.dish-row').count(), 7);
   assert.equal(await milk.isChecked(), true);
+  await page.getByRole('button', { name: 'Подборка', exact: true }).click();
+  assert.equal(await breakfasts(page).locator('.dish-row').count(), 7);
   await breakfasts(page).getByRole('button', { name: /^Блины/ }).click();
   const blini = page.locator('#recipe-blini');
   assert.equal(await blini.locator(':scope > .recipe-steps li').count(), 2);
@@ -231,14 +239,17 @@ test('first online visit is enough to reopen and use the shopping list offline',
   assert.equal(await blini.locator('.dough-details').count(), 0);
   assert.equal(await blini.getByText('мука — 100 г', { exact: true }).count(), 1);
   await page.getByRole('button', { name: 'Больше персон' }).click();
+  await openShopping(page);
   assert.equal(await milk.isChecked(), false);
   await milk.check();
   await reopenMenu(page);
   assert.equal(await milk.isChecked(), true);
   assert.equal(await page.locator('.persons-count').textContent(), '3');
+  await page.getByRole('button', { name: 'Подборка', exact: true }).click();
   await page.getByRole('button', { name: 'Сгенерировать заново' }).click();
-  assert.equal(await milk.isChecked(), false);
   assert.equal(await breakfasts(page).locator('.dish-row').count(), 7);
+  await openShopping(page);
+  assert.equal(await milk.isChecked(), false);
 });
 
 test('whole duck batches show the same yield and quantities on the card and shopping list', async (t) => {
@@ -253,11 +264,13 @@ test('whole duck batches show the same yield and quantities on the card and shop
   assert.match(await card.locator('.recipe-meta').textContent(), /6 порций/);
   assert.equal(await card.locator('.recipe-steps li').count(), 3);
   assert.equal(await card.getByText('утка — 1 шт', { exact: true }).isVisible(), true);
-  assert.equal(await page.getByRole('checkbox', { name: 'утка — 1 шт', exact: true }).count(), 1);
-  assert.equal(await page.getByRole('checkbox', { name: 'яблоко — 6 шт', exact: true }).count(), 1);
   for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Больше персон' }).click();
   assert.match(await card.locator('.recipe-meta').textContent(), /12 порций/);
+  await openShopping(page);
   assert.equal(await page.getByRole('checkbox', { name: 'утка — 2 шт', exact: true }).count(), 1);
+  for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Меньше персон' }).click();
+  await page.getByRole('checkbox', { name: 'утка — 1 шт', exact: true }).waitFor();
+  assert.equal(await page.getByRole('checkbox', { name: 'яблоко — 6 шт', exact: true }).count(), 1);
 });
 
 test('old saved menus recover malformed entries and show category shortages', async (t) => {
@@ -292,20 +305,21 @@ test('cottage cheese casserole and pea porridge are separate cards with recipes 
       { categoryId: 'dishes', dishIds: ['zapekanka-gorokhovaya-kasha-s-myasom', 'pelmeni'] },
     ],
   });
+  await page.setViewportSize({ width: 320, height: 720 });
   for (const dish of [
     { name: 'Творожная запеканка', id: 'tvorozhnaya-zapekanka', ingredient: 'творог — 500 г' },
     { name: 'Гороховая каша с мясом', id: 'gorokhovaya-kasha-s-myasom', ingredient: 'горох — 120 г' },
   ]) {
-    await page.getByRole('button', { name: new RegExp(`^${dish.name}`) }).click();
+    const photo = page.getByRole('button', { name: dish.name, exact: true }).locator('img');
+    await photo.scrollIntoViewIfNeeded();
+    assert.match(await photo.getAttribute('src'), new RegExp(`/images/${dish.id}\\.webp$`));
+    await photo.evaluate((image) => image.decode());
+    await photo.click();
     const card = page.locator(`#recipe-${dish.id}`);
     assert.equal(await card.getByText(dish.ingredient, { exact: true }).isVisible(), true);
     assert.equal(await card.locator('.recipe-steps li').count(), 3);
-    const photo = page.getByRole('img', { name: dish.name, exact: true });
-    await photo.scrollIntoViewIfNeeded();
-    assert.match(await photo.getAttribute('src'), new RegExp(`/images/${dish.id}\\.webp$`));
-    await page.waitForFunction((name) => Array.from(document.images)
-      .some((image) => image.alt === name && image.naturalWidth > 0), dish.name);
   }
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 320);
   await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
   const photoTab = await context.newPage();
   const response = await photoTab.goto(`${url}images/grechka.webp`);
@@ -334,6 +348,7 @@ test('catalog finds a recipe and a pinned manual choice survives regeneration an
   await page.getByRole('button', { name: 'Сгенерировать заново' }).click();
   await reopenMenu(page);
   assert.deepEqual(await sides.locator('.dish-name').allTextContents(), ['Гречка']);
+  await sides.getByLabel('Действия · Гречка', { exact: true }).click();
   assert.equal(await sides.getByRole('button', { name: 'Открепить блюдо' }).getAttribute('aria-pressed'), 'true');
   assert.equal(await sides.getByRole('button', { name: 'Заменить это блюдо' }).isDisabled(), true);
 });
@@ -359,6 +374,7 @@ test('a weekly recipe can be served twice and copied with grouped shopping and t
   await recipe.getByRole('img', { name: 'Борщ' }).evaluate((image) => image.decode());
   await recipe.getByRole('button', { name: 'Закрыть рецепт' }).click();
 
+  await openShopping(page);
   const beef = page.getByRole('checkbox', { name: /^мясо говядина — 266,7 г$/ });
   await beef.check();
   await page.waitForFunction(async () => Object.keys((await window.readStoredMenu()).weekChecked).length === 1);
@@ -368,8 +384,9 @@ test('a weekly recipe can be served twice and copied with grouped shopping and t
   assert.match(copied, /Мясо, птица и колбаса\r?\n✓ мясо говядина — 266,7 г/);
 
   await reopenMenu(page);
-  assert.equal(await lunch.getByText('На всю готовку · 4 порции', { exact: true }).isVisible(), true);
   assert.equal(await beef.isChecked(), true);
+  await page.getByRole('button', { name: 'По дням' }).click();
+  assert.equal(await lunch.getByText('На всю готовку · 4 порции', { exact: true }).isVisible(), true);
   await dishAction(lunch, 'Борщ', 'Убрать Борщ из приёма');
   await page.getByRole('button', { name: 'Вторник' }).click();
   assert.equal(await lunch.getByText('На всю готовку · 2 порции', { exact: true }).isVisible(), true);
@@ -390,9 +407,11 @@ test('autofill preserves a manual meal and history copies the saved week with a 
   assert.equal(Object.keys(week).length, 21);
   assert.deepEqual(week['mon-lunch'], cooked);
   assert.deepEqual(week['tue-lunch'], repeated);
+  await openShopping(page);
   await page.locator('#shopping input[type=checkbox]').first().check();
   await page.waitForFunction(async () => Object.keys((await window.readStoredMenu()).weekChecked).length === 1);
 
+  await page.getByRole('button', { name: 'По дням' }).click();
   await weekAction(page, 'Новая неделя');
   const next = page.getByRole('dialog', { name: 'Новая неделя' });
   await next.getByRole('textbox', { name: 'Название сохраняемого плана' }).fill('План с борщом');
@@ -449,13 +468,29 @@ test('Today shows the current local weekday, portions to serve and the original 
   assert.equal(await page.getByRole('button', { name: 'Вторник' }).getAttribute('aria-pressed'), 'true');
 });
 
+test('an empty Today screen takes the user directly to weekly planning', async (t) => {
+  const { page } = await openMenu(t);
+  await page.clock.setFixedTime(new Date('2026-11-24T12:00:00Z'));
+  await page.getByRole('button', { name: 'Сегодня', exact: true }).click();
+  const today = page.getByRole('region', { name: 'Сегодня', exact: true });
+  await today.getByText('На сегодня пока ничего не запланировано.').waitFor();
+  assert.equal(await today.locator('.meal-block h3').count(), 0);
+  await today.getByRole('button', { name: 'Запланировать неделю' }).click();
+  const fill = page.getByRole('button', { name: 'Заполнить пустые приёмы' });
+  await fill.waitFor();
+  await page.waitForFunction(() => document.activeElement?.id === 'fill-schedule');
+  assert.equal(await page.getByRole('button', { name: 'Вторник' }).getAttribute('aria-pressed'), 'true');
+  assert.deepEqual((await storedState(page)).week, {});
+});
+
 test('pantry reduces shopping quantities and cost, persists, and supports removing a stock entry', async (t) => {
   const { page } = await openMenu(t, {
     version: 1, view: 'week', week: { 'mon-lunch': [{ dishId: 'borshch', from: null }] },
   });
+  await openShopping(page);
   const previous = page.getByRole('checkbox', { name: 'мясо говядина — 133,3 г', exact: true });
   await previous.check();
-  const previousTotal = await page.locator('#shopping summary').innerText();
+  const previousTotal = await page.locator('.shopping-total').innerText();
   await page.getByRole('button', { name: 'Запасы дома' }).click();
   const stock = page.getByRole('dialog', { name: 'Запасы дома' });
   await stock.getByRole('combobox', { name: 'Продукт' }).selectOption('мясо говядина__г');
@@ -465,7 +500,7 @@ test('pantry reduces shopping quantities and cost, persists, and supports removi
   await stock.getByRole('button', { name: 'Закрыть', exact: true }).click();
   const remaining = page.getByRole('checkbox', { name: 'мясо говядина — 33,3 г', exact: true });
   assert.equal(await remaining.isChecked(), false);
-  assert.notEqual(await page.locator('#shopping summary').innerText(), previousTotal);
+  assert.notEqual(await page.locator('.shopping-total').innerText(), previousTotal);
   await reopenMenu(page);
   await remaining.waitFor();
   await page.getByRole('button', { name: 'Запасы дома' }).click();
@@ -505,18 +540,34 @@ test('sharing a week sends the same schedule and pantry-adjusted shopping text s
   assert.deepEqual(await page.evaluate(() => [window.copiedWeek, window.sharedWeek]), [preview, preview]);
 });
 
-test('the catalog keeps the shopping link and opens the list for the previous view', async (t) => {
+test('shopping is a separate view with sticky navigation and independent sources', async (t) => {
   const { page } = await openMenu(t, {
     version: 1, view: 'week',
     week: { 'mon-lunch': [{ dishId: 'borshch', from: null }] },
   });
+  await page.setViewportSize({ width: 320, height: 720 });
   await page.getByRole('button', { name: 'Каталог', exact: true }).click();
   await page.getByRole('searchbox').fill('блины');
-  await page.getByRole('link', { name: 'Покупки', exact: true }).click();
-  await page.getByText('По плану недели', { exact: true }).waitFor();
-  assert.equal(await page.locator('#shopping summary').evaluate((element) => element === document.activeElement), true);
-  assert.equal(await page.getByRole('checkbox', { name: 'мясо говядина — 133,3 г', exact: true }).isVisible(), true);
-  assert.equal(await page.locator('#shopping').evaluate((element) => element.open), true);
+  await openShopping(page);
+  await page.waitForFunction(() => document.activeElement?.id === 'shopping-title');
+  const weekSource = page.getByRole('button', { name: 'По плану недели', exact: true });
+  const menuSource = page.getByRole('button', { name: 'По подборке', exact: true });
+  assert.equal(await weekSource.getAttribute('aria-pressed'), 'true');
+  assert.equal(await page.getByRole('heading', { name: 'План на неделю' }).isVisible(), false);
+  const beef = page.getByRole('checkbox', { name: 'мясо говядина — 133,3 г', exact: true });
+  await beef.check();
+  await menuSource.click();
+  const milk = page.getByRole('checkbox', { name: /^молоко —/ });
+  assert.equal(await milk.isChecked(), false);
+  await milk.check();
+  await page.locator('#shopping li').last().scrollIntoViewIfNeeded();
+  assert.equal(await page.locator('.view-nav').evaluate((el) => el.getBoundingClientRect().top >= 0), true);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 320);
+  await reopenMenu(page);
+  assert.equal(await menuSource.getAttribute('aria-pressed'), 'true');
+  assert.equal(await milk.isChecked(), true);
+  await weekSource.click();
+  assert.equal(await beef.isChecked(), true);
 });
 
 test('two tabs keep independent edits after importing the previous version', async (t) => {
@@ -631,8 +682,10 @@ test('moving and replacing a batch updates linked servings and preserves unrelat
       'fri-dinner': [{ dishId: 'grechka', from: null }],
     },
   });
+  await openShopping(page);
   const check = page.getByRole('checkbox', { name: /^гречка —/ });
   await check.check();
+  await page.getByRole('button', { name: 'По дням' }).click();
   const lunch = page.getByRole('region', { name: 'Обед', exact: true });
   await dishAction(lunch, 'Борщ', 'Перенести');
   const move = page.getByRole('dialog', { name: 'Перенести блюдо' });
@@ -646,6 +699,7 @@ test('moving and replacing a batch updates linked servings and preserves unrelat
     .getByRole('button', { name: 'Выбрать', exact: true }).click();
   await lunch.getByRole('button', { name: /^Щи/ }).waitFor();
   assert.deepEqual((await storedState(page)).week['thu-lunch'], [{ dishId: 'shchi', from: 'wed-lunch' }]);
+  await openShopping(page);
   assert.equal(await check.isChecked(), true);
 });
 
@@ -653,6 +707,7 @@ test('shopping prices show rubles per kilogram, persist zero and reset to the es
   const { page } = await openMenu(t, {
     version: 1, view: 'week', week: { 'mon-lunch': [{ dishId: 'borshch', from: null }] },
   });
+  await openShopping(page);
   const price = page.getByRole('spinbutton', { name: 'Цена за 1 кг · мясо говядина' });
   assert.equal(await price.isVisible(), false);
   await page.getByRole('button', { name: 'Редактировать цены' }).click();
@@ -718,7 +773,7 @@ test('new arugula dishes have separate pictures and reach the produce shopping l
   assert.equal(new Set(images).size, 2);
   const cherry = salads.filter({ hasText: 'Руккола с черри и фетой' });
   await cherry.getByRole('button', { name: 'Добавить в меню' }).click();
-  await page.getByRole('link', { name: 'Покупки', exact: true }).click();
+  await openShopping(page);
   const produce = page.locator('.shopping-group').filter({ hasText: 'Овощи, фрукты и зелень' });
   await produce.getByRole('checkbox', { name: 'руккола — 65 г', exact: true }).waitFor();
   await page.getByRole('button', { name: 'Редактировать цены' }).click();
@@ -768,7 +823,9 @@ test('a homemade weekly batch and its repeat update shopping independently of an
       'thu-lunch': [{ dishId: 'pelmeni', from: null }],
     },
   });
+  await openShopping(page);
   await page.getByRole('checkbox', { name: /^пельмени — 1\s?500 г$/ }).waitFor();
+  await page.getByRole('button', { name: 'По дням' }).click();
   const lunch = page.getByRole('region', { name: 'Обед', exact: true });
   await lunch.getByRole('button', { name: 'Пельмени', exact: true }).click();
   const recipe = page.getByRole('dialog', { name: 'Пельмени' });
@@ -777,9 +834,11 @@ test('a homemade weekly batch and its repeat update shopping independently of an
   await recipe.getByText(/около 75 мин/).waitFor();
   assert.equal(await recipe.getByText(/варите по инструкции на упаковке/).count(), 0);
   await recipe.getByRole('button', { name: 'Закрыть рецепт' }).click();
+  await openShopping(page);
   await page.getByRole('checkbox', { name: 'пельмени — 500 г', exact: true }).waitFor();
   await page.getByRole('checkbox', { name: 'мясо говядина — 300 г', exact: true }).waitFor();
   await reopenMenu(page);
+  await page.getByRole('button', { name: 'По дням' }).click();
   await page.getByRole('button', { name: 'Вторник' }).click();
   await lunch.getByText(/повторная подача.*домашний вариант/i).waitFor();
   await lunch.getByRole('button', { name: 'Пельмени', exact: true }).click();
@@ -817,6 +876,7 @@ test('portions from the same batch can use different storage and reserves are de
   await lunch.getByText(/Холодильник — 1 порция.*Морозилка — 1 порция/).waitFor();
   await page.locator('.app[aria-busy="false"]').waitFor();
   assert.deepEqual((await storedState(page)).batchRecords['mon-lunch/borshch'].reserve, { fridge: 0, freezer: 2 });
+  await openShopping(page);
   assert.equal(await page.getByRole('checkbox', { name: 'мясо говядина — 400 г', exact: true }).isVisible(), true);
 });
 

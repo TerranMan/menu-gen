@@ -29,6 +29,9 @@ test('a portable backup round-trips the full state and rejects partial snapshots
   const text = encodeBackup(state);
   const backup = JSON.parse(text);
   assert.deepEqual(decodeBackup(text), { savedAt: backup.savedAt, state });
+  const legacy = { ...backup, state: { ...state, view: 'week' } };
+  delete legacy.state.shoppingMode;
+  assert.equal(decodeBackup(JSON.stringify(legacy)).state.shoppingMode, 'week');
   assert.equal(decodeBackup('{'), null);
   assert.equal(decodeBackup(JSON.stringify({ ...backup, version: 99 })), null);
   delete backup.state.stock;
@@ -149,6 +152,7 @@ test('saved menus and shopping checks are sanitized without dropping valid prefe
     weekHistory: [],
     stock: { 'картофель__г': 120.3, 'яйцо__шт': 2 },
     view: 'menu',
+    shoppingMode: 'menu',
     prices: { 'яйцо__шт': 18, 'квас__мл': 0.12, 'картофель__г': 0.14 },
   });
 });
