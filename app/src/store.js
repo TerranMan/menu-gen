@@ -23,6 +23,7 @@ const empty = () => ({
   lastMenu: null,
   homemade: {},
   quickDinners: false,
+  kidsMeals: false,
   checked: {}, // ключ списка покупок → количество на момент отметки
   week: {},
   weekStart: null,
@@ -140,6 +141,7 @@ function read(parsed) {
     lastMenu: sanitizeMenu(parsed.lastMenu),
     homemade: Object.fromEntries(Object.entries(parsed.homemade ?? {}).filter(([, value]) => value === true)),
     quickDinners: parsed.quickDinners === true,
+    kidsMeals: parsed.kidsMeals === true,
     checked: sanitizeChecked(parsed.checked),
     week,
     weekStart: isWeekStart(parsed.weekStart) ? parsed.weekStart : (Object.keys(week).length ? localWeekStart() : null),
@@ -203,7 +205,7 @@ async function loadRecord(key) {
 }
 
 const groups = [
-  ['persons'], ['quickDinners'], ['picks', 'blocks', 'favorites', 'pins', 'lastMenu'],
+  ['persons'], ['quickDinners'], ['kidsMeals', 'picks', 'blocks', 'favorites', 'pins', 'lastMenu'],
   ['week', 'weekStart', 'batchRecords', 'weekHistory'],
 ];
 const maps = ['checked', 'weekChecked', 'stock', 'prices', 'homemade'];
@@ -224,8 +226,7 @@ export function decodeBackup(text) {
   const original = data?.state;
   if (data?.format !== BACKUP_FORMAT || data.version !== 1 || original?.version !== 2
       || typeof data.savedAt !== 'string' || !Number.isFinite(Date.parse(data.savedAt))) return null;
-  const state = Object.hasOwn(original, 'shoppingMode') ? original
-    : { ...original, shoppingMode: storedShoppingMode(original) };
+  const state = { shoppingMode: storedShoppingMode(original), kidsMeals: false, ...original };
   const normalized = read(state);
   // Резервная копия содержит полный снимок. Не заменяем повреждённые поля значениями по умолчанию.
   if (Object.entries(normalized).some(([key, value]) => !same(value, state[key]))) return null;

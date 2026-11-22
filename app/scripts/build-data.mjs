@@ -112,6 +112,10 @@ function buildDishes() {
       if (allIds.has(d.id)) fail(`дублирующийся id: ${d.id}`);
       allIds.add(d.id);
       total++;
+      if (cat.id === 'kids' && (!['breakfast', 'main'].includes(d.childMeal) ||
+          typeof d.childServing !== 'string' || !d.childServing.trim())) {
+        fail(`${d.id}: для детского блюда укажите приём пищи и способ подачи`);
+      }
       validateRecipe(d.id, recipes[d.id]);
       d.recipe = recipes[d.id];
       if (Object.hasOwn(dough, d.id)) d.dough = buildDough(d, dough[d.id]);

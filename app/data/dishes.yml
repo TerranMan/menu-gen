@@ -852,6 +852,72 @@ categories:
           - name: перец чёрный
             qty: 0
             unit: по вкусу
+      - id: ratatouille
+        name: "Рататуй"
+        image: images/ratatouille.webp
+        cuisine: Французская кухня
+        ingredients:
+          - { name: баклажан, qty: 300, unit: г }
+          - { name: кабачок, qty: 300, unit: г }
+          - { name: перец болгарский, qty: 1, unit: шт }
+          - { name: помидор, qty: 3, unit: шт }
+          - { name: лук, qty: 1, unit: шт }
+          - { name: чеснок, qty: 2, unit: зубчик }
+          - { name: масло оливковое, qty: 1, unit: ст.л. }
+          - { name: соль, qty: 0, unit: по вкусу }
+      - id: pastushiy-pirog-indeyka
+        name: "Пастуший пирог с индейкой"
+        image: images/pastushiy-pirog-indeyka.webp
+        cuisine: Британская кухня
+        ingredients:
+          - { name: фарш индейки, qty: 400, unit: г }
+          - { name: картофель, qty: 650, unit: г }
+          - { name: морковь, qty: 100, unit: г }
+          - { name: лук, qty: 1, unit: шт }
+          - { name: молоко, qty: 100, unit: мл }
+          - { name: томатная паста, qty: 20, unit: г }
+          - { name: вода, qty: 100, unit: мл }
+          - { name: масло растительное, qty: 1, unit: ст.л. }
+          - { name: соль, qty: 0, unit: по вкусу }
+      - id: fish-chips-duhovka
+        name: "Фиш-энд-чипс в духовке"
+        image: images/fish-chips-duhovka.webp
+        cuisine: Британская кухня
+        ingredients:
+          - { name: филе трески, qty: 480, unit: г }
+          - { name: картофель, qty: 550, unit: г }
+          - { name: сухари панировочные, qty: 65, unit: г }
+          - { name: яйцо, qty: 1, unit: шт }
+          - { name: лимон, qty: 1, unit: шт }
+          - { name: масло растительное, qty: 1, unit: ст.л. }
+          - { name: соль, qty: 0, unit: по вкусу }
+      - id: chili-indeyka-fasol
+        name: "Мягкое чили из индейки и фасоли"
+        image: images/chili-indeyka-fasol.webp
+        cuisine: Американская кухня
+        ingredients:
+          - { name: фарш индейки, qty: 400, unit: г }
+          - { name: фасоль красная консервированная, qty: 240, unit: г }
+          - { name: помидор, qty: 3, unit: шт }
+          - { name: перец болгарский, qty: 1, unit: шт }
+          - { name: лук, qty: 1, unit: шт }
+          - { name: чеснок, qty: 1, unit: зубчик }
+          - { name: томатная паста, qty: 25, unit: г }
+          - { name: паприка сладкая молотая, qty: 3, unit: г }
+          - { name: вода, qty: 150, unit: мл }
+          - { name: масло растительное, qty: 1, unit: ст.л. }
+          - { name: соль, qty: 0, unit: по вкусу }
+      - id: kuritsa-kukuruza-kartofel
+        name: "Курица с картофелем и кукурузой на противне"
+        image: images/kuritsa-kukuruza-kartofel.webp
+        cuisine: Американская кухня
+        ingredients:
+          - { name: курица филе, qty: 480, unit: г }
+          - { name: картофель, qty: 550, unit: г }
+          - { name: кукуруза, qty: 2, unit: шт }
+          - { name: паприка сладкая молотая, qty: 3, unit: г }
+          - { name: масло растительное, qty: 1, unit: ст.л. }
+          - { name: соль, qty: 0, unit: по вкусу }
   - id: fruits_vegetables
     name: Фрукты и овощи
     pick: 2
@@ -2190,3 +2256,98 @@ categories:
           - name: соль
             qty: 0
             unit: по вкусу
+      - id: minestrone-belaya-fasol
+        name: "Минестроне с белой фасолью"
+        image: images/minestrone-belaya-fasol.webp
+        cuisine: Итальянская кухня
+        ingredients:
+          - { name: фасоль белая консервированная, qty: 240, unit: г }
+          - { name: кабачок, qty: 200, unit: г }
+          - { name: морковь, qty: 1, unit: шт }
+          - { name: лук, qty: 1, unit: шт }
+          - { name: помидор, qty: 3, unit: шт }
+          - { name: чеснок, qty: 1, unit: зубчик }
+          - { name: зелень, qty: 0.5, unit: пучок }
+          - { name: вода, qty: 800, unit: мл }
+          - { name: масло оливковое, qty: 1, unit: ст.л. }
+          - { name: соль, qty: 0, unit: по вкусу }
+  - id: desserts
+    name: Десерты
+    pick: 0
+    dishes:
+      - id: yablochno-ovsyaniy-krambl
+        name: "Яблочно-овсяный крамбл"
+        image: images/yablochno-ovsyaniy-krambl.webp
+        cuisine: Британская кухня
+        ingredients:
+          - { name: яблоко, qty: 3, unit: шт }
+          - { name: хлопья овсяные, qty: 60, unit: г }
+          - { name: мука, qty: 25, unit: г }
+          - { name: масло сливочное, qty: 30, unit: г }
+          - { name: сахар, qty: 20, unit: г }
+          - { name: корица, qty: 2, unit: г }
+          - { name: вода, qty: 30, unit: мл }
+      - id: grushi-s-yogurtom
+        name: "Запечённые груши с йогуртом"
+        image: images/grushi-s-yogurtom.webp
+        ingredients:
+          - { name: груша, qty: 2, unit: шт }
+          - { name: йогурт, qty: 150, unit: г }
+          - { name: корица, qty: 1, unit: г }
+          - { name: вода, qty: 50, unit: мл }
+      - id: shokoladniy-puding
+        name: "Шоколадный пудинг на молоке"
+        image: images/shokoladniy-puding.webp
+        cuisine: Американская кухня
+        ingredients:
+          - { name: молоко, qty: 450, unit: мл }
+          - { name: какао-порошок, qty: 20, unit: г }
+          - { name: крахмал, qty: 30, unit: г }
+          - { name: сахар, qty: 35, unit: г }
+  - id: kids
+    name: Детские блюда 2+
+    pick: 2
+    dishes:
+      - id: detskaya-ovsyanka-grusha
+        name: "Мягкая овсянка с грушей"
+        image: images/detskaya-ovsyanka-grusha.webp
+        childMeal: breakfast
+        childServing: "Для ребёнка 2+ очистите грушу, сварите до мягкости и разомните. Подавайте тёплой, без сахара и твёрдых кусочков фруктов."
+        ingredients:
+          - { name: хлопья овсяные, qty: 50, unit: г }
+          - { name: груша, qty: 1, unit: шт }
+          - { name: молоко, qty: 180, unit: мл }
+          - { name: вода, qty: 100, unit: мл }
+      - id: detskie-tefteli-indeyka
+        name: "Тефтели из индейки с морковным пюре"
+        image: images/detskie-tefteli-indeyka.webp
+        childMeal: main
+        childServing: "Для ребёнка 2+ разломите тефтели на мягкие мелкие кусочки и смешайте с пюре. Подавайте тёплыми."
+        ingredients:
+          - { name: фарш индейки, qty: 300, unit: г }
+          - { name: хлопья овсяные, qty: 25, unit: г }
+          - { name: вода, qty: 50, unit: мл }
+          - { name: морковь, qty: 270, unit: г }
+          - { name: картофель, qty: 200, unit: г }
+          - { name: масло оливковое, qty: 1, unit: ч.л. }
+      - id: detskiy-omlet-kabachok
+        name: "Запечённый омлет с кабачком"
+        image: images/detskiy-omlet-kabachok.webp
+        childMeal: breakfast
+        childServing: "Для ребёнка 2+ полностью пропеките омлет, дайте остыть до тёплого и нарежьте на небольшие мягкие кусочки."
+        ingredients:
+          - { name: яйцо, qty: 2, unit: шт }
+          - { name: кабачок, qty: 100, unit: г }
+          - { name: молоко, qty: 40, unit: мл }
+          - { name: масло растительное, qty: 1, unit: ч.л. }
+      - id: detskaya-treska-pyure
+        name: "Треска с картофельно-морковным пюре"
+        image: images/detskaya-treska-pyure.webp
+        childMeal: main
+        childServing: "Для ребёнка 2+ разберите готовую рыбу на мелкие хлопья и тщательно проверьте, что в ней нет костей. Подавайте с тёплым пюре."
+        ingredients:
+          - { name: филе трески, qty: 180, unit: г }
+          - { name: картофель, qty: 180, unit: г }
+          - { name: морковь, qty: 100, unit: г }
+          - { name: молоко, qty: 35, unit: мл }
+          - { name: масло оливковое, qty: 1, unit: ч.л. }

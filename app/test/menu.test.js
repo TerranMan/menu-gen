@@ -31,7 +31,10 @@ test('a portable backup round-trips the full state and rejects partial snapshots
   assert.deepEqual(decodeBackup(text), { savedAt: backup.savedAt, state });
   const legacy = { ...backup, state: { ...state, view: 'week' } };
   delete legacy.state.shoppingMode;
-  assert.equal(decodeBackup(JSON.stringify(legacy)).state.shoppingMode, 'week');
+  delete legacy.state.kidsMeals;
+  const migrated = decodeBackup(JSON.stringify(legacy)).state;
+  assert.equal(migrated.shoppingMode, 'week');
+  assert.equal(migrated.kidsMeals, false);
   assert.equal(decodeBackup('{'), null);
   assert.equal(decodeBackup(JSON.stringify({ ...backup, version: 99 })), null);
   delete backup.state.stock;
@@ -53,6 +56,31 @@ test('replacement excludes the current dish, selected dishes and blocked dishes'
   const selected = ['blini', 'oladi'];
   assert.equal(regenerateSlot(data, state, category.id, 'oladi', selected).id, 'sirniki');
   assert.equal(regenerateSlot(data, state, category.id, 'oladi', [...selected, 'sirniki']), null);
+});
+
+test('auto-planning adds the opt-in child recipes to suitable empty meals once', () => {
+  const kids = {
+    id: 'kids', pick: 2, dishes: [
+      { id: 'porridge', childMeal: 'breakfast', recipe: { minutes: 20 } },
+      { id: 'cod', childMeal: 'main', recipe: { minutes: 30 } },
+      { id: 'blocked', childMeal: 'main', recipe: { minutes: 20 } },
+    ],
+  };
+  const catalog = { categories: [category, kids] };
+  const state = { blocks: ['blocked'] };
+  const original = { 'mon-breakfast': [{ dishId: 'blini', from: null }] };
+  assert.deepEqual(generateMenu(catalog, state).map(({ categoryId }) => categoryId), ['breakfasts']);
+  const childState = { ...state, kidsMeals: true };
+  assert.deepEqual(new Set(generateMenu(catalog, childState)[0].dishes.map(({ id }) => id)), new Set(['porridge', 'cod']));
+  const regular = structuredClone(original);
+  fillEmptyMeals(regular, catalog, state, []);
+  assert.equal(regular['mon-lunch'], undefined);
+  const family = structuredClone(original);
+  fillEmptyMeals(family, catalog, childState, []);
+  assert.deepEqual(family['mon-breakfast'], original['mon-breakfast']);
+  assert.equal(family['mon-lunch'][0].dishId, 'cod');
+  assert.equal(family['tue-breakfast'][0].dishId, 'porridge');
+  assert.equal(family['mon-dinner'], undefined);
 });
 
 test('generating keeps pinned dishes even with a lower target or a conflicting favorite', () => {
@@ -144,6 +172,7 @@ test('saved menus and shopping checks are sanitized without dropping valid prefe
     lastMenu: [{ categoryId: 'breakfasts', dishIds: ['blini'] }],
     homemade: {},
     quickDinners: false,
+    kidsMeals: false,
     checked: { 'яйцо__шт': 2, 'соль__по вкусу': 0 },
     week: {},
     weekStart: null,

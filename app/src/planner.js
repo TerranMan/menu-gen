@@ -131,7 +131,7 @@ export function planner() {
 
     catalogEntries() {
       const words = searchable(this.catalogQuery).trim().split(/\s+/);
-      return this.data.categories
+      return this.visibleCategories()
         .filter((category) => !this.catalogCategory || category.id === this.catalogCategory)
         .flatMap((category) => category.dishes
           .filter((dish) => words.every((word) => searchable(dish.name).includes(word)))

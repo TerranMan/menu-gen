@@ -93,7 +93,7 @@ async function openBackup(page) {
 
 test('backup exports and restores across browsers offline, with preview, cancel and undo', async (t) => {
   const { context: sourceContext, page: source } = await openMenu(t, {
-    version: 2, view: 'week', shoppingMode: 'menu', persons: 4, quickDinners: true, weekStart: '2026-11-23',
+    version: 2, view: 'week', shoppingMode: 'menu', persons: 4, quickDinners: true, kidsMeals: true, weekStart: '2026-11-23',
     week: { 'mon-lunch': [{ dishId: 'borshch', from: null }] },
     batchRecords: { 'mon-lunch/borshch': { cookedAt: Date.UTC(2025, 0, 6), reserve: { fridge: 0, freezer: 2 } } },
     weekHistory: [{ id: Date.UTC(2025, 0, 6), name: 'Зимнее меню', persons: 2,
@@ -288,7 +288,7 @@ test('old saved menus recover malformed entries and show category shortages', as
     ],
   });
   const slot = breakfasts(page);
-  assert.equal(await page.locator('.category').count(), 8);
+  assert.equal(await page.locator('.category').count(), 9);
   assert.equal(await page.locator('.persons-count').textContent(), '4');
   assert.deepEqual(await slot.locator('.dish-name').allTextContents(), ['Омлет']);
   assert.equal(await slot.getByText('Подобрано 1 из 7.', { exact: false }).isVisible(), true);
@@ -384,6 +384,47 @@ test('mobile catalog returns to the selected meal and a long recipe can be close
   await close.tap();
   await dialog.waitFor({ state: 'hidden' });
   await page.waitForFunction(() => document.activeElement?.textContent === 'Пельмени');
+});
+
+test('the 2+ switch adds child recipes to the selection and empty meals without removing planned dishes', async (t) => {
+  const { page } = await openMenu(t, undefined, { mobile: true });
+  const mode = page.getByRole('checkbox', { name: 'Добавлять детские блюда 2+', exact: true });
+  const heading = page.getByRole('heading', { name: 'Детские блюда 2+', exact: false });
+  assert.equal(await mode.isChecked(), false);
+  assert.equal(await heading.count(), 0);
+  const original = await breakfasts(page).locator('.dish-name').allTextContents();
+
+  await mode.check();
+  await heading.waitFor();
+  assert.deepEqual(await breakfasts(page).locator('.dish-name').allTextContents(), original);
+  await page.getByRole('button', { name: 'Мягкая овсянка с грушей', exact: true }).click();
+  await page.getByText(/очистите грушу, сварите до мягкости/).waitFor();
+  await reopenMenu(page);
+  assert.equal(await mode.isChecked(), true);
+
+  await page.getByRole('button', { name: 'По дням', exact: true }).click();
+  await page.getByRole('button', { name: 'Заполнить пустые приёмы' }).click();
+  await page.getByText(/Расписание готово/).waitFor();
+  const childMeal = page.getByRole('region', { name: 'Завтрак', exact: true })
+    .getByRole('button', { name: 'Мягкая овсянка с грушей', exact: true });
+  await childMeal.waitFor();
+  await mode.uncheck();
+  await reopenMenu(page);
+  assert.equal(await mode.isChecked(), false);
+  await childMeal.waitFor();
+  await page.getByRole('button', { name: 'Каталог', exact: true }).click();
+  assert.equal(await page.getByRole('option', { name: 'Детские блюда 2+', exact: true }).count(), 0);
+});
+
+test('new desserts have their own catalog category and reach the shopping list', async (t) => {
+  const { page } = await openMenu(t);
+  await page.getByRole('button', { name: 'Каталог', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Категория' }).selectOption('desserts');
+  const pudding = page.getByRole('listitem').filter({ hasText: 'Шоколадный пудинг на молоке' });
+  await pudding.getByText(/Американская кухня/).waitFor();
+  await pudding.getByRole('button', { name: 'Добавить · Шоколадный пудинг на молоке', exact: true }).click();
+  await openShopping(page);
+  await page.getByRole('checkbox', { name: 'какао-порошок — 10 г', exact: true }).waitFor();
 });
 
 test('a weekly recipe can be served twice and copied with grouped shopping and the shared yield', async (t) => {

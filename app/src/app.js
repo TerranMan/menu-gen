@@ -1,7 +1,7 @@
 import Alpine from 'alpinejs';
 import dishesData from '../data/dishes.json';
 import pricesData from '../data/prices.json';
-import { generateMenu, regenerateSlot, pickMore } from './generator.js';
+import { enabledCategories, generateMenu, regenerateSlot, pickMore } from './generator.js';
 import {
   aggregate, formatLine, priceKey, lineCost, totalCost, formatMoney,
   recipeFactor, recipeIngredients, scaleQty, formatCardIngredient, groupShopping, shoppingText, subtractStock, KITCHEN_MEASURES,
@@ -28,6 +28,8 @@ const EMOJI = {
   meat: '🥩',
   salads: '🥗',
   soups: '🍜',
+  desserts: '🍮',
+  kids: '🥣',
 };
 
 document.addEventListener('alpine:init', () => {
@@ -109,10 +111,11 @@ document.addEventListener('alpine:init', () => {
     applySavedState(state) {
       this.savedState = snapshot(state);
       this.draftBase = this.savedState;
-      const refreshMenu = ['lastMenu', 'pins', 'picks', 'blocks'].some(
+      const refreshMenu = ['lastMenu', 'pins', 'picks', 'blocks', 'kidsMeals'].some(
         (key) => JSON.stringify(this.state[key]) !== JSON.stringify(state[key])
       );
       this.state = state;
+      if (!state.kidsMeals && this.catalogCategory === 'kids') this.catalogCategory = '';
       this.state.week = sanitizeWeek(state.week, (id) => Boolean(this.dishById(id)));
       this.state.batchRecords = sanitizeBatchRecords(state.batchRecords, this.state.week);
       if (refreshMenu) {
@@ -247,6 +250,22 @@ document.addEventListener('alpine:init', () => {
       this.pruneShoppingChecks('menu');
       this.pruneShoppingChecks('week');
       this.saveState();
+    },
+
+    visibleCategories() {
+      return enabledCategories(this.data, this.state);
+    },
+
+    async setKidsMeals(input) {
+      this.state.kidsMeals = input.checked;
+      if (this.state.kidsMeals) {
+        const kids = this.data.categories.find(({ id }) => id === 'kids');
+        this.menu = [...this.hydrate([], [kids]), ...this.menu];
+      } else {
+        this.menu = this.menu.filter(({ categoryId }) => categoryId !== 'kids');
+        if (this.catalogCategory === 'kids') this.catalogCategory = '';
+      }
+      if (!await this.persistMenu()) input.checked = this.state.kidsMeals;
     },
 
     availableCount(catId) {
@@ -532,9 +551,9 @@ document.addEventListener('alpine:init', () => {
       return this.saveState();
     },
 
-    hydrate(saved) {
+    hydrate(saved, categories = this.visibleCategories()) {
       const savedByCategory = new Map(saved.map((slot) => [slot.categoryId, slot.dishIds]));
-      return this.data.categories.map((cat) => {
+      return categories.map((cat) => {
         const dishIds = new Set([...(savedByCategory.get(cat.id) ?? []), ...this.state.pins]);
         const dishes = [...dishIds]
           .filter((id) => !this.isBlocked(id))

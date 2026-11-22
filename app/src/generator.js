@@ -3,6 +3,12 @@
 
 const FAVORITE_WEIGHT = 3; // во сколько раз чаще должны попадаться избранные
 
+export function enabledCategories(data, state) {
+  const standard = data.categories.filter(({ id }) => id !== 'kids');
+  const kids = state.kidsMeals && data.categories.find(({ id }) => id === 'kids');
+  return kids ? [kids, ...standard] : standard;
+}
+
 function weightedSample(pool, count) {
   // Без возврата: каждое блюдо может попасть в одно меню один раз.
   // Если запрошено больше блюд чем есть — берём сколько есть.
@@ -36,7 +42,7 @@ function buildPool(category, { favorites, blocks }, excludeIds = []) {
 export function generateMenu(data, state) {
   const pins = new Set(state.pins);
   const blocks = new Set(state.blocks);
-  return data.categories.map((cat) => {
+  return enabledCategories(data, state).map((cat) => {
     const override = state.picks?.[cat.id];
     const effective = Number.isInteger(override) ? override : cat.pick;
     const kept = cat.dishes.filter((dish) => pins.has(dish.id) && !blocks.has(dish.id));

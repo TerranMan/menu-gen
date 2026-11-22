@@ -47,6 +47,10 @@
 
       <main>
       <p class="view-status warning" role="alert" x-show="storageMessage" x-text="storageMessage"></p>
+      <label class="variant-control kids-menu-control" x-show="['menu', 'week', 'catalog'].includes(view)">
+        <input type="checkbox" :checked="state.kidsMeals" @change="setKidsMeals($event.target)" />
+        Добавлять детские блюда 2+
+      </label>
       <div x-show="view === 'menu'">
       <template x-for="slot in menu" :key="slot.categoryId">
         <section class="category">
@@ -71,7 +75,7 @@
             </span>
           </h2>
           <template x-if="slot.dishes.length === 0 && effectivePick(slot.categoryId) === 0">
-            <p class="empty-hint">Категория отключена.</p>
+            <p class="empty-hint" x-text="slot.categoryId === 'desserts' ? 'Добавьте десерт кнопкой + или выберите его в каталоге.' : 'Категория отключена.'"></p>
           </template>
           <template x-if="slot.dishes.length < effectivePick(slot.categoryId)">
             <p class="empty-hint" x-text="`Подобрано ${slot.dishes.length} из ${effectivePick(slot.categoryId)}. Снимите блокировки, чтобы добавить блюда.`"></p>
@@ -123,6 +127,7 @@
               <template x-if="isExpanded(dish.id)">
                 <div class="dish-details" :id="`recipe-${dish.id}`">
                   <p class="recipe-meta" x-text="recipeSummary(dish, state.persons, isHomemade(dish))"></p>
+                  <p class="child-serving" x-show="dish.childServing" x-text="dish.childServing"></p>
                   <label class="variant-control" x-show="dish.dough?.replaces">
                     <input type="checkbox" :checked="isHomemade(dish)" @change="setHomemade(dish, $event.target)" />
                     Готовить дома
@@ -334,7 +339,7 @@
               placeholder="Поиск по названию" x-ref="catalogSearch" x-model="catalogQuery" />
             <select class="field" aria-label="Категория" x-model="catalogCategory">
               <option value="">Все категории</option>
-              <template x-for="category in data.categories" :key="category.id">
+              <template x-for="category in visibleCategories()" :key="category.id">
                 <option :value="category.id" x-text="category.name"></option>
               </template>
             </select>
@@ -352,7 +357,7 @@
                   </template>
                   <span>
                     <strong x-text="entry.dish.name"></strong>
-                    <span class="item-meta" x-text="`${entry.categoryName} · ${recipeTime(entry.dish)}`"></span>
+                    <span class="item-meta" x-text="[entry.categoryName, entry.dish.cuisine, recipeTime(entry.dish)].filter(Boolean).join(' · ')"></span>
                   </span>
                 </button>
                 <template x-if="!catalogTarget && catalogHasDish(entry)">
@@ -658,6 +663,7 @@
               x-data="{ imageFailed: false }" :src="imageUrl(recipePreview.dish.image)" :alt="recipePreview.dish.name"
               @error="imageFailed = true" />
             <p class="recipe-meta" x-text="recipeSummary(recipePreview.dish, recipePreview.servings, isHomemade(recipePreview.dish, recipePreview.mealId))"></p>
+            <p class="child-serving" x-show="recipePreview.dish.childServing" x-text="recipePreview.dish.childServing"></p>
             <label class="variant-control" x-show="recipePreview.dish.dough?.replaces">
               <input type="checkbox" :checked="isHomemade(recipePreview.dish, recipePreview.mealId)"
                 :disabled="Boolean(recipePreview.mealId && batchRecord(recipePreview.mealId, recipePreview.dish.id))"

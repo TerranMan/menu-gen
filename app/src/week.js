@@ -225,10 +225,10 @@ export function distributeMenu(week, menu, data, homemade = {}) {
   const mainMeals = MEALS.filter((meal) => meal.type !== 'breakfast');
   const empty = (meal) => !week[meal.id]?.length;
 
-  function place(categoryId, targets, preferEmpty) {
+  function place(categoryId, targets, preferEmpty, matchesMeal = () => true) {
     const ordered = [...targets.filter((meal) => empty(meal) === preferEmpty),
       ...targets.filter((meal) => empty(meal) !== preferEmpty)];
-    const dishes = (categoryDishes.get(categoryId) ?? []).filter((dish) => !scheduled.has(dish.id));
+    const dishes = (categoryDishes.get(categoryId) ?? []).filter((dish) => !scheduled.has(dish.id) && matchesMeal(dish));
     for (const [index, dish] of dishes.entries()) {
       addToMeal(week, ordered[index % ordered.length].id, dish.id, null, null, Boolean(homemade[dish.id]));
       scheduled.add(dish.id);
@@ -268,10 +268,13 @@ export function distributeMenu(week, menu, data, homemade = {}) {
     return added;
   }
 
-  return place('breakfasts', breakfasts, true) + place('soups', lunches, true)
+  return place('kids', breakfasts, true, (dish) => dish.childMeal === 'breakfast')
+    + place('kids', mainMeals, true, (dish) => dish.childMeal === 'main')
+    + place('breakfasts', breakfasts, true) + place('soups', lunches, true)
     + place('dishes', mainMeals, true) + place('meat', dinners, true)
     + placeSides('garnishes') + placeSides('salads')
-    + place('bakery', breakfasts, false) + place('fruits_vegetables', breakfasts, false);
+    + place('bakery', breakfasts, false) + place('fruits_vegetables', breakfasts, false)
+    + place('desserts', lunches, false);
 }
 
 export function fillEmptyMeals(week, data, state, menu) {
@@ -296,6 +299,7 @@ export function fillEmptyMeals(week, data, state, menu) {
         id: dish.id,
         categoryId: category.id,
         tags: dish.tags ?? [],
+        childMeal: dish.childMeal,
         homemade,
         minutes: dish.recipe?.timeNote ? Infinity : (minutes ?? Infinity),
         preference: (pinned.has(dish.id) ? 4 : 0) + (selected.has(dish.id) ? 2 : 0) + (favorites.has(dish.id) ? 1 : 0),
@@ -321,7 +325,10 @@ export function fillEmptyMeals(week, data, state, menu) {
       .map((group) => group.flatMap((categoryId) => available.get(categoryId) ?? [])
         .filter(({ minutes }) => minutes <= limit))
       .find((group) => group.length);
-    const main = choose(pool);
+    const childMeal = meal.type === 'breakfast' ? 'breakfast' : 'main';
+    const kids = state.kidsMeals ? (available.get('kids') ?? []).filter((dish) =>
+      dish.childMeal === childMeal && dish.minutes <= limit && !uses.has(dish.id)) : [];
+    const main = choose(kids) ?? choose(pool);
     if (!main) {
       remaining++;
       continue;
