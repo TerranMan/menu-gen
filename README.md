@@ -211,7 +211,10 @@ blini:
 Пересчёт ровных ложек в граммы для муки, сахара, соды, разрыхлителя и крахмала
 основан на [таблице мер King Arthur Baking](https://www.kingarthurbaking.com/learn/ingredient-weight-chart).
 
-Температуры внутри мяса, птицы и рыбы сверены с [таблицей FoodSafety.gov](https://www.foodsafety.gov/food-safety-charts/safe-minimum-internal-temperatures).
+Минуты в шагах подсказывают, когда начать проверять готовность. Для мяса,
+птицы и рыбы используйте термощуп. Вводите его в центр самой толстой части,
+не касаясь кости. Если температура ниже указанной, продолжайте готовить
+и измерьте снова. [Безопасные температуры FoodSafety.gov](https://www.foodsafety.gov/food-safety-charts/safe-minimum-internal-temperatures).
 
 ## Фото новых салатов и гарниров
 

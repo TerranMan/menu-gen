@@ -19,6 +19,10 @@ const category = {
 };
 const data = { categories: [category] };
 
+function readYaml(name) {
+  return YAML.parse(readFileSync(new URL(`../data/${name}.yml`, import.meta.url), 'utf8'));
+}
+
 test('a portable backup round-trips the full state and rejects partial snapshots', () => {
   const state = {
     ...loadLegacyState(),
@@ -104,7 +108,6 @@ test('shopping combines teaspoons with grams and rounds countable items once', (
 });
 
 test('every catalog ingredient has a department and a price when quantified', () => {
-  const readYaml = (name) => YAML.parse(readFileSync(new URL(`../data/${name}.yml`, import.meta.url), 'utf8'));
   const variants = readYaml('dough');
   const dishes = readYaml('dishes').categories.flatMap((cat) => cat.dishes);
   const recipes = dishes.flatMap((dish) => variants[dish.id]?.replaces
@@ -384,7 +387,6 @@ test('stock deducts only the matching units and covered products leave the shopp
 });
 
 test('the dough catalog covers homemade dough, packaged dough and pasta used in the dishes', () => {
-  const readYaml = (name) => YAML.parse(readFileSync(new URL(`../data/${name}.yml`, import.meta.url), 'utf8'));
   const dishes = readYaml('dishes').categories.flatMap((category) => category.dishes);
   const recipes = readYaml('recipes');
   const dough = readYaml('dough');
@@ -400,4 +402,15 @@ test('the dough catalog covers homemade dough, packaged dough and pasta used in 
     if (!entry.replaces) assert.deepEqual(Object.keys(entry), ['type']);
   }
   assert.ok(dough.pelmeni.ingredients.some(({ name }) => name === 'мясо говядина'));
+});
+
+test('internal temperature steps show where to use a probe and give a cooking time apart from steaks', () => {
+  const recipes = Object.entries(readYaml('recipes'));
+  const dough = Object.entries(readYaml('dough'));
+  for (const [id, { steps = [] }] of [...recipes, ...dough]) {
+    for (const step of steps.filter((step) => /\b(?:63|71|74)\s*°C/.test(step))) {
+      assert.match(step, /термощуп/iu, id);
+      if (id !== 'steiki') assert.match(step, /\b\d+\s+минут/iu, id);
+    }
+  }
 });
