@@ -229,11 +229,13 @@ test('first online visit is enough to reopen and use the shopping list offline',
   await reopenMenu(page);
   assert.equal(await milk.isChecked(), true);
   await page.getByRole('button', { name: 'Подборка', exact: true }).click();
-  assert.equal(await breakfasts(page).locator('.dish-row').count(), 7);
-  await breakfasts(page).getByRole('button', { name: /^Блины/ }).click();
+  const slot = breakfasts(page);
+  await slot.waitFor();
+  assert.equal(await slot.locator('.dish-row').count(), 7);
+  await slot.getByRole('button', { name: /^Блины/ }).click();
   const blini = page.locator('#recipe-blini');
-  assert.equal(await blini.locator(':scope > .recipe-steps li').count(), 2);
   await blini.getByText('Тесто · Жидкое блинное на молоке', { exact: true }).waitFor();
+  assert.equal(await blini.locator(':scope > .recipe-steps li').count(), 2);
   await blini.getByText('мука — 100 г', { exact: true }).waitFor();
   await blini.getByText('сахар — 0,5 ст.л. (6,2 г)', { exact: true }).waitFor();
   assert.equal(await blini.locator('.dough-details').count(), 0);
@@ -247,7 +249,7 @@ test('first online visit is enough to reopen and use the shopping list offline',
   assert.equal(await page.locator('.persons-count').textContent(), '3');
   await page.getByRole('button', { name: 'Подборка', exact: true }).click();
   await page.getByRole('button', { name: 'Сгенерировать заново' }).click();
-  assert.equal(await breakfasts(page).locator('.dish-row').count(), 7);
+  assert.equal(await slot.locator('.dish-row').count(), 7);
   await openShopping(page);
   assert.equal(await milk.isChecked(), false);
 });
