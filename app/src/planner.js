@@ -131,10 +131,11 @@ export function planner() {
 
     catalogEntries() {
       const words = searchable(this.catalogQuery).trim().split(/\s+/);
+      const family = this.catalogCategory === 'family';
       return this.visibleCategories()
-        .filter((category) => !this.catalogCategory || category.id === this.catalogCategory)
+        .filter((category) => family || !this.catalogCategory || category.id === this.catalogCategory)
         .flatMap((category) => category.dishes
-          .filter((dish) => words.every((word) => searchable(dish.name).includes(word)))
+          .filter((dish) => (!family || dish.familyRecipe) && words.every((word) => searchable(dish.name).includes(word)))
           .map((dish) => ({ dish, categoryId: category.id, categoryName: category.name })));
     },
 

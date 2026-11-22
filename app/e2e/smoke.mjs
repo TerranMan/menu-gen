@@ -285,6 +285,7 @@ test('old saved menus recover malformed entries and show category shortages', as
       'blini', 'oladi', 'sirniki', 'mannaya-kasha', 'ovsyanaya-kasha', 'yogurt', 'glazunya',
       'skrembl-s-pomidorami', 'pshenichnaya-kasha', 'grenki', 'goryachie-tosti-s-dzhemom',
       'khlopya-s-molokom', 'tvorog', 'tvorozhnaya-massa',
+      'babushkiny-bliny-na-kefire', 'sdobnye-grechnevye-bliny',
     ],
   });
   const slot = breakfasts(page);
@@ -425,6 +426,28 @@ test('new desserts have their own catalog category and reach the shopping list',
   await pudding.getByRole('button', { name: 'Добавить · Шоколадный пудинг на молоке', exact: true }).click();
   await openShopping(page);
   await page.getByRole('checkbox', { name: 'какао-порошок — 10 г', exact: true }).waitFor();
+});
+
+test('family recipes can be found in the catalog and add their full cake batch to shopping', async (t) => {
+  const { page } = await openMenu(t, undefined, { mobile: true });
+  await page.getByRole('button', { name: 'Каталог', exact: true }).tap();
+  const category = page.getByRole('combobox', { name: 'Категория' });
+  await category.selectOption({ label: 'Бабушкины рецепты' });
+  await page.getByText('Сдобные гречневые блины', { exact: true }).waitFor();
+  assert.equal(await page.locator('.catalog-dishes li').count(), 8);
+  await page.getByRole('searchbox').fill('трухлявый');
+
+  const name = 'Торт «Трухлявый пень» с сухофруктами';
+  await page.getByRole('button', { name: /^Торт «Трухлявый пень» с сухофруктами/ }).tap();
+  const recipe = page.getByRole('dialog', { name, exact: true });
+  await recipe.getByText(/поперёк на кусочки шириной около 3 см/).waitFor();
+  await recipe.getByRole('img', { name }).evaluate((img) => img.decode());
+  assert.equal(await recipe.getByText(/орехи/).count(), 0);
+  await recipe.getByRole('button', { name: 'Закрыть рецепт' }).tap();
+  await page.getByRole('button', { name: `Добавить · ${name}`, exact: true }).tap();
+
+  await openShopping(page);
+  await page.getByRole('checkbox', { name: 'чернослив — 100 г', exact: true }).waitFor();
 });
 
 test('a weekly recipe can be served twice and copied with grouped shopping and the shared yield', async (t) => {

@@ -339,6 +339,7 @@
               placeholder="Поиск по названию" x-ref="catalogSearch" x-model="catalogQuery" />
             <select class="field" aria-label="Категория" x-model="catalogCategory">
               <option value="">Все категории</option>
+              <option value="family">Бабушкины рецепты</option>
               <template x-for="category in visibleCategories()" :key="category.id">
                 <option :value="category.id" x-text="category.name"></option>
               </template>

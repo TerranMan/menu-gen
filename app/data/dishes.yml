@@ -596,6 +596,33 @@ categories:
           - name: ванильный сахар
             qty: 1
             unit: ч.л.
+      - id: babushkiny-bliny-na-kefire
+        name: "Бабушкины заварные блины на кефире"
+        image: images/babushkiny-bliny-na-kefire.webp
+        familyRecipe: true
+        ingredients:
+          - { name: кефир, qty: 250, unit: мл }
+          - { name: вода, qty: 250, unit: мл }
+          - { name: мука, qty: 260, unit: г }
+          - { name: яйцо, qty: 2, unit: шт }
+          - { name: масло растительное, qty: 1, unit: ст.л. }
+          - { name: сахар, qty: 1, unit: ч.л. }
+          - { name: сода, qty: 2, unit: г }
+          - { name: соль, qty: 0, unit: по вкусу }
+      - id: sdobnye-grechnevye-bliny
+        name: "Сдобные гречневые блины"
+        image: images/sdobnye-grechnevye-bliny.webp
+        familyRecipe: true
+        ingredients:
+          - { name: мука гречневая, qty: 360, unit: г }
+          - { name: мука, qty: 260, unit: г }
+          - { name: молоко, qty: 1000, unit: мл }
+          - { name: яйцо, qty: 3, unit: шт }
+          - { name: сливки, qty: 100, unit: мл }
+          - { name: дрожжи сухие, qty: 8, unit: г }
+          - { name: сахар, qty: 1, unit: ст.л. }
+          - { name: масло сливочное, qty: 30, unit: г }
+          - { name: соль, qty: 0, unit: по вкусу }
   - id: dishes
     name: Основные блюда
     pick: 2
@@ -918,6 +945,19 @@ categories:
           - { name: паприка сладкая молотая, qty: 3, unit: г }
           - { name: масло растительное, qty: 1, unit: ст.л. }
           - { name: соль, qty: 0, unit: по вкусу }
+      - id: babushkiny-zavarnye-pelmeni
+        name: "Домашние пельмени на заварном тесте"
+        image: images/babushkiny-zavarnye-pelmeni.webp
+        familyRecipe: true
+        ingredients:
+          - { name: мука, qty: 300, unit: г }
+          - { name: вода, qty: 185, unit: мл }
+          - { name: мясо говядина, qty: 225, unit: г }
+          - { name: мясо свинина, qty: 225, unit: г }
+          - { name: лук, qty: 1, unit: шт }
+          - { name: молоко, qty: 35, unit: мл }
+          - { name: соль, qty: 0, unit: по вкусу }
+          - { name: перец чёрный, qty: 0, unit: по вкусу }
   - id: fruits_vegetables
     name: Фрукты и овощи
     pick: 2
@@ -1251,6 +1291,21 @@ categories:
           - { name: масло растительное, qty: 1.5, unit: ст.л. }
           - { name: паприка сладкая молотая, qty: 2, unit: г }
           - { name: соль, qty: 0, unit: по вкусу }
+      - id: semeinyi-kartofelnyi-graten
+        name: "Картофельный гратен с сыром и апельсиновой цедрой"
+        image: images/semeinyi-kartofelnyi-graten.webp
+        familyRecipe: true
+        ingredients:
+          - { name: картофель, qty: 1500, unit: г }
+          - { name: молоко, qty: 500, unit: мл }
+          - { name: сыр твёрдый, qty: 140, unit: г }
+          - { name: чеснок, qty: 2, unit: зубчик }
+          - { name: ваниль стручковая, qty: 1, unit: шт }
+          - { name: апельсин, qty: 0.5, unit: шт }
+          - { name: масло сливочное, qty: 15, unit: г }
+          - { name: орех мускатный, qty: 0, unit: по вкусу }
+          - { name: соль, qty: 0, unit: по вкусу }
+          - { name: перец чёрный, qty: 0, unit: по вкусу }
   - id: meat
     name: Мясо
     pick: 1
@@ -1602,7 +1657,7 @@ categories:
             qty: 200
             unit: г
   - id: salads
-    name: Салаты
+    name: Салаты и закуски
     pick: 1
     dishes:
       - id: ogurtsi-pomidori
@@ -1919,6 +1974,15 @@ categories:
           - { name: лимон, qty: 0.5, unit: шт }
           - { name: масло оливковое, qty: 1, unit: ст.л. }
           - { name: соль, qty: 0, unit: по вкусу }
+      - id: syrnye-rafaello
+        name: "Сырные «Рафаэлло» с крабовыми палочками"
+        image: images/syrnye-rafaello.webp
+        familyRecipe: true
+        ingredients:
+          - { name: сыр плавленый, qty: 200, unit: г }
+          - { name: палочки крабовые, qty: 120, unit: г }
+          - { name: орехи грецкие, qty: 30, unit: г }
+          - { name: майонез, qty: 25, unit: г }
   - id: soups
     name: Супы
     pick: 2
@@ -2304,6 +2368,48 @@ categories:
           - { name: какао-порошок, qty: 20, unit: г }
           - { name: крахмал, qty: 30, unit: г }
           - { name: сахар, qty: 35, unit: г }
+      - id: datskii-pirog-s-revenem
+        name: "Датский пирог с ревенем и орехами"
+        image: images/datskii-pirog-s-revenem.webp
+        familyRecipe: true
+        cuisine: Датская кухня
+        ingredients:
+          - { name: ревень, qty: 200, unit: г }
+          - { name: сахар, qty: 180, unit: г }
+          - { name: яйцо, qty: 3, unit: шт }
+          - { name: мука, qty: 125, unit: г }
+          - { name: разрыхлитель, qty: 1.5, unit: ч.л. }
+          - { name: орехи грецкие, qty: 100, unit: г }
+          - { name: масло сливочное, qty: 30, unit: г }
+          - { name: молоко, qty: 75, unit: мл }
+          - { name: ванилин, qty: 0, unit: по вкусу }
+      - id: truhlyavyi-pen-s-suhofruktami
+        name: "Торт «Трухлявый пень» с сухофруктами"
+        image: images/truhlyavyi-pen-s-suhofruktami.webp
+        familyRecipe: true
+        ingredients:
+          - { name: сметана, qty: 900, unit: г }
+          - { name: сахар, qty: 280, unit: г }
+          - { name: яйцо, qty: 1, unit: шт }
+          - { name: мука, qty: 400, unit: г }
+          - { name: сода, qty: 0.5, unit: ч.л. }
+          - { name: чернослив, qty: 100, unit: г }
+          - { name: курага, qty: 150, unit: г }
+          - { name: изюм, qty: 150, unit: г }
+      - id: tort-rezekne-yabloki
+        name: "Торт «Резекне» с яблочной начинкой"
+        image: images/tort-rezekne-yabloki.webp
+        familyRecipe: true
+        cuisine: Латвийская кухня
+        ingredients:
+          - { name: мука, qty: 500, unit: г }
+          - { name: масло сливочное, qty: 700, unit: г }
+          - { name: сахар, qty: 150, unit: г }
+          - { name: яйцо, qty: 2, unit: шт }
+          - { name: сгущённое молоко варёное, qty: 370, unit: г }
+          - { name: яблоко, qty: 1000, unit: г }
+          - { name: лимон, qty: 1, unit: шт }
+          - { name: безе готовое, qty: 40, unit: г }
   - id: kids
     name: Детские блюда 2+
     pick: 2
