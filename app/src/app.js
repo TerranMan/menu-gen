@@ -470,9 +470,14 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
-    shoppingTotal() {
-      const { sum, missing } = totalCost(this.shoppingIngredients(), this.effectivePrices());
-      return { text: formatMoney(sum), missing };
+    shoppingSummary() {
+      const ingredients = this.shoppingIngredients();
+      if (!ingredients.length) return '';
+      const checks = this.shoppingChecks();
+      const remaining = ingredients.filter((ing) => checks[priceKey(ing)] !== ing.qty).length;
+      const { sum, missing } = totalCost(ingredients, this.effectivePrices());
+      const estimate = missing ? `${formatMoney(sum)} + ${missing} без цены` : formatMoney(sum);
+      return `Осталось ${remaining} из ${ingredients.length} · Всего ${estimate}`;
     },
 
     async setChecked(ingredient, input) {

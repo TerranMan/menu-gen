@@ -20,8 +20,9 @@ after(async () => {
   if (server) await new Promise((resolve) => server.httpServer.close(resolve));
 });
 
-async function openMenu(t, savedState, { withoutNativeShare = false, legacyKey = 'menu_gen_v1' } = {}) {
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, timezoneId: 'UTC' });
+async function openMenu(t, savedState, { withoutNativeShare = false, legacyKey = 'menu_gen_v1', mobile = false } = {}) {
+  const viewport = mobile ? { width: 320, height: 640 } : { width: 390, height: 844 };
+  const context = await browser.newContext({ viewport, timezoneId: 'UTC', hasTouch: mobile, isMobile: mobile });
   const pageErrors = [];
   context.on('page', (page) => page.on('pageerror', (error) => pageErrors.push(error.message)));
   t.after(async () => {
@@ -341,7 +342,7 @@ test('catalog finds a recipe and a pinned manual choice survives regeneration an
   await recipe.waitFor();
   assert.equal(await recipe.locator('.recipe-steps li').count(), 2);
   await recipe.getByRole('button', { name: 'Закрыть рецепт' }).click();
-  await page.getByRole('button', { name: 'Добавить в меню' }).click();
+  await page.getByRole('button', { name: 'Добавить · Гречка', exact: true }).click();
   await page.getByRole('button', { name: 'Закрепить', exact: true }).click();
   await page.getByRole('button', { name: 'Подборка', exact: true }).click();
 
@@ -355,6 +356,36 @@ test('catalog finds a recipe and a pinned manual choice survives regeneration an
   assert.equal(await sides.getByRole('button', { name: 'Заменить это блюдо' }).isDisabled(), true);
 });
 
+test('mobile catalog returns to the selected meal and a long recipe can be closed after scrolling', async (t) => {
+  const { page } = await openMenu(t, {
+    version: 1, view: 'week', week: { 'mon-dinner': [{ dishId: 'pelmeni', from: null }] },
+  }, { mobile: true });
+  const dinner = page.getByRole('region', { name: 'Ужин', exact: true });
+  const add = dinner.getByRole('button', { name: 'Добавить блюдо' });
+  await add.tap();
+  await page.waitForFunction(() => document.activeElement?.textContent === 'Выбрать блюдо · Пн · ужин');
+  await page.getByRole('button', { name: 'К расписанию' }).tap();
+  await page.waitForFunction(() => document.activeElement?.id === 'meal-mon-dinner');
+
+  await add.tap();
+  await page.getByRole('searchbox').fill('гречка');
+  await page.getByRole('button', { name: 'Добавить · Гречка', exact: true }).tap();
+  await dinner.getByRole('button', { name: 'Гречка', exact: true }).waitFor();
+  await page.waitForFunction(() => document.activeElement?.id === 'meal-mon-dinner');
+
+  const opener = dinner.getByRole('button', { name: 'Пельмени', exact: true });
+  await opener.tap();
+  const dialog = page.getByRole('dialog', { name: 'Пельмени' });
+  const close = dialog.getByRole('button', { name: 'Закрыть рецепт' });
+  await dialog.getByRole('heading', { name: 'Как приготовить' }).waitFor();
+  assert.ok(await dialog.evaluate((el) => { el.scrollTop = el.scrollHeight; return el.scrollTop; }) > 0);
+  const closeAtBottom = await close.boundingBox();
+  assert.ok(closeAtBottom.y >= 0 && closeAtBottom.height >= 44);
+  await close.tap();
+  await dialog.waitFor({ state: 'hidden' });
+  await page.waitForFunction(() => document.activeElement?.textContent === 'Пельмени');
+});
+
 test('a weekly recipe can be served twice and copied with grouped shopping and the shared yield', async (t) => {
   const { context, page } = await openMenu(t);
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
@@ -362,7 +393,7 @@ test('a weekly recipe can be served twice and copied with grouped shopping and t
   const lunch = page.getByRole('region', { name: 'Обед', exact: true });
   await lunch.getByRole('button', { name: 'Добавить блюдо' }).click();
   await page.getByRole('searchbox').fill('борщ');
-  await page.getByRole('button', { name: 'Добавить в меню' }).click();
+  await page.getByRole('button', { name: 'Добавить · Борщ', exact: true }).click();
   await lunch.getByText('На всю готовку · 2 порции', { exact: true }).waitFor();
 
   await page.getByRole('button', { name: 'Вторник' }).click();
@@ -557,7 +588,11 @@ test('shopping is a separate view with sticky navigation and independent sources
   assert.equal(await weekSource.getAttribute('aria-pressed'), 'true');
   assert.equal(await page.getByRole('heading', { name: 'План на неделю' }).isVisible(), false);
   const beef = page.getByRole('checkbox', { name: 'мясо говядина — 133,3 г', exact: true });
+  const summary = page.locator('.shopping-total');
+  const [, total] = (await summary.textContent()).match(/Осталось (\d+) из \1/);
+  assert.ok((await beef.locator('..').boundingBox()).height >= 44);
   await beef.check();
+  await summary.filter({ hasText: `Осталось ${Number(total) - 1} из ${total}` }).waitFor();
   await menuSource.click();
   const milk = page.getByRole('checkbox', { name: /^молоко —/ });
   assert.equal(await milk.isChecked(), false);
@@ -698,7 +733,7 @@ test('moving and replacing a batch updates linked servings and preserves unrelat
   await dishAction(lunch, 'Борщ', 'Заменить');
   await page.getByRole('searchbox').fill('щи');
   await page.getByRole('listitem').filter({ has: page.getByRole('button', { name: /^Щи/ }) })
-    .getByRole('button', { name: 'Выбрать', exact: true }).click();
+    .getByRole('button', { name: 'Выбрать · Щи', exact: true }).click();
   await lunch.getByRole('button', { name: /^Щи/ }).waitFor();
   assert.deepEqual((await storedState(page)).week['thu-lunch'], [{ dishId: 'shchi', from: 'wed-lunch' }]);
   await openShopping(page);
@@ -774,7 +809,7 @@ test('new arugula dishes have separate pictures and reach the produce shopping l
   });
   assert.equal(new Set(images).size, 2);
   const cherry = salads.filter({ hasText: 'Руккола с черри и фетой' });
-  await cherry.getByRole('button', { name: 'Добавить в меню' }).click();
+  await cherry.getByRole('button', { name: 'Добавить · Руккола с черри и фетой', exact: true }).click();
   await openShopping(page);
   const produce = page.locator('.shopping-group').filter({ hasText: 'Овощи, фрукты и зелень' });
   await produce.getByRole('checkbox', { name: 'руккола — 65 г', exact: true }).waitFor();

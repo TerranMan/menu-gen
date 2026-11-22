@@ -112,7 +112,21 @@ export function planner() {
       this.plannerMessage = '';
       this.catalogQuery = '';
       this.catalogCategory = '';
-      this.$nextTick(() => this.$refs.catalogSearch.focus({ preventScroll: true }));
+      this.$nextTick(() => {
+        if (this.view !== 'catalog') return;
+        const target = window.matchMedia('(pointer: coarse)').matches ? this.$refs.catalogHeading : this.$refs.catalogSearch;
+        target.focus({ preventScroll: true });
+      });
+    },
+
+    returnToMeal() {
+      const mealId = this.catalogTarget;
+      this.showView('week');
+      this.$nextTick(() => {
+        const heading = document.getElementById(`meal-${mealId}`);
+        heading?.scrollIntoView({ block: 'start' });
+        heading?.focus({ preventScroll: true });
+      });
     },
 
     catalogEntries() {
@@ -154,7 +168,7 @@ export function planner() {
           return;
         }
         if (await this.persistWeek()) {
-          if (this.view === 'catalog' && this.catalogTarget === target) this.navigateTo('week');
+          if (this.view === 'catalog' && this.catalogTarget === target) this.returnToMeal();
         }
       } else {
         this.addToSelection(entry.categoryId, entry.dish);

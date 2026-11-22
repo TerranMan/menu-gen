@@ -12,6 +12,9 @@ app/data/credits.json
 # Image candidates (temp staging for Pexels picks)
 app/public/images/.candidates/
 
+# Private family recipe photos and transcription
+/my_rec/
+
 # Tauri
 tauri/target/
 

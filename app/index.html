@@ -258,7 +258,7 @@
           <p class="view-status" aria-live="polite" x-show="plannerMessage" x-text="plannerMessage"></p>
           <template x-for="meal in currentMeals()" :key="meal.id">
             <section class="meal-block" :aria-labelledby="`meal-${meal.id}`">
-              <h4 :id="`meal-${meal.id}`" x-text="meal.name"></h4>
+              <h4 :id="`meal-${meal.id}`" tabindex="-1" x-text="meal.name"></h4>
               <ul class="meal-dishes">
                 <template x-for="entry in mealEntries(meal.id)" :key="entry.dishId">
                   <li class="planned-dish">
@@ -324,12 +324,14 @@
       <template x-if="view === 'catalog'">
         <section class="catalog-view" aria-label="Каталог блюд">
           <div class="view-heading">
-            <h2 x-text="catalogTarget ? `${replacement ? 'Заменить блюдо' : 'Выбрать блюдо'} · ${mealLabel(catalogTarget)}` : 'Каталог блюд'"></h2>
-            <button type="button" class="btn" x-show="catalogTarget" @click="navigateTo('week')">К расписанию</button>
+            <h2 tabindex="-1" x-ref="catalogHeading"
+              x-text="catalogTarget ? `${replacement ? 'Заменить блюдо' : 'Выбрать блюдо'} · ${mealLabel(catalogTarget)}` : 'Каталог блюд'"></h2>
+            <button type="button" class="btn" x-show="catalogTarget" @click="returnToMeal()">К расписанию</button>
           </div>
           <p class="view-status" aria-live="polite" x-show="plannerMessage && catalogTarget" x-text="plannerMessage"></p>
           <div class="catalog-filters">
-            <input class="field" type="search" aria-label="Поиск по названию" placeholder="Поиск по названию" x-ref="catalogSearch" x-model="catalogQuery" />
+            <input class="field" type="search" enterkeyhint="search" aria-label="Поиск по названию"
+              placeholder="Поиск по названию" x-ref="catalogSearch" x-model="catalogQuery" />
             <select class="field" aria-label="Категория" x-model="catalogCategory">
               <option value="">Все категории</option>
               <template x-for="category in data.categories" :key="category.id">
@@ -360,7 +362,8 @@
                 <template x-if="catalogTarget || !catalogHasDish(entry)">
                   <button type="button" class="btn" :disabled="isBlocked(entry.dish.id) || catalogHasDish(entry)"
                     @click="chooseCatalogDish(entry)"
-                    x-text="catalogHasDish(entry) ? 'Добавлено' : isBlocked(entry.dish.id) ? 'Заблокировано' : replacement ? 'Выбрать' : 'Добавить в меню'"></button>
+                    :aria-label="catalogHasDish(entry) || isBlocked(entry.dish.id) ? null : `${replacement ? 'Выбрать' : 'Добавить'} · ${entry.dish.name}`"
+                    x-text="catalogHasDish(entry) ? 'Добавлено' : isBlocked(entry.dish.id) ? 'Заблокировано' : replacement ? 'Выбрать' : 'Добавить'"></button>
                 </template>
               </li>
             </template>
@@ -371,11 +374,7 @@
       <section id="shopping" class="shopping-view" aria-labelledby="shopping-title" x-show="view === 'shopping'">
           <div class="view-heading">
             <h2 id="shopping-title" tabindex="-1" x-ref="shoppingHeading">Покупки</h2>
-            <p class="item-meta shopping-total" aria-live="polite">
-              Позиций <span x-text="shoppingList().length"></span> · <span x-text="shoppingTotal().text"></span>
-              <span class="missing-hint" x-show="shoppingTotal().missing > 0"
-                x-text="`+ ${shoppingTotal().missing} без цены`"></span>
-            </p>
+            <p class="item-meta shopping-total" role="status" x-text="shoppingSummary()"></p>
           </div>
           <div class="shopping-source" role="group" aria-label="Источник списка покупок">
             <button class="btn" type="button" :aria-pressed="shoppingMode === 'week'"
@@ -388,7 +387,8 @@
               <button class="btn" type="button" @click="openStock()">Запасы дома</button>
               <button class="btn" type="button" aria-label="Копировать список"
                 :disabled="!shoppingList().length" @click="copyShopping()">Копировать</button>
-              <button class="btn" type="button" :aria-pressed="editingPrices" @click="editingPrices = !editingPrices">Редактировать цены</button>
+              <button class="btn" type="button" aria-label="Редактировать цены" :aria-pressed="editingPrices"
+                @click="editingPrices = !editingPrices">Цены</button>
             </div>
           </div>
           <p class="item-meta" x-show="editingPrices && priceDate" x-text="`Базовые цены — ориентир по Москве на ${priceDate}.`"></p>

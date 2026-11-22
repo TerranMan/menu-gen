@@ -509,6 +509,10 @@ header.top h1 {
   min-width: 0;
 }
 
+.catalog-preview strong {
+  overflow-wrap: anywhere;
+}
+
 .catalog-preview .dish-img,
 .catalog-preview .dish-emoji-big {
   width: 48px;
@@ -968,6 +972,7 @@ header.top h1 {
 }
 
 .shopping-source [aria-pressed='true'],
+.shopping-actions [aria-pressed='true'],
 .selection-options [aria-pressed='true'] {
   background: var(--accent-soft);
   color: #952b21;
@@ -1062,20 +1067,34 @@ header.top h1 {
   text-align: right;
 }
 
-.missing-hint {
-  font-size: 12px;
-  color: var(--muted);
-  font-weight: normal;
-  margin-left: 6px;
-}
-
 @media (max-width: 600px) {
   .shopping li {
     grid-template-columns: 1fr;
     gap: 4px;
+    padding: 0;
   }
+
+  .shopping-item {
+    padding: 6px 0;
+    min-height: 44px;
+  }
+
+  .shopping-item input[type='checkbox'] {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    accent-color: var(--accent);
+  }
+
   .shopping-price {
     justify-content: flex-end;
+    padding-bottom: 6px;
+  }
+
+  .shopping-price input[type='number'] {
+    min-height: 44px;
+    font-size: 16px;
   }
 }
 
@@ -1134,6 +1153,10 @@ footer.bottom .text-button {
 }
 
 @media (max-width: 600px) {
+  html {
+    scroll-padding-block-start: calc(62px + env(safe-area-inset-top, 0px));
+  }
+
   .app {
     padding: 14px 12px 40px;
   }
@@ -1162,5 +1185,46 @@ footer.bottom .text-button {
   .catalog-dishes .btn {
     padding-inline: 7px;
     font-size: 13px;
+  }
+
+  .view-nav > *,
+  .catalog-dishes .btn,
+  .shopping-actions .btn,
+  .shopping-source .btn,
+  .field {
+    min-height: 44px;
+  }
+
+  .field {
+    font-size: 16px;
+  }
+
+  .shopping-actions .btn {
+    padding-inline: 9px;
+  }
+
+  .recipe-dialog,
+  .week-dialog {
+    padding-top: 0;
+    overscroll-behavior-y: contain;
+    scroll-padding-block-start: 80px;
+  }
+
+  .recipe-dialog .view-heading,
+  .week-dialog > .view-heading {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    flex-wrap: nowrap;
+    margin-inline: -16px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .recipe-dialog .view-heading > .icon-btn,
+  .week-dialog > .view-heading > .icon-btn {
+    flex: 0 0 44px;
+    min-height: 44px;
   }
 }
